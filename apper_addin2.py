@@ -11,9 +11,6 @@ import adsk.core
 app = adsk.core.Application.cast(adsk.core.Application.get())
 ui = app.userInterface
 
-# TODO ui ids enums
-# TODO cookiecutter mulit command support
-
 try:
     from .apper.apper.Utilities import create_default_logger
     from .apper.apper import FusionApp
@@ -27,15 +24,15 @@ try:
         os.path.abspath(os.path.dirname(__file__)), 'logs',
         datetime.now().strftime('%Y-%m-%d_%H-%M-%S_apper_addin2_log.txt'))
     logger = create_default_logger(
-            name='apper_addin2_logger',
-            handlers=[logging.StreamHandler(),
-                      logging.FileHandler(logfile)],
-            level=logging.DEBUG)
-    
+        name='apper_addin2_logger',
+        handlers=[logging.StreamHandler(),
+                  logging.FileHandler(logfile)],
+        level=logging.DEBUG)
 
     my_addin = FusionApp(
         debug_to_ui=True,
-        logger = logger,)
+        logger=logger,
+    )
 
     my_addin.add_command(
         command_class=CustomCommand,
@@ -62,8 +59,7 @@ try:
 except:
     app = adsk.core.Application.get()
     ui = app.userInterface
-    message = 'Initialization Failed: {0}'.format(  # pylint: disable = invalid-name 
-        traceback.format_exc())
+    message = 'Initialization Failed: {0}'.format(traceback.format_exc())
     if ui:
         ui.messageBox(message)
     logger.error(message)

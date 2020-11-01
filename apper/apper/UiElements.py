@@ -44,7 +44,7 @@ class Workspace(Structure):
     product_type: str = ProductTypes.Design
     tooltip: str = 'workspace tooltip'
     tooltip_description: str = 'workspace tooltip description'
-    toolclip_resource_name: str = 'tool_clip.png'  # TODO change
+    toolclip_resource_name: str = 'toolclip.png'
 
     def in_fusion(self, parent: adsk.core.UserInterface):
         """[summary]
@@ -231,7 +231,8 @@ class CommandControl(Control):
     is_visible: bool = True
     is_promoted_by_default: bool = True
 
-    def in_fusion(self, parent: Union[adsk.core.ToolbarPanel, adsk.core.Toolbar],
+    def in_fusion(self, parent: Union[adsk.core.ToolbarPanel,
+                                      adsk.core.Toolbar],
                   cmd_def: adsk.core.CommandDefinition):
         """[summary]
 
@@ -412,15 +413,13 @@ class ListDefinition(CommandDefinition):
         return cmd_def, False
 
 
-
-
-
-child_type = {adsk.core.UserInterface: (Workspace, Toolbar),
-            Workspace: (Tab),
-            Toolbar: (SplitButtonControl, CommandControl, Dropdown),
-            SplitButtonControl: (CheckBoxDefinition, ListDefinition, ButtonDefinition),
-            CommandControl: (CheckBoxDefinition, ListDefinition, ButtonDefinition),
-            Tab: (Panel),
-            Panel: (Dropdown, CommandControl),
-            Dropdown: (Dropdown, CommandControl),
-            }
+child_type = {
+    adsk.core.UserInterface: (Workspace, Toolbar),
+    Workspace: (Tab),
+    Toolbar: (SplitButtonControl, CommandControl, Dropdown),
+    SplitButtonControl: (CheckBoxDefinition, ListDefinition, ButtonDefinition),
+    CommandControl: (CheckBoxDefinition, ListDefinition, ButtonDefinition),
+    Tab: (Panel),
+    Panel: (Dropdown, CommandControl),
+    Dropdown: (Dropdown, CommandControl),
+}
