@@ -1,0 +1,11 @@
+{
+	"autodeskProduct":	"Fusion360",
+	"type":	"addin",
+	"id":	"PiXsikJbHwCQGUGo",
+	"author":	"Moritz Hesche",
+	"description": "Custom Fusion360 addin by Moritz Hesche.",
+	"version":	"0.1.0",
+	"runOnStartup":	false,
+	"supportedOS":	"windows|mac",
+	"editEnabled":	true
+}

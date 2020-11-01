@@ -1,0 +1,3 @@
+*.pyc
+logs/
+__pycache__/
