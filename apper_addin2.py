@@ -17,6 +17,7 @@ try:
     from .apper.apper.UiElements import Workspace, Toolbar, Tab, Panel  # pylint: disable = unused-import
     from .apper.apper.UiElements import Dropdown, CommandControl, SplitButtonControl  # pylint: disable = unused-import
     from .apper.apper.UiElements import ButtonDefinition, CheckBoxDefinition, ListDefinition  # pylint: disable = unused-import
+    from .apper.apper.Enums import Workspaces, Toolbars, Tabs, Panels
 
     from .commands.CustomCommandDir import CustomCommand
 
@@ -45,15 +46,17 @@ try:
                 ButtonDefinition(ui_id='custom_buton_definiton_1',
                                  name='custombuttonname1')
             ],
-            # [
-            # Toolbar(),
-            # Workspace(),
-            # Tab(),
-            # Panel(),
-            # CommandControl(),
-            # ButtonDefinition(ui_id='custom_addin_command_custom_addinas',
-            #                  name='cbsd')
-            # ],
+            [
+                #Toolbar(),
+                Workspace(),
+                Tab('asdasd'),
+                Panel('werwer'),
+                CommandControl(),
+                ButtonDefinition(ui_id='custom_buton_definiton_1',
+                                 name='custombuttonname1')
+                # ButtonDefinition(ui_id='custom_addin_command_custom_addinas',
+                #                  name='cbsd')
+            ],
         ])
 
 except:
