@@ -7,6 +7,7 @@ from collections import deque
 import traceback
 from typing import List, Dict, Any
 import logging
+from abc import abstractmethod
 
 import adsk.core
 import adsk.fusion
@@ -119,6 +120,23 @@ class Fusion360CommandBase():
 
             self.position_paths.append(this_position_path)
 
+    @abstractmethod
+    def on_create(self, args: adsk.core.CommandEventArgs,
+                  command: adsk.core.Command, inputs: adsk.core.CommandInputs):
+        """ Executed when addin button is pressed.
+
+        Create the needed input field here.
+
+        Args:
+            args (adsk.core.CommandEventArgs): the native commandEventArgs passed
+                                                to the handler
+            command (adsk.core.Command): reference to the command object
+            inputs (adsk.core.CommandInputs): quick reference directly to the
+                                                commandInputs object
+        """
+        pass
+
+    @abstractmethod
     def on_preview(self, args: adsk.core.CommandEventArgs,
                    command: adsk.core.Command, inputs: adsk.core.CommandInputs,
                    input_values: Dict[str, Any]):
@@ -140,6 +158,7 @@ class Fusion360CommandBase():
 
         pass
 
+    @abstractmethod
     def on_input_changed(self, args: adsk.core.InputChangedEventArgs,
                          command: adsk.core.Command,
                          inputs: adsk.core.CommandInputs,
@@ -163,6 +182,7 @@ class Fusion360CommandBase():
         """
         pass
 
+    @abstractmethod
     def on_execute(self, args: adsk.core.CommandEventArgs,
                    command: adsk.core.Command, inputs: adsk.core.CommandInputs,
                    input_values: Dict[str, Any]):
@@ -179,6 +199,7 @@ class Fusion360CommandBase():
         """
         pass
 
+    @abstractmethod
     def on_destroy(self, args: adsk.core.CommandEventArgs,
                    command: adsk.core.Command, inputs: adsk.core.CommandInputs,
                    input_values: Dict[str, Any],
@@ -346,7 +367,7 @@ class _DestroyHandler(adsk.core.CommandEventHandler):
 
 
 def get_values(current_inputs):
-    """ Returns a dictionary with all input VALUES as values. 
+    """ Returns a dictionary with all input VALUES as values.
     Input Ids are the keys.
     """
     return current_inputs

@@ -74,7 +74,7 @@ class Tab(Structure):
     Returns:
         [type]: [description]
     """
-    ui_id: str = 'ToolsTab'  # TODO use an enum
+    ui_id: str = Tabs.ToolsTab
     name: str = 'Custom Tab'
     is_visible: bool = True
 
@@ -105,7 +105,7 @@ class Panel(Structure):
     Returns:
         [type]: [description]
     """
-    ui_id: str = 'SolidScriptsAddinsPanel'  # TODO use an enum
+    ui_id: str = Panels.AddIns
     name: str = 'Custom Panel'
     position_id: str = ''
     is_before: bool = True
@@ -142,7 +142,7 @@ class Toolbar(Structure):
     Returns:
         [type]: [description]
     """
-    ui_id: str = 'QAT'  # TODO use an enum
+    ui_id: str = Toolbars.QAT
 
     def in_fusion(self, parent: adsk.core.UserInterface):
         """[summary]

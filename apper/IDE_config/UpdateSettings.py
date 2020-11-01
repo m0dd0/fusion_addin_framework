@@ -51,14 +51,12 @@ def updateSettings():
     For details see script docstring.
     """
 
-    this_dir_path = os.path.realpath(os.path.dirname(__file__)) 
-    settings_to_apply_path = os.path.join(
-        this_dir_path, SETTINGS_NAME)
-    pylintrc_path = os.path.join(
-        this_dir_path, PYLINTRC_NAME)
+    this_dir_path = os.path.realpath(os.path.dirname(__file__))
+    settings_to_apply_path = os.path.join(this_dir_path, SETTINGS_NAME)
+    pylintrc_path = os.path.join(this_dir_path, PYLINTRC_NAME)
     vscode_settings_path = os.path.realpath(
         os.path.join(this_dir_path, '../../.vscode/settings.json'))
-    
+
     with open(settings_to_apply_path, 'r') as f:
         settings_to_apply = json.load(f)
 

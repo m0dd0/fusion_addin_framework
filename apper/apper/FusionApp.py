@@ -48,8 +48,9 @@ class FusionApp:
             for position in positions:
                 if not isinstance(position[-1], CommandDefinition):
                     raise ValueError(
-                        'You need to provide a Command Definition at the end of every position. Not a {0}.'
-                        .format(type(position[-1].__name__)))
+                        'You need to provide a Command Definition at the end of'
+                        'every position. Not a {0}.'.format(
+                            type(position[-1].__name__)))
                 parent = adsk.core.UserInterface
                 for elem in position:
                     if not isinstance(elem, child_type[parent]):
@@ -126,8 +127,8 @@ class FusionApp:
 
         Args:
             event_id: A unique identifier for the event
-            event_type: One of [UserInterface.commandCreated, 
-                UserInterface.commandStarting, UserInterface.commandTerminated]
+            event_type: One of [UserInterface.commandCreated,
+            UserInterface.commandStarting, UserInterface.commandTerminated]
             event_class: Your subclass of apper.Fusion360CommandEvent class
         """
         command_event = event_class(event_id, event_type)

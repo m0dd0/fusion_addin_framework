@@ -28,10 +28,11 @@ def unique_string(all_strings: Iterable[str],
 
 
 def create_default_logger(
-    name:str,
-    handlers:Iterable[logging.Handler],
-    level:int=logging.DEBUG,
-    message_format:str='{asctime} {levelname} {module}/{funcName}: {message}',
+    name: str,
+    handlers: Iterable[logging.Handler],
+    level: int = logging.DEBUG,
+    message_format:
+    str = '{asctime} {levelname} {module}/{funcName}: {message}',
 ):
     """[summary]
 
@@ -39,7 +40,7 @@ def create_default_logger(
         name (str): [description]
         handlers (Iterable[logging.Handler]): [description]
         level (int, optional): [description]. Defaults to logging.DEBUG.
-        message_format (str, optional): [description]. 
+        message_format (str, optional): [description].
             Defaults to '{asctime} {levelname} {module}/{funcName}: {message}'.
 
     Returns:

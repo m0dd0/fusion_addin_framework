@@ -1,26 +1,17 @@
+"""[summary]
 """
-Fusion360Utilities.py
-=====================
-Tools to leverage when creating a Fusion 360 Add-in
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-:copyright: (c) 2019 by Patrick Rainsberry.
-:license: Apache 2.0, see LICENSE for more details.
 
-"""
+from typing import Optional
+
 import adsk.core
 import adsk.fusion
 import adsk.cam
 
-import os
-import sys
-
-from typing import Optional, List, Union
-
 
 # Class to quickly access Fusion Application Objects
-# TODO Doc string
 class AppObjects(object):
-    """The AppObjects class wraps many common application objects required when writing a Fusion 360 Addin."""
+    """The AppObjects class wraps many common application objects required when
+     writing a Fusion 360 Addin."""
     def __init__(self):
 
         self.app = adsk.core.Application.cast(adsk.core.Application.get())
@@ -109,7 +100,8 @@ class AppObjects(object):
     def root_comp(self) -> Optional[adsk.fusion.Component]:
         """Every adsk.fusion.Design has exactly one Root Component
 
-        It should also be noted that the Root Component in the Design does not have an associated Occurrence
+        It should also be noted that the Root Component in the Design does not
+        have an associated Occurrence
 
         Returns: The Root Component of the adsk.fusion.Design
 
@@ -146,9 +138,11 @@ class AppObjects(object):
     # def units_manager(self) -> Optional[adsk.core.UnitsManager]:
     #     """adsk.core.UnitsManager from the active document
 
-    #     If not in an active document with design workspace active, will return adsk.core.UnitsManager if possible
+    #     If not in an active document with design workspace active, will return
+    #  adsk.core.UnitsManager if possible
 
-    #     Returns: adsk.fusion.FusionUnitsManager or adsk.core.UnitsManager if in a different workspace than design.
+    #     Returns: adsk.fusion.FusionUnitsManager or adsk.core.UnitsManager if
+    # in a different workspace than design.
     #     """
     #     units_manager_ = None
     #     if self.product is not None:
@@ -198,7 +192,26 @@ class AppObjects(object):
     #         return None
 
 
-def apply_appearance(obj, r, g, b, o=255, appearance_name='ABS (White)'):
+def apply_appearance(obj,
+                     r: int,
+                     g: int,
+                     b: int,
+                     o=255,
+                     appearance_name='ABS (White)'):
+    """[summary]
+
+    Args:
+        obj ([type]): [description]
+        r (int): [description]
+        g (int): [description]
+        b (int): [description]
+        o (int, optional): [description]. Defaults to 255.
+        appearance_name (str, optional): [description]. Defaults to 'ABS (White)'.
+
+    Raises:
+        ValueError: [description]
+        ValueError: [description]
+    """
     # https://ekinssolutions.com/setting-colors-in-fusion-360/
     app = adsk.core.Application.get()
     design = adsk.fusion.Design.cast(app.activeProduct)
@@ -229,18 +242,31 @@ def apply_appearance(obj, r, g, b, o=255, appearance_name='ABS (White)'):
 
 
 def clear_collection(collection):
+    """[summary]
+
+    Args:
+        collection ([type]): [description]
+    """
     while collection.count > 0:
         collection.item(0).deleteMe()
 
 
 def orient_bounding_box(bounding_box):
+    """[summary]
+
+    Args:
+        bounding_box ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
     # min_arr = np.array(bounding_box.minPoint.asArray())
     # max_arr = np.array(bounding_box.maxPoint.asArray())
     # diagonal = max_arr - min_arr
     # center = min_arr + diagonal/2
     # do not use numpy to have no third party dependencies on apper
     diagonal = [
-        max_coord - min_coord for max_coord, min_coor in zip(
+        max_coord - min_coord for max_coord, min_coord in zip(
             bounding_box.minPoint.asArray(), bounding_box.maxPoint.asArray())
     ]
     center = [
@@ -251,7 +277,7 @@ def orient_bounding_box(bounding_box):
         adsk.core.Point3D.create(*center), adsk.core.Vector3D.create(1, 0, 0),
         adsk.core.Vector3D.create(0, 1, 0), abs(diagonal[0]), abs(diagonal[1]),
         abs(diagonal[2]))
-    return orient_bounding_box
+    return oriented_box
 
 
 def delete_all_graphics():
@@ -261,7 +287,3 @@ def delete_all_graphics():
     for comp in des.allComponents:
         clear_collection(comp.customGraphicsGroup)
     adsk.core.Application.get().activeViewport.refresh()
-
-
-def delete_all_custom_ui_elements():
-    pass

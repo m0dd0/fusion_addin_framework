@@ -1,10 +1,12 @@
-"""
+"""[summary]
 """
 
 # TODO extend
 
 
 class ProductTypes:
+    """[summary]
+    """
     Cam = 'CAMProductType'
     Animation = 'AnimationProductType'
     Design = 'DesignProductType'
@@ -13,16 +15,24 @@ class ProductTypes:
 
 
 class Workspaces:
+    """[summary]
+    """
     Solid = 'FusionSolidEnvironment'
 
 
 class Tabs:
+    """[summary]
+    """
     ToolsTab = 'ToolsTab'
 
 
 class Panels:
+    """[summary]
+    """
     AddIns = 'SolidScriptsAddinsPanel'
 
 
 class Toolbars:
+    """[summary]
+    """
     QAT = 'QAT'
