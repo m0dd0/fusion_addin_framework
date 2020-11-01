@@ -24,7 +24,7 @@ class FusionApp:
     def __init__(self, logger: logging.Logger, debug_to_ui: bool = True):
         self.debug_to_ui = debug_to_ui
         self.commands = []
-        self.events = []
+        # self.events = []
         self.created_ui_elements = defaultdict(list)
 
         self.logger = logger
@@ -70,85 +70,6 @@ class FusionApp:
             self._show_error('Apper Add Command failed: {}'.format(
                 traceback.format_exc()))
 
-    def add_document_event(self, event_id: str,
-                           event_type: adsk.core.DocumentEvent,
-                           event_class: Any):
-        """Register a document event that can respond to various document actions
-
-        Args:
-            event_id: A unique identifier for the event
-            event_type: Any document event in the current application
-            event_class: Your subclass of apper.Fusion360DocumentEvent
-        """
-        doc_event = event_class(event_id, event_type)
-        doc_event.fusion_app = self
-        self.events.append(doc_event)
-
-    def add_custom_event(self, event_id: str, event_class: Any):
-        """Register a custom event to respond to a function running in a new thread
-
-        Args:
-            event_id: A unique identifier for the event
-            event_class: Your subclass of apper.Fusion360CustomThread
-        """
-
-        custom_event = event_class(event_id)
-        custom_event.fusion_app = self
-        self.events.append(custom_event)
-
-    def add_custom_event_no_thread(self, event_id: str, event_class: Any):
-        """Register a custom event
-
-        Args:
-            event_id: A unique identifier for the event
-            event_class: Your subclass of apper.Fusion360CustomThread
-        """
-
-        custom_event = event_class(event_id)
-        custom_event.fusion_app = self
-        self.events.append(custom_event)
-
-    def add_workspace_event(self, event_id: str, workspace_name: str,
-                            event_class: Any):
-        """Register a workspace event that can respond to various workspace actions
-
-        Args:
-            event_id: A unique identifier for the event
-            workspace_name: name of the workspace (i.e.
-            event_class: Your subclass of apper.Fusion360WorkspaceEvent
-        """
-        workspace_event = event_class(event_id, workspace_name)
-        workspace_event.fusion_app = self
-        self.events.append(workspace_event)
-
-    def add_command_event(self, event_id: str, event_type: Any,
-                          event_class: Any):
-        """Register a workspace event that can respond to various workspace actions
-
-        Args:
-            event_id: A unique identifier for the event
-            event_type: One of [UserInterface.commandCreated,
-            UserInterface.commandStarting, UserInterface.commandTerminated]
-            event_class: Your subclass of apper.Fusion360CommandEvent class
-        """
-        command_event = event_class(event_id, event_type)
-        command_event.fusion_app = self
-        self.events.append(command_event)
-
-    def add_web_request_event(self, event_id: str,
-                              event_type: adsk.core.WebRequestEvent,
-                              event_class: Any):
-        """Register a workspace event that can respond to various workspace actions
-
-        Args:
-            event_id: A unique identifier for the event
-            event_class: Your subclass of apper.Fusion360WebRequestEvent
-            event_type: Opened or Inserting from URL event type such as (app.openedFromURL)
-        """
-        web_request_event = event_class(event_id, event_type)
-        web_request_event.fusion_app = self
-        self.events.append(web_request_event)
-
     def run_app(self):
         """[summary]
         """
@@ -175,9 +96,88 @@ class FusionApp:
                             elem[0].objectType, elem[0].id))
                         elem[0].deleteMe()
 
-            for event in self.events:
-                event.on_stop()
+            # for event in self.events:
+            #     event.on_stop()
 
         except:
             self._show_error('AddIn Stop Failed: {0}'.format(
                 traceback.format_exc()))
+
+    # def add_document_event(self, event_id: str,
+    #                        event_type: adsk.core.DocumentEvent,
+    #                        event_class: Any):
+    #     """Register a document event that can respond to various document actions
+
+    #     Args:
+    #         event_id: A unique identifier for the event
+    #         event_type: Any document event in the current application
+    #         event_class: Your subclass of apper.Fusion360DocumentEvent
+    #     """
+    #     doc_event = event_class(event_id, event_type)
+    #     doc_event.fusion_app = self
+    #     self.events.append(doc_event)
+
+    # def add_custom_event(self, event_id: str, event_class: Any):
+    #     """Register a custom event to respond to a function running in a new thread
+
+    #     Args:
+    #         event_id: A unique identifier for the event
+    #         event_class: Your subclass of apper.Fusion360CustomThread
+    #     """
+
+    #     custom_event = event_class(event_id)
+    #     custom_event.fusion_app = self
+    #     self.events.append(custom_event)
+
+    # def add_custom_event_no_thread(self, event_id: str, event_class: Any):
+    #     """Register a custom event
+
+    #     Args:
+    #         event_id: A unique identifier for the event
+    #         event_class: Your subclass of apper.Fusion360CustomThread
+    #     """
+
+    #     custom_event = event_class(event_id)
+    #     custom_event.fusion_app = self
+    #     self.events.append(custom_event)
+
+    # def add_workspace_event(self, event_id: str, workspace_name: str,
+    #                         event_class: Any):
+    #     """Register a workspace event that can respond to various workspace actions
+
+    #     Args:
+    #         event_id: A unique identifier for the event
+    #         workspace_name: name of the workspace (i.e.
+    #         event_class: Your subclass of apper.Fusion360WorkspaceEvent
+    #     """
+    #     workspace_event = event_class(event_id, workspace_name)
+    #     workspace_event.fusion_app = self
+    #     self.events.append(workspace_event)
+
+    # def add_command_event(self, event_id: str, event_type: Any,
+    #                       event_class: Any):
+    #     """Register a workspace event that can respond to various workspace actions
+
+    #     Args:
+    #         event_id: A unique identifier for the event
+    #         event_type: One of [UserInterface.commandCreated,
+    #         UserInterface.commandStarting, UserInterface.commandTerminated]
+    #         event_class: Your subclass of apper.Fusion360CommandEvent class
+    #     """
+    #     command_event = event_class(event_id, event_type)
+    #     command_event.fusion_app = self
+    #     self.events.append(command_event)
+
+    # def add_web_request_event(self, event_id: str,
+    #                           event_type: adsk.core.WebRequestEvent,
+    #                           event_class: Any):
+    #     """Register a workspace event that can respond to various workspace actions
+
+    #     Args:
+    #         event_id: A unique identifier for the event
+    #         event_class: Your subclass of apper.Fusion360WebRequestEvent
+    #         event_type: Opened or Inserting from URL event type such as (app.openedFromURL)
+    #     """
+    #     web_request_event = event_class(event_id, event_type)
+    #     web_request_event.fusion_app = self
+    #     self.events.append(web_request_event)
