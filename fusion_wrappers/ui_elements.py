@@ -1,10 +1,5 @@
-"""[summary]
-
-"""
-
 from dataclasses import dataclass
 from typing import Union, Tuple
-import os
 
 import adsk.core
 
