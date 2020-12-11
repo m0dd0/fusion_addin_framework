@@ -13,7 +13,7 @@ import uuid
 import adsk.core
 import adsk.fusion
 
-from .UiElements import UiItemFactory
+from .ui_elements import UiItemFactory
 from ..utilities import get_values
 
 

@@ -8,7 +8,7 @@ import os
 
 import adsk.core
 
-from .Enums import ProductTypes, Workspaces, Tabs, Panels, Toolbars
+from .enums import ProductTypes, Workspaces, Tabs, Panels, Toolbars
 # from ..utilities import default_resources
 
 # TODO use values abstract base classes
