@@ -1,0 +1,12 @@
+{
+	"python.autoComplete.extraPaths":	[
+		"~/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/Python/defs"
+	],
+	"python.pythonPath":	"", 
+	"python.linting.pylintEnabled":	true,
+	"python.linting.enabled": true,
+	"python.linting.pylintArgs": [
+	],
+	"python.formatting.provider": "yapf",
+	"editor.rulers": [80]
+}
