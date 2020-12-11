@@ -1,4 +1,9 @@
 *.pyc
 logs/
 __pycache__/
+.idea/
 .vscode/
+.DS_STORE
+.DS_Store
+venv
+
