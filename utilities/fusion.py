@@ -10,7 +10,7 @@ import adsk.core
 import adsk.fusion
 import adsk.cam
 
-from .python_util import trim_from_substring
+from .python import trim_from_substring
 
 custom_appearance_substring = '_custom_colored_r'
 
