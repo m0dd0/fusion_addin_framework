@@ -10,7 +10,7 @@ import logging
 
 import adsk.core
 
-from . import Fusion360CommandBase
+from .fusion360_command_base import Fusion360CommandBase
 from .ui_elements import UiItemFactory, child_type, CommandDefinition
 
 from ..utilities import appdirs
