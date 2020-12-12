@@ -14,7 +14,7 @@ import adsk.core
 import adsk.fusion
 
 from .ui_elements import UiItemFactory
-from ..utilities import get_values
+from ..utilities.fw import get_values
 
 
 class HandlerState:
