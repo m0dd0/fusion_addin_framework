@@ -3,7 +3,7 @@ from typing import Union, Tuple
 
 import adsk.core
 
-from .ui_enums import ProductTypes, Workspaces, Tabs, Panels, Toolbars
+from ..ui_enums import ProductTypes, Workspaces, Tabs, Panels, Toolbars
 
 # TODO use values abstract base classes
 
