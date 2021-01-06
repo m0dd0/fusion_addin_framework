@@ -1,0 +1,182 @@
+from pathlib import Path
+from functools import partial
+import logging
+import json
+
+default_pictures = {}
+
+standard_defaults = {
+    "workspace": {
+        "id": "random",  # random, string
+        "name": "random",  # random string
+        "product_type": "DesignProductType",  # ['DesignProducttype']
+        "picture": "lightbulb",  # pfad, random, ['lighbulb']
+        "picture_retina": "lightbulb",  # pfad, random, ['lighbulb'] # TODO warning wenn nur picture in defaukt definiert wurde
+        "picture_tooltip": "",  # str
+        "tooltip_head": "",  # str
+        "tooltip_text": "",  # str
+        # children=List[Tab] = None,
+    },
+    "tab": {
+        "id": "random",  # random, string
+        "name": "random",  # random string
+        "position_index": 0,  # int
+        "is_visible": True,  # bool
+        # children=List[Panel] = None,
+        # parents=None,
+    },
+    "panel": {
+        "id": "random",  # random, string
+        "name": "random",  # random string
+        "position_index": 0,  # int
+        "is_visible": True,  # bool
+        # children=List[Panel] = None,
+        # parents=None,
+    },
+}
+
+
+def picture_check(titles, v):
+    if v in default_pictures:
+        v = default_pictures[v]
+    p = Path(str(v))
+    if not p.exists():
+        logging.warning("The provided image path doesnt exist.")
+        return False
+    contained_files = [f.name for f in p.iterdir()]
+    for title, optional in titles.items():
+        if title not in contained_files:
+            if optional:
+                logging.warning(
+                    "The provided image directory doesnt contains "
+                    "'{0}'. Fusion will generate this file automatically.".format(title)
+                )
+            else:
+                return False
+        else:
+            pass
+            # TODO check for image size
+            # (https://stackoverflow.com/questions/8032642/how-to-obtain-image-size-using-standard-python-class-without-using-external-lib/9499976)
+    return True
+
+
+standard_defaults_checks = {
+    "workspace": {
+        "id": lambda v: isinstance(v, str),  # random, arbitrary string
+        "name": lambda v: isinstance(v, str),  # random, arbitraty string
+        "product_type": lambda v: v in ["DesignProducttype"],  # ['Designproducttype']
+        # TODO check when pictures are optional # pfad, random, ['lighbulb']
+        "picture": partial(picture_check, {"49x31.png": False, "98x62.png": False}),
+        "picture_tooltip": lambda v: isinstance(v, str),  # arbitrary string
+        "tooltip_head": lambda v: isinstance(v, str),  # arbitrary string
+        "tooltip_text": lambda v: isinstance(v, str),  # arbitrary string
+    },
+    "tab": {
+        "id": lambda v: isinstance(v, str),  # random, arbitrary string
+        "name": lambda v: isinstance(v, str),  # random, arbitraty string
+        "position_index": lambda v: isinstance(v, int),  # arbitrary integer
+        "is_visible": lambda v: isinstance(v, bool),  # arbitrary bool
+    },
+    "panel": {
+        "id": lambda v: isinstance(v, str),  # random, arbitrary string
+        "name": lambda v: isinstance(v, str),  # random, arbitraty string
+        "position_index": lambda v: isinstance(v, int),  # arbitrary integer
+        "is_visible": lambda v: isinstance(v, bool),  # arbitrary bool
+    },
+}
+
+standard_defaults_checks = {
+    "workspace": {
+        "id": {
+            "value": "random",
+            "check": lambda v: isinstance(v, str),
+        },  # random, arbitrary string
+        "name": {
+            "value": "random",
+            "check": lambda v: isinstance(v, str),
+        },  # random, arbitraty string
+        "product_type": {
+            "value": "DesignProductType",
+            "check": lambda v: v in ["DesignProducttype"],
+        },  # ['Designproducttype']
+        "picture": {
+            "value": "lightbulb",
+            "check": partial(
+                picture_check, {"49x31.png": False, "98x62.png": False}
+            ),  # TODO check when pictures are optional
+        },  # pfad, random, ['lighbulb']
+        "picture_retina": "lightbulb",  # pfad, random, ['lighbulb'] # TODO warning wenn nur picture in defaukt definiert wurde
+        "picture_tooltip": "",  # str
+        "tooltip_head": "",  # str
+        "tooltip_text": "",  # str
+        # children=List[Tab] = None,
+    },
+    "tab": {
+        "id": "random",  # random, string
+        "name": "random",  # random string
+        "position_index": 0,  # int
+        "is_visible": True,  # bool
+        # children=List[Panel] = None,
+        # parents=None,
+    },
+    "panel": {
+        "id": "random",  # random, string
+        "name": "random",  # random string
+        "position_index": 0,  # int
+        "is_visible": True,  # bool
+        # children=List[Panel] = None,
+        # parents=None,
+    },
+}
+
+
+def _flatten_dict(d):  # json loaded dict cant contain loops
+    flattened = {}
+
+    def _traverse_dict(d, upper_keys):
+        for k, v in d.items():
+            if isinstance(v, dict):
+                _traverse_dict(d[k], upper_keys + [k])
+            else:
+                flattened[tuple(upper_keys + [k])] = v
+
+    _traverse_dict(d, [])
+    return flattened
+
+
+def get_effective_defaults(user_defaults_path):
+    try:
+        user_defaults = json.load(user_defaults_path)
+    except json.JSONDecodeError:
+        logging.warning(
+            "Couldnt decode user default setting. Make sure to use proper "
+            "json encoding. Standard default settings are used."
+        )
+        user_defaults = {}
+
+    usr_dflts = _flatten_dict(user_defaults)
+    std_dflts = _flatten_dict(standard_defaults)
+    std_dflts_checks = _flatten_dict(standard_defaults_checks)
+
+    unknown_user_settings = set(usr_dflts.keys()) - set(std_dflts.keys())
+    if len(unknown_user_settings) > 0:
+        logging.warning(
+            "The following default setttings are not known and will be ignored: {0}. "
+            "Check the Documentation for all available options".format(
+                unknown_user_settings
+            )
+        )
+
+    effective_defaults = {}
+
+    for key in set(usr_dflts.keys()) & set(std_dflts.keys()):
+        usr_value = usr_dflts[key]
+        if std_dflts_checks[key](usr_value):
+            effective_defaults[key] = usr_value
+        else:
+            effective_defaults[key] = std_dflts[key]
+
+    for key in set(std_dflts.keys()) - set(usr_dflts.keys()):
+        effective_defaults[key] = std_dflts[key]
+
+    return effective_defaults
