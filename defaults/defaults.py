@@ -2,6 +2,10 @@ from pathlib import Path
 from functools import partial
 import logging
 import json
+from copy import deepcopy
+
+
+### import and load jsons ###
 
 default_pictures_path = Path(__file__).with_name("default_pictures")
 default_pictures = {p.stem(): p.absolute() for p in default_pictures_path.iterdir()}
@@ -10,10 +14,14 @@ standard_defaults_path = Path(__file__).with_name("standard_defaults.json")
 standard_defaults = json.loads(standard_defaults_path)
 
 
-def picture_check(sizes, picture_type, value):
+### checker functions ###
+
+
+def picture_check(picture_type, value):
+    sizes_by_type = {"workspace": {"49x31.png": False, "98x62.png": False}}
+
     # check if a default picure name was provided and set v to according path if so
-    if value in default_pictures:
-        value = default_pictures[value]
+    value = default_pictures.get(value, value)
 
     # parse value to string, should always work
     pic_dir = Path(str(value)).absolute()
@@ -30,7 +38,7 @@ def picture_check(sizes, picture_type, value):
     contained_files = [f.name for f in pic_dir.iterdir()]
 
     # check for all the pics that are needed
-    for size, optional in sizes.items():
+    for size, optional in sizes_by_type[picture_type].items():
         if size not in contained_files:
             if not optional:
                 logging.warning(
@@ -56,7 +64,9 @@ def picture_check(sizes, picture_type, value):
     return True
 
 
-standard_defaults_checks = {
+### assign checker functions to every key/setting ###
+
+default_checks = {
     "workspace": {
         "id": lambda v: isinstance(v, str),  # random, arbitrary string
         "name": lambda v: isinstance(v, str),  # random, arbitraty string
@@ -84,6 +94,7 @@ standard_defaults_checks = {
 }
 
 
+# TODO to python util
 def _flatten_dict(d):  # json loaded dict cant contain loops
     flattened = {}
 
@@ -98,7 +109,11 @@ def _flatten_dict(d):  # json loaded dict cant contain loops
     return flattened
 
 
-def get_effective_defaults(user_defaults_path):
+### calculate the default dict with inserted correct usr values ###
+
+
+def effective_defaults(user_defaults_path):
+    # try to load user defaults
     try:
         user_defaults = json.load(user_defaults_path)
     except json.JSONDecodeError:
@@ -108,10 +123,13 @@ def get_effective_defaults(user_defaults_path):
         )
         user_defaults = {}
 
+    # flatten all the dict to make live easier,
+    # abbreviation indicates flattened dict
     usr_dflts = _flatten_dict(user_defaults)
     std_dflts = _flatten_dict(standard_defaults)
-    std_dflts_checks = _flatten_dict(standard_defaults_checks)
+    dflt_checks = _flatten_dict(default_checks)
 
+    # drop all settings that whose keys is not in standard defaults
     unknown_user_settings = set(usr_dflts.keys()) - set(std_dflts.keys())
     if len(unknown_user_settings) > 0:
         logging.warning(
@@ -120,17 +138,14 @@ def get_effective_defaults(user_defaults_path):
                 unknown_user_settings
             )
         )
+    usr_dflts = {k: v for k, v in usr_dflts.items() if k not in unknown_user_settings}
 
-    effective_defaults = {}
+    # drop all settings whose value didnt pass the check
+    usr_dflts = {k: v for k, v in usr_dflts.items() if dflt_checks[k](v)}
+    # usr_dflts = {k: v for k, v in usr_dflts.items() if dflt_checks[k + ("checks",)](v)}
 
-    for key in set(usr_dflts.keys()) & set(std_dflts.keys()):
-        usr_value = usr_dflts[key]
-        if std_dflts_checks[key](usr_value):
-            effective_defaults[key] = usr_value
-        else:
-            effective_defaults[key] = std_dflts[key]
+    # create a dict with all settings, where usr settings replace standards
+    eff_dflts = deepcopy(std_dflts)
+    eff_dflts.update(usr_dflts)
 
-    for key in set(std_dflts.keys()) - set(usr_dflts.keys()):
-        effective_defaults[key] = std_dflts[key]
-
-    return effective_defaults
+    return eff_dflts
