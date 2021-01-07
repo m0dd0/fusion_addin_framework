@@ -131,7 +131,7 @@ def effective_defaults(user_defaults_path):
 
     # drop all settings that whose keys is not in standard defaults
     unknown_user_settings = set(usr_dflts.keys()) - set(std_dflts.keys())
-    if len(unknown_user_settings) > 0:
+    if unknown_user_settings:
         logging.warning(
             "The following default setttings are not known and will be ignored: {0}. "
             "Check the Documentation for all available options".format(
