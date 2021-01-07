@@ -1,0 +1,24 @@
+{
+    "workspace": {
+        "id": "random",
+        "name": "random",
+        "product_type": "DesignProductType",
+        "picture": "lightbulb",
+        "picture_retina": "lightbulb",
+        "picture_tooltip": "",
+        "tooltip_head": "",
+        "tooltip_text": ""
+    },
+    "tab": {
+        "id": "random",
+        "name": "random",
+        "position_index": 0,
+        "is_visible": true
+    },
+    "panel": {
+        "id": "random",
+        "name": "random",
+        "position_index": 0,
+        "is_visible": true
+    }
+}

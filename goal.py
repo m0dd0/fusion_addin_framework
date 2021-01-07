@@ -49,139 +49,7 @@ import logging
 import json
 import random
 
-# load from external json
-default_pictures = {"lightbulb": ""}
-random_names = {"workspace": ["water workspace"]}
-standard_defaults = {
-    "workspace": {
-        "id": "random",  # random, string
-        "name": "random",  # random string
-        "product_type": "DesignProductType",  # ['DesignProducttype']
-        "picture": "lightbulb",  # pfad, random, ['lighbulb']
-        "picture_retina": "lightbulb",  # pfad, random, ['lighbulb'] # TODO warning wenn nur picture in defaukt definiert wurde
-        "picture_tooltip": "",  # str
-        "tooltip_head": "",  # str
-        "tooltip_text": "",  # str
-        # children=List[Tab] = None,
-    },
-    "tab": {
-        "id": "random",  # random, string
-        "name": "random",  # random string
-        "position_index": 0,  # int
-        "is_visible": True,  # bool
-        # children=List[Panel] = None,
-        # parents=None,
-    },
-    "panel": {
-        "id": "random",  # random, string
-        "name": "random",  # random string
-        "position_index": 0,  # int
-        "is_visible": True,  # bool
-        # children=List[Panel] = None,
-        # parents=None,
-    },
-}
-
-
-def picture_check(v, titles):
-    p = Path(str(v))
-    if not p.exists():
-        return False
-
-
-standard_defaults = {
-    "workspace": {
-        "id": {
-            "value": "random",
-            "check": lambda v: v if isinstance(v, str) else "random",
-        },  # random, arbitrary string
-        "name": {
-            "value": "random",
-            "check": lambda v: v if isinstance(v, str) else "random",
-        },  # random, arbitraty string
-        "product_type": {
-            "value": "DesignProductType",
-            "check": lambda v: v if v in ["DesignProducttype"] else "DesignProducttype",
-        },  # ['Designproducttype']
-        "picture": {
-            "value": "lightbulb",
-            "check": lambda v: Path(str(v)).exists(),
-        },  # pfad, random, ['lighbulb']
-        "picture_retina": "lightbulb",  # pfad, random, ['lighbulb'] # TODO warning wenn nur picture in defaukt definiert wurde
-        "picture_tooltip": "",  # str
-        "tooltip_head": "",  # str
-        "tooltip_text": "",  # str
-        # children=List[Tab] = None,
-    },
-    "tab": {
-        "id": "random",  # random, string
-        "name": "random",  # random string
-        "position_index": 0,  # int
-        "is_visible": True,  # bool
-        # children=List[Panel] = None,
-        # parents=None,
-    },
-    "panel": {
-        "id": "random",  # random, string
-        "name": "random",  # random string
-        "position_index": 0,  # int
-        "is_visible": True,  # bool
-        # children=List[Panel] = None,
-        # parents=None,
-    },
-}
-user_defaults_path = Path()
-try:
-    user_defaults = json.loads(user_defaults_path)
-except json.JSONDecodeError:
-    logging.warning(
-        "Couldnt decode user default setting. Make sure to use proper "
-        "json encoding. Standard default settings are used."
-    )
-    user_defaults = {}
-
-
-def all_key_combs(d):  # json loaded dict cant contain loops
-    key_combs = []
-
-    def _traverse_dict(d, upper_keys):
-        for k, v in d.items():
-            if isinstance(v, dict):
-                all_key_combs(d[k], upper_keys + [k])
-            else:
-                key_combs.append(upper_keys + [k])
-
-    _traverse_dict(d, [])
-    return key_combs
-
-
-def check_dict(user_dict, standard_dict):
-    for k, v in user_dict.items():
-        if k not in standard_dict:
-            logging.warning()
-            continue
-        if isinstance(v, dict):
-            check_dict(d[k], s[k])
-        else:
-            key_combs.append(upper_keys + [k])
-
-
-def get_by_multiindex(d, keys):
-    value = d
-    for key in keys:
-        value = value[key]
-    return value
-
-
-def get_default(*keys):
-    try:
-        return get_by_multiindex(defaults, keys)
-    except KeyError as e:
-        return get_by_multiindex(standard_defaults, keys)
-
-
-# temporal resource folder
-resources = Path.cwd()
+from .defaults import get_default
 
 
 class Workspace:
@@ -191,7 +59,6 @@ class Workspace:
         id: str = None,  # add
         product_type: str = None,  # add
         picture: Union[str, Path] = None,  # add
-        picture_retina: Union[str, Path] = None,  # add
         picture_tooltip: Union[str, Path] = None,
         tooltip_head: str = None,
         tooltip_text: str = None,
@@ -199,26 +66,26 @@ class Workspace:
     ):
         args = locals()
         given_args = {k: v for k, v in args.items() if k is not None}
-
-        if id is None:
-            dflt = get_default("workspace", "id")
-            id = uuid4() if dflt == "random" else dflt
+        args = {k: get_default("workspace", k) for k in args if k is None}
 
         app = adsk.core.Application.get()
         ws_coll = app.userInterface.workspaces
 
-        fusion_ws = ws_coll.itemById(id)
+        fusion_ws = ws_coll.itemById(args["id"])
         if fusion_ws:
             if fusion_ws.isNative:
                 not_setable = set(given_args.keys()) - {"id", "children"}
                 if not_setable is not None:
                     logging.warning(
-                        "The following args were ignored since they cant be "
-                        "manipulated on a native Workspace: {0}".format(not_setable)
+                        "The following arguments for the workspace (id: {0}) "
+                        "were ignored since they cant be manipulated on a "
+                        "native Workspace: {1}".format(id, not_setable)
                     )
             else:
                 pass
                 # TODO implement if app managemnt is created
+
+        # create new workspace
         else:
 
             if name is None:
