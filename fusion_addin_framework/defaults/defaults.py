@@ -4,6 +4,7 @@ import logging
 import json
 from copy import deepcopy
 
+from ..util import py_utils
 
 ### import and load jsons ###
 
@@ -94,21 +95,6 @@ default_checks = {
 }
 
 
-# TODO to python util
-def _flatten_dict(d):  # json loaded dict cant contain loops
-    flattened = {}
-
-    def _traverse_dict(d, upper_keys):
-        for k, v in d.items():
-            if isinstance(v, dict):
-                _traverse_dict(d[k], upper_keys + [k])
-            else:
-                flattened[tuple(upper_keys + [k])] = v
-
-    _traverse_dict(d, [])
-    return flattened
-
-
 ### calculate the default dict with inserted correct usr values ###
 
 
@@ -125,9 +111,9 @@ def effective_defaults(user_defaults_path):
 
     # flatten all the dict to make live easier,
     # abbreviation indicates flattened dict
-    usr_dflts = _flatten_dict(user_defaults)
-    std_dflts = _flatten_dict(standard_defaults)
-    dflt_checks = _flatten_dict(default_checks)
+    usr_dflts = py_utils.flatten_dict(user_defaults)
+    std_dflts = py_utils.flatten_dict(standard_defaults)
+    dflt_checks = py_utils.flatten_dict(default_checks)
 
     # drop all settings that whose keys is not in standard defaults
     unknown_user_settings = set(usr_dflts.keys()) - set(std_dflts.keys())
