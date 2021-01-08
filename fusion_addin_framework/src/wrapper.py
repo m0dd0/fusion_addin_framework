@@ -180,7 +180,7 @@ class Button:
 
 class Command:
     def __init__(self, button: Button):
-        button.cmd_def.commandCreated
+        button.cmd_def.commandCreated.add()
 
 
 class Control:
