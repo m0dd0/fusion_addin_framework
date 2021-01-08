@@ -1,11 +1,13 @@
 import logging
 from typing import List, Union, Callable
 from pathlib import Path
+from uuid import uuid4
 
 import adsk.core
 import adsk.fusion
 
 from .defaults import fill_args
+from .util.py_utils import comes_after
 
 
 class FusionWrapper:
@@ -149,17 +151,36 @@ class Panel:
         # create new tab
         else:
             # TODO check behaviour of related workspaces etc.
-            panel_order = {
-                p.indexWithinTab(): p.id for p in parent_tab.in_fusion.toolbarPanels
-            }
-
-            for i in sorted(list(panel_order.keys())):
-                if args["position_index"] < i:
-                    position_id = panel_order[i]
-                    break
+            # TODO warning or similar
+            panel_order = {p.index: p.id for p in parent_tab.in_fusion.toolbarPanels}
+            before_id = panel_order[
+                comes_after(list(panel_order.keys()), args["position_index"])
+            ]
             self.in_fusion = parent_tab.in_fusion.toolbarPanels.add(
-                args["id"], args["name"], position_id, True
+                args["id"], args["name"], before_id, True
             )
+
+
+dummy_button = (
+    adsk.core.Application.get().userInterface.commandDefinitions.addButtonDefinition(
+        uuid4(),
+        "unused button",
+        "this button was createdbut has no connected command",
+        "",
+    )
+)
+
+
+class Button:
+    def __init__(self, position, parent: Panel):
+        self.cmd_def = parent.in_fusion.controls.addCommand(
+            dummy_button, position, True
+        )
+
+
+class Command:
+    def __init__(self, button: Button):
+        button.cmd_def.commandCreated
 
 
 class Control:
@@ -183,11 +204,6 @@ class Control:
         self.connected_command = Command(
             self, on_created, on_input_changed, on_preview, on_execute, on_destroy
         )
-
-
-class Button(Control):
-    def __init__(self, parent, command):
-        super().__init__(parent, command)
 
 
 class Command:
