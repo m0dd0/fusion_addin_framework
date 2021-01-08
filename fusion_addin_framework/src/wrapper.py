@@ -8,11 +8,25 @@ import adsk.fusion
 
 from .defaults import fill_args
 from .util.py_utils import comes_after
+from . import handlers
 
 
-class FusionWrapper:
-    def __init__(self):
-        pass
+ws = Workspace(id="Solid")
+tab = Tab(id="Tools", parent_workspace=ws)
+panel = Panel(id="Addin", parent_tab=tab)
+button = Button(id="faf_button_id", parent_panel=panel)
+cmd = Command(id="faf_command_id", parent_button=button)
+
+cmd = Command(Button(Panel(Tab(Workspace))))
+# pylint:disable=unused-argument
+
+# class FusionWrapper:
+#     def __init__(self):
+#         pass
+
+#     @classmethod
+#     def create_from_fusion(cls, fusion_obj):
+#         pass
 
 
 class Workspace:
@@ -25,9 +39,10 @@ class Workspace:
         picture_tooltip: Union[str, Path] = None,
         tooltip_head: str = None,
         tooltip_text: str = None,
-        # children: List[Tab] = None,
     ):
         args, given_args = fill_args(locals(), "workspace")
+        for name, value in args.items():
+            setattr(self, name, value)
 
         app = adsk.core.Application.get()
         ws_coll = app.userInterface.workspaces
@@ -55,34 +70,6 @@ class Workspace:
             self.in_fusion.tooltip = args["tooltip_head"]
             self.in_fusion.tooltipDescription = args["tooltip_text"]
 
-        # self.children = []
-        #     for tab in children:
-        #         fusion_tab = fusion_ws.toolbarTabs.itemById(tab.id)
-        #         if fusion_tab:
-        #             if
-        #         else:
-        #             fusion_tab = fusion_ws.toolbarTabs.add(tab.id, tab.name)
-        #             tab.parents.append(self)
-
-    # def tab(
-    #     self,
-    #     name: str = None,  # add
-    #     id: str = None,  # add
-    #     position_index: int = None,
-    #     is_visible: bool = None,
-    #     # children: List[Panel] = None,
-    # ):
-    #     new_tab = Tab(name, id, position_index, is_visible, [self])
-    #     self.children.append(new_tab)
-    #     return new_tab
-
-    # def toolbar(self):
-    #     pass
-
-    # @classmethod
-    # def create_from_fusion(cls, fusion_obj):
-    #     pass
-
 
 class Tab:
     def __init__(
@@ -92,13 +79,9 @@ class Tab:
         id: str = None,  # add
         position_index: int = None,
         is_visible: bool = None,
-        # children: List[Panel] = None,
-        # parents: Union[List[Workspace], Workspace] = None,
     ):
         args, given_args = fill_args(locals(), "tab")
 
-        # if not isinstance(parents, List):
-        #     parents = [parents]
         self.in_fusion = parent_workspace.in_fusion.toolbarTabs.itemById(args["id"])
         if self.in_fusion:
             if self.in_fusion.isNative:
@@ -129,8 +112,6 @@ class Panel:
         id: str,
         position_index: int,
         is_visible: bool,
-        # children: List[Control],
-        # parents, # TODO support multiple parents
     ):
         args, given_args = fill_args(locals(), "panel")
 
@@ -172,37 +153,23 @@ dummy_button = (
 
 
 class Button:
-    def __init__(self, position, parent: Panel):
-        self.cmd_def = parent.in_fusion.controls.addCommand(
-            dummy_button, position, True
-        )
+    def __init__(self, parent_panel: Panel, id=None, position=None):
+        self.parent_panel = parent_panel
+        self.id = id
+        self.position = position
+        # self.cmd_def = self.create_cmd_def()
 
+        # self.isPromoted = is_promoted
+        # ...
 
-class Command:
-    def __init__(self, button: Button):
-        button.cmd_def.commandCreated.add()
-
-
-class Control:
-    def __init__(self, parent, command):
-        self.connected_command = None
-
-    def conncect_command(
+    def create_control(
         self,
-        name,
-        id,
-        on_created: Callable = None,
-        on_input_changed: Callable = None,
-        on_preview: Callable = None,
-        on_execute: Callable = None,
-        on_destroy: Callable = None,
     ):
-        if self.connected_command:
-            self.connected_command.remove_control(self)
-            self.connected_command = None
-            print("WARNING")
-        self.connected_command = Command(
-            self, on_created, on_input_changed, on_preview, on_execute, on_destroy
+        adsk.core.Application.get().userInterface.commandDefinitions.addButtonDefinition(
+            self.id,
+            "unused button",
+            "this button was createdbut has no connected command",
+            "",
         )
 
 
@@ -211,15 +178,16 @@ class Command:
         self,
         name: str = None,
         id: str = None,
-        controlls: Union[List[Control], Control] = None,
+        parent_button: Button = None,
         on_created: Callable = None,
         on_input_changed: Callable = None,
         on_preview: Callable = None,
         on_execute: Callable = None,
         on_destroy: Callable = None,
-        command_class=None,
     ):
-        pass
+        button.in_fusion.deleteMe()
+        button.create_ctrl_def()
+        button.cmd_def.commandCreated.add(handlers._CommandCreatedHandler())
 
     def add_control(self):
         pass

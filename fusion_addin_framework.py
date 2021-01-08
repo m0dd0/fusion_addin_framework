@@ -9,9 +9,10 @@ class MyCommand(faf.CommandBase):
 
 cmd = MyCommand()
 cmd.controls = []
+
+
 ### HTML STYLE ###
 
-import fusion_addin_framework as faf
 
 faf.Workspace(
     id="Solid",
