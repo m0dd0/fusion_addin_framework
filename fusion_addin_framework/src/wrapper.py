@@ -18,7 +18,6 @@ button = Button(id="faf_button_id", parent_panel=panel)
 cmd = Command(id="faf_command_id", parent_button=button)
 
 cmd = Command(Button(Panel(Tab(Workspace))))
-# pylint:disable=unused-argument
 
 # class FusionWrapper:
 #     def __init__(self):
@@ -142,55 +141,50 @@ class Panel:
             )
 
 
-dummy_button = (
-    adsk.core.Application.get().userInterface.commandDefinitions.addButtonDefinition(
-        uuid4(),
-        "unused button",
-        "this button was createdbut has no connected command",
-        "",
-    )
-)
+# class Button:
+#     def __init__(self, parent_panel: Panel, id=None, position=None, is_promoted=None):
+#         self.parent_panel = parent_panel
+#         self.id = id
+#         self.position = position
+#         self.is_promoted = is_promoted
+#         self.in_fusion = self.create_control()
+
+#     def create_control(
+#         self,
+#         name="<unused button>",
+#         tooltip="this button was created but no command has been connected to it yet",
+#         image="",
+#     ):
+#         return adsk.core.Application.get().userInterface.commandDefinitions.addButtonDefinition(
+#             self.id, name, tooltip, image  # TODO button image
+#         )
 
 
-class Button:
-    def __init__(self, parent_panel: Panel, id=None, position=None):
-        self.parent_panel = parent_panel
-        self.id = id
-        self.position = position
-        # self.cmd_def = self.create_cmd_def()
+# class Command:
+#     def __init__(
+#         self,
+#         name: str = None,
+#         id: str = None,
+#         parent_button: Button = None,
+#         tooltip: str = None,
+#         image: Path = None,
+#         on_created: Callable = None,
+#         on_input_changed: Callable = None,
+#         on_preview: Callable = None,
+#         on_execute: Callable = None,
+#         on_destroy: Callable = None,
+#     ):
+#         button.in_fusion.deleteMe()
+#         button.create_control(name, tooltip, image)
+#         self.in_fusion = button.cmd-
+#         button.cmd_def.commandCreated.add(
+#             handlers._CommandCreatedHandler(
+#                 on_created, on_input_changed, on_execute, on_destroy
+#             )
+#         )
 
-        # self.isPromoted = is_promoted
-        # ...
+#     def add_control(self):
+#         pass
 
-    def create_control(
-        self,
-    ):
-        adsk.core.Application.get().userInterface.commandDefinitions.addButtonDefinition(
-            self.id,
-            "unused button",
-            "this button was createdbut has no connected command",
-            "",
-        )
-
-
-class Command:
-    def __init__(
-        self,
-        name: str = None,
-        id: str = None,
-        parent_button: Button = None,
-        on_created: Callable = None,
-        on_input_changed: Callable = None,
-        on_preview: Callable = None,
-        on_execute: Callable = None,
-        on_destroy: Callable = None,
-    ):
-        button.in_fusion.deleteMe()
-        button.create_ctrl_def()
-        button.cmd_def.commandCreated.add(handlers._CommandCreatedHandler())
-
-    def add_control(self):
-        pass
-
-    def remove_control(self, control):
-        pass
+#     def remove_control(self, control):
+#         pass
