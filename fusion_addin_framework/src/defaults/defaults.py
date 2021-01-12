@@ -6,29 +6,140 @@ from copy import deepcopy
 from uuid import uuid4
 import random
 
-# from ..util import py_utils
+from ..util import py_utils
 
-# ### import and load jsons ###
+### LOADING JSONS ###
 
-standard_defaults_path = Path(__file__).with_name("standard_defaults.json").absolute()
-standard_defaults = json.loads(standard_defaults_path)
+_standard_defaults_path = Path(__file__).with_name("standard_defaults.json").absolute()
+_standard_defaults = json.loads(_standard_defaults_path)
 
-# custom_defaults_path = (
-#     Path(__file__).joinpath("../../settings/standard_defaults.json").absolute()
+_custom_defaults_path = (
+    Path(__file__).joinpath("../../settings/standard_defaults.json").absolute()
+)
+_custom_defaults = json.loads(_custom_defaults_path)
+
+_default_images_path = Path(__file__).with_name("default_images").absolute()
+_default_pictures = {p.stem(): p.absolute() for p in _default_images_path.iterdir()}
+
+# picture_dependencies_path = (
+#     Path(__file__).with_name("picture_dependencies.json").absolute()
 # )
+# picture_dependencies = json.loads(picture_dependencies_path)
 
-# default_pictures_path = Path(__file__).with_name("default_pictures").absolute()
-# default_pictures = {p.stem(): p.absolute() for p in default_pictures_path.iterdir()}
+_random_names_path = Path(__file__).with_name("random_names.json").absolute()
+_random_names = json.loads(_random_names_path)
 
 
+### PARSING ###
+# the input values are parsed so that special values like "random" are evaluated
+# no validation happens here
+
+
+def _random_uuid(value):
+    if value == "random":
+        return uuid4()
+    return value
+
+
+def _random_select(selection, value):
+    if value == "random":
+        return random.choice(selection)
+    return value
+
+
+def _image_parser(value):
+    if value in _default_pictures:
+        return str(_default_pictures[value])
+    return str(value)
+
+
+default_parsers = {
+    "workspace": {
+        "id": _random_uuid,  # random or arbitrary string
+        # random, arbitraty string
+        "name": partial(_random_select, _random_names["workspace"]),
+        "product_type": lambda v: v,  # ['Designproducttype']
+        "picture": _image_parser,  # pfad, random, [<default_images>]
+        "picture_tooltip": lambda v: v,  # arbitrary string
+        "tooltip_head": lambda v: v,  # arbitrary string
+        "tooltip_text": lambda v: v,  # arbitrary string
+    },
+    "tab": {
+        "id": _random_uuid,  # random, arbitrary string
+        "name": partial(
+            _random_select, _random_names["tab"]
+        ),  # random, arbitraty string
+        "position_index": lambda v: v,  # arbitrary integer
+        "is_visible": lambda v: v,  # arbitrary bool
+    },
+    "panel": {
+        "id": _random_uuid,  # random, arbitrary string
+        # random, arbitraty string
+        "name": partial(_random_select, _random_names["panel"]),
+        "position_index": lambda v: v,  # arbitrary integer
+        "is_visible": lambda v: v,  # arbitrary bool
+    },
+}
+
+
+### COMPOSE DEFAULT DICT ###
+
+# TODO use subfunctions
+# try to load custom defaults
+try:
+    _custom_defaults = json.load(_custom_defaults_path)
+except json.JSONDecodeError:
+    logging.warning(
+        "Couldnt decode custom default setting. Make sure to use proper "
+        "json encoding. Standard default settings are used."
+    )
+    _custom_defaults = {}
+
+# flatten all the dict to make live easier,
+# abbreviation indicates flattened dict
+_cstm_dflts = py_utils.flatten_dict(_custom_defaults)
+_std_dflts = py_utils.flatten_dict(_standard_defaults)
+# dflt_checks = py_utils.flatten_dict(default_checks)
+
+# drop all settings whose keys is not in standard defaults
+_unknown_custom_settings = set(_cstm_dflts.keys()) - set(_std_dflts.keys())
+if _unknown_custom_settings:
+    logging.warning(
+        "The following default setttings are not known and will be ignored: {0}. "
+        "Check the Documentation for all available options".format(
+            _unknown_custom_settings
+        )
+    )
+_cstm_dflts = {
+    k: v for k, v in _cstm_dflts.items() if k not in _unknown_custom_settings
+}
+
+# drop all settings whose value didnt pass the check
+# for k, v in deepcopy(cstm_dflts).items():
+#     if not dflt_checks[k](v):
+#         logging.warning(
+#             "The setting {0} is invalid and will be ignored. See the "
+#             "documentation for information on custom default settings.".format(k)
+#         )
+#         cstm_dflts.pop(k)
+
+# create a dict with all settings, where cstm settings replace standards
+eff_dflts = deepcopy(_std_dflts)
+eff_dflts.update(_cstm_dflts)
+
+
+def evaluate(value, *keys):
+    key = tuple(keys)
+    if value is None:
+        value = eff_dflts[key]
+    return default_parsers[key](value)
+
+
+# TODO implement atribute checking
 # ### checker functions ###
 
 
 # def picture_check(picture_type, value):
-#     # TODO check when pictures are optional
-#     # TODO load from extern (?)
-#     sizes_by_type = {"workspace": {"49x31.png": False, "98x62.png": False}}
-
 #     # check if a default picure name was provided and set v to according path if so
 #     value = default_pictures.get(value, value)
 
@@ -98,156 +209,3 @@ standard_defaults = json.loads(standard_defaults_path)
 #         "is_visible": lambda v: isinstance(v, bool),  # arbitrary bool
 #     },
 # }
-
-
-# def random_uuid(v):
-#     if v == "random":
-#         return uuid4()
-#     return v
-
-
-# def random_select(selection, v):
-#     if v == "random":
-#         return random.choice(selection)
-#     return v
-
-
-# def picture_parser(v):
-#     if v in default_pictures:
-#         return str(default_pictures[v])
-#     return str(v)
-
-
-# default_parsers = {
-#     "workspace": {
-#         "id": random_uuid,  # random, arbitrary string
-#         "name": partial(
-#             random_select, ["water workspace"]
-#         ),  # random, arbitraty string # TODO laod from extern
-#         "product_type": lambda v: v,  # ['Designproducttype']
-#         "picture": picture_parser,  # pfad, random, ['lighbulb']
-#         "picture_tooltip": lambda v: v,  # arbitrary string
-#         "tooltip_head": lambda v: v,  # arbitrary string
-#         "tooltip_text": lambda v: v,  # arbitrary string
-#     },
-#     "tab": {
-#         "id": random_uuid,  # random, arbitrary string
-#         "name": partial(random_select, ["toller tab"]),  # random, arbitraty string
-#         "position_index": lambda v: v,  # arbitrary integer
-#         "is_visible": lambda v: v,  # arbitrary bool
-#     },
-#     "panel": {
-#         "id": random_uuid,  # random, arbitrary string
-#         "name": partial(random_select, ["papa panel"]),  # random, arbitraty string
-#         "position_index": lambda v: v,  # arbitrary integer
-#         "is_visible": lambda v: v,  # arbitrary bool
-#     },
-# }
-
-
-# ### calculate the default dict with inserted correct usr values ###
-
-# # try to load custom defaults
-# try:
-#     custom_defaults = json.load(custom_defaults_path)
-# except json.JSONDecodeError:
-#     logging.warning(
-#         "Couldnt decode custom default setting. Make sure to use proper "
-#         "json encoding. Standard default settings are used."
-#     )
-#     custom_defaults = {}
-
-# # flatten all the dict to make live easier,
-# # abbreviation indicates flattened dict
-# cstm_dflts = py_utils.flatten_dict(custom_defaults)
-# std_dflts = py_utils.flatten_dict(standard_defaults)
-# dflt_checks = py_utils.flatten_dict(default_checks)
-
-# # drop all settings that whose keys is not in standard defaults
-# unknown_custom_settings = set(cstm_dflts.keys()) - set(std_dflts.keys())
-# if unknown_custom_settings:
-#     logging.warning(
-#         "The following default setttings are not known and will be ignored: {0}. "
-#         "Check the Documentation for all available options".format(
-#             unknown_custom_settings
-#         )
-#     )
-# cstm_dflts = {k: v for k, v in cstm_dflts.items() if k not in unknown_custom_settings}
-
-# # drop all settings whose value didnt pass the check
-# for k, v in deepcopy(cstm_dflts).items():
-#     if not dflt_checks[k](v):
-#         logging.warning(
-#             "The setting {0} is invalid and will be ignored. See the "
-#             "documentation for information on custom default settings.".format(k)
-#         )
-#         cstm_dflts.pop(k)
-# # cstm_dflts = {k: v for k, v in cstm_dflts.items() if dflt_checks[k + ("checks",)](v)}
-
-# # create a dict with all settings, where cstm settings replace standards
-# eff_dflts = deepcopy(std_dflts)
-# eff_dflts.update(cstm_dflts)
-
-
-# def get_default(*keys):
-#     key = tuple(keys)
-#     return default_parsers[key](eff_dflts[key])
-
-
-# # def get_all_defaults(*keys):
-# #     d = standard_defaults
-# #     for k in keys:
-# #         d = d[k]
-# #     flat_keys = [tuple(keys + k) for k in d.keys()]
-# #     return {k[-1]: get_default(*k) for k in flat_keys}
-
-
-# def fill_args(args, cls_name):
-#     given_args = {k: v for k, v in args.items() if k is not None}
-#     args = {k: get_default(cls_name, k) for k in args if k is None}
-#     return (args, given_args)
-
-# # def fill_attrs(instance):
-# #     type(instance).__name__.lower()
-
-# def evaluate(inst, args):
-#     given_args = {k: v for k, v in args.items() if k is not None}
-#     args = {k: get_default(cls_name, k) for k in args if k is None}
-#     return (args, given_args)
-
-
-# random_names = {"workspace": ["www"], "tab": ["ttt"], "panel": ["ppp"]}
-
-# default_pictures = {"lighbulb": ""}
-
-
-# def name(val, choices_list, dflt):
-#     if val is None:
-#         val = dflt
-#     if val == "random":
-#         return random.choice(random_names[choices_list])
-#     return val
-
-
-# def id(val, dflt):
-#     if val is None:
-#         val = dflt
-#     if val == "random":
-#         return str(uuid4())
-#     return val
-
-
-# def picture(val, dflt):
-#     if val is None:
-#         val = dflt
-#     if val in default_pictures:
-#         return str(default_pictures[val])
-#     return str(val)
-
-
-# def no_parse(val, dflt):
-#     if val is None:
-#         val = dflt
-#     return val
-
-def evaluate(val, cls, attr):

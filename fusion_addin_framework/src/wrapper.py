@@ -6,12 +6,11 @@ from uuid import uuid4
 import adsk.core
 import adsk.fusion
 
+from .util import appdirs
 from . import defaults as dflts
 from . import handlers
 from . import msgs
 from .util.py_utils import comes_after
-
-# from .defaults import
 
 # ws = Workspace(id="Solid")
 # tab = Tab(id="Tools", parent_workspace=ws)
@@ -19,92 +18,195 @@ from .util.py_utils import comes_after
 # button = Button(id="faf_button_id", parent_panel=panel)
 # cmd = Command(id="faf_command_id", parent_button=button)
 
-# cmd = Command(Button(Panel(Tab(Workspace))))
 
-# class FusionWrapper():
-#     def __init__(
-#         self,
-# all properties of a fusion ui element that can be set
-# ...
-# ):
-# get the given properties
-# given_args = get_given_args(locals())
+class FusionApp:
+    def __init__(
+        self,
+        name: str = None,
+        logger: logging.Logger = None,
+        debug_to_ui: bool = None,
+        author=None,
+    ):
+        self.name = name
+        self.author = author if author is not None else self.name
 
-# parse all properties (externally) and save them as attributes (?)
-# self.property = parse(property)
+        self.user_state_dir = appdirs.user_state_dir(self.name, self.author)
+        self.user_cache_dir = appdirs.user_cache_dir(self.name, self.author)
+        self.user_config_dir = appdirs.user_config_dir(self.name, self.author)
+        self.user_data_dir = appdirs.user_data_dir(self.name, self.author)
+        self.user_log_dir = appdirs.user_log_dir(self.name, self.author)
 
-# app = adsk.core.Application.get()
-# paretn_coll = app.userInterface.workspaces
+        self.debug_to_ui = debug_to_ui
 
-# self.in_fusion = parent_coll.itemById(self.id)
-# if self.in_fusion:
-#     if self.in_fusion.isNative:
-#     not_setable = set(given_args.keys()) - {"id"}
-#     if not_setable:
-#         show_warning()
-# else:
-#     overwrite
+        self.created_ui_elements = defaultdict(list)
 
-# create new workspace
-# else:
-#     self.in_fusion = app.userInterface.workspaces.add(
-#         self.product_type, self.id, self.name, self.picture
-#     )
-#     self.in_fusion.toolClipFilename = self.picture_tooltip
-#     self.in_fusion.tooltip = self.tooltip_head
-#     self.in_fusion.tooltipDescription = self.tooltip_head
+        self.logger = logger
+
+    # def register(self):
+    #     pass
+
+    def stop(self):
+        pass
 
 
+# TODO implement and use
+class FusionWrapper:
+    def __init__(self):
+        pass
+
+    def already_exisiting_in_fusion(self):
+        pass
+
+    @property
+    def id(self):
+        pass
+
+
+# TODO superclass
 class Workspace:
     def __init__(
         self,
-        name: str = None,  # add
-        id: str = None,  # add
-        product_type: str = None,  # add
-        picture: Union[str, Path] = None,  # add
-        picture_tooltip: Union[str, Path] = None,
+        paren_app,
+        name: str = None,
+        id: str = None,
+        product_type: str = None,
+        image: Union[str, Path] = None,
+        tooltip_image: Union[str, Path] = None,
         tooltip_head: str = None,
         tooltip_text: str = None,
     ):
-        given_args = {k: v for k, v in locals().items() if v is not None}
-        self.id = dflts.id(id, "random")
-        self.name = dflts.name(name, "workspace", "random")
-        self.product_type = dflts.no_parse(product_type, "DesignProductType")
-        self.picture = dflts.picture(picture, "lighbulb")
-        self.picture_tooltip = dflts.picture(picture_tooltip, "")
-        self.tooltip_head = dflts.no_parse(tooltip_head, "")
-        self.tooltip_text = dflts.no_parse(tooltip_text, "")
+        # get the names of all attributes that were passen to the init
+        given_args = [k for k, v in locals().items() if v is not None and k != "self"]
 
+        # this could be done in to lines with a loop but its more clear if all
+        # defaults are set explicitly
+        id = dflts.evaluate(id, "workspace", "id")
+        name = dflts.evaluate(name, "workspace", "name")
+        product_type = dflts.evaluate(product_type, "workspace", "product_type")
+        image = dflts.evaluate(image, "workspace", "image")
+        tooltip_image = dflts.evaluate(tooltip_image, "workspace", "tooltip_image")
+        tooltip_head = dflts.evaluate(tooltip_head, "workspace", "tooltip_head")
+        tooltip_text = dflts.evaluate(tooltip_text, "workspace", "tooltip_text")
+
+        # get the parent fusion collection where you can add instances
         app = adsk.core.Application.get()
         ws_coll = app.userInterface.workspaces
 
-        self.in_fusion = ws_coll.itemById(self.id)
-        if self.in_fusion:
-            if self.in_fusion.isNative:
-                not_setable = set(given_args.keys()) - {"id", "self"}
-                if not_setable:
-                    logging.warning(
-                        msgs.setting_on_native("workspace", self.id, not_setable)
-                    )
-                self.name = self.in_fusion.name
-                self.product_type = self.in_fusion.productType
-                self.picture = self.in_fusion.resourceFolder
-                self.picture_tooltip = self.in_fusion.toolClipFilename
-                self.tooltip_head = self.in_fusion.tooltip
-                self.tooltip_text = self.in_fusion.tooltipDescription
-            else:
-                pass
+        # try to get an existing instance
+        self.in_fusion = ws_coll.itemById(id)
 
-        # create new workspace
+        # if there is an instance, modify it if its not natice, else warning message
+        if self.in_fusion:
+            # TODO super function
+            not_setable = set(given_args) - {"id"}
+            if not_setable:
+                if self.in_fusion.isNative:
+                    logging.warning(
+                        msgs.setting_on_native("workspace", id, not_setable)
+                    )
+                else:
+                    logging.warning(
+                        msgs.already_exisiting("workspace", id, not_setable)
+                    )
+                    # TODO option to overwrite with warning
+
+        # create new workspace if there is no
         else:
             self.in_fusion = app.userInterface.workspaces.add(
-                self.product_type, self.id, self.name, self.picture
+                product_type, id, name, image
             )
-            self.in_fusion.toolClipFilename = self.picture_tooltip
-            self.in_fusion.tooltip = self.tooltip_head
-            self.in_fusion.tooltipDescription = self.tooltip_head
+            self.in_fusion.toolClipFilename = tooltip_image
+            self.in_fusion.tooltip = tooltip_head
+            self.in_fusion.tooltipDescription = tooltip_head
+
+        # TODO register in app
+
+    # TODO super function
+    @property
+    def id(self):
+        return self.in_fusion.id
+
+    @property
+    def is_active(self):
+        return self.in_fusion.isActive
+
+    @property
+    def is_native(self):
+        return self.in_fusion.isNative
+
+    @property
+    def is_valid(self):
+        return self.in_fusion.isValid
+
+    @property
+    def name(self):
+        return self.in_fusion.name
+
+    @property
+    def product_type(self):
+        return self.in_fusion.productType
+
+    @property
+    def image(self):
+        return self.in_fusion.resourceFolder
+
+    @image.setter
+    def image(self, new_image):
+        # TODO decorsor
+        if self.is_native:
+            logging.warning(msgs.setting_on_native("workspace", self.id, "image"))
+        else:
+            new_image = dflts.evaluate(new_image, "workspace", "image")
+            self.in_fusion.resourceFolder = new_image
+
+    @property
+    def children(self):
+        return self.in_fusion.toolbarTabs
+
+    @property
+    def tooltip_image(self):
+        return self.in_fusion.toolClipFilename
+
+    @tooltip_image.setter
+    def tooltip_image(self, new_tooltip_image):
+        # TODO decorsor
+        if self.is_native:
+            logging.warning(
+                msgs.setting_on_native("workspace", self.id, "tooltip_image")
+            )
+        else:
+            dflts.evaluate(new_tooltip_image, "workspace", "tooltip_image")
+
+    @property
+    def tooltip_head(self):
+        return self.in_fusion.tooltip
+
+    @tooltip_head.setter
+    def tooltip_head(self, new_tooltip_head):
+        # TODO decorsor
+        if self.is_native:
+            logging.warning(
+                msgs.setting_on_native("workspace", self.id, "tooltip_head")
+            )
+        else:
+            dflts.evaluate(new_tooltip_head, "workspace", "tooltip_head")
+
+    @property
+    def tooltip_text(self):
+        return self.in_fusion.tooltip_description
+
+    @tooltip_text.setter
+    def tooltip_text(self, new_tooltip_text):
+        # TODO decorsor
+        if self.is_native:
+            logging.warning(
+                msgs.setting_on_native("workspace", self.id, "tooltip_text")
+            )
+        else:
+            dflts.evaluate(new_tooltip_text, "workspace", "tooltip_text")
 
 
+# TODO see Workspace
 class Tab:
     def __init__(
         self,
