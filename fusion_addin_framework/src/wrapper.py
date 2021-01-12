@@ -6,26 +6,18 @@ from uuid import uuid4
 import adsk.core
 import adsk.fusion
 
-from .defaults import fill_args
-from .util.py_utils import comes_after
+from . import defaults as dflts
 from . import handlers
+from . import msgs
+from .util.py_utils import comes_after
 
+# ws = Workspace(id="Solid")
+# tab = Tab(id="Tools", parent_workspace=ws)
+# panel = Panel(id="Addin", parent_tab=tab)
+# button = Button(id="faf_button_id", parent_panel=panel)
+# cmd = Command(id="faf_command_id", parent_button=button)
 
-ws = Workspace(id="Solid")
-tab = Tab(id="Tools", parent_workspace=ws)
-panel = Panel(id="Addin", parent_tab=tab)
-button = Button(id="faf_button_id", parent_panel=panel)
-cmd = Command(id="faf_command_id", parent_button=button)
-
-cmd = Command(Button(Panel(Tab(Workspace))))
-
-# class FusionWrapper:
-#     def __init__(self):
-#         pass
-
-#     @classmethod
-#     def create_from_fusion(cls, fusion_obj):
-#         pass
+# cmd = Command(Button(Panel(Tab(Workspace))))
 
 
 class Workspace:
@@ -39,106 +31,120 @@ class Workspace:
         tooltip_head: str = None,
         tooltip_text: str = None,
     ):
-        args, given_args = fill_args(locals(), "workspace")
-        for name, value in args.items():
-            setattr(self, name, value)
+        given_args = {k: v for k, v in locals().items() if v is not None}
+        self.id = dflts.id(id, "random")
+        self.name = dflts.name(name, "workspace", "random")
+        self.product_type = dflts.no_parse(product_type, "DesignProductType")
+        self.picture = dflts.picture(picture, "lighbulb")
+        self.picture_tooltip = dflts.picture(picture_tooltip, "")
+        self.tooltip_head = dflts.no_parse(tooltip_head, "")
+        self.tooltip_text = dflts.no_parse(tooltip_text, "")
 
         app = adsk.core.Application.get()
         ws_coll = app.userInterface.workspaces
 
-        self.in_fusion = ws_coll.itemById(args["id"])
+        self.in_fusion = ws_coll.itemById(self.id)
         if self.in_fusion:
             if self.in_fusion.isNative:
-                not_setable = set(given_args.keys()) - {"id", "children"}
+                not_setable = set(given_args.keys()) - {"id"}
                 if not_setable:
                     logging.warning(
-                        "The following arguments for the workspace (id: {0}) "
-                        "were ignored since they cant be manipulated on a "
-                        "native Workspace: {1}".format(args["id"], not_setable)
+                        msgs.setting_on_native("workspace", self.id, not_setable)
                     )
+                self.name = self.in_fusion.name
+                self.product_type = self.in_fusion.productType
+                self.picture = self.in_fusion.resourceFolder
+                self.picture_tooltip = self.in_fusion.toolClipFilename
+                self.tooltip_head = self.in_fusion.tooltip
+                self.tooltip_text = self.in_fusion.tooltipDescription
             else:
                 pass
-                # TODO implement if app managemnt is created
 
         # create new workspace
         else:
             self.in_fusion = app.userInterface.workspaces.add(
-                args["product_type"], args["id"], args["name"], args["picture"]
+                self.product_type, self.id, self.name, self.picture
             )
-            self.in_fusion.toolClipFilename = args["picture_tooltip"]
-            self.in_fusion.tooltip = args["tooltip_head"]
-            self.in_fusion.tooltipDescription = args["tooltip_text"]
+            self.in_fusion.toolClipFilename = self.picture_tooltip
+            self.in_fusion.tooltip = self.tooltip_head
+            self.in_fusion.tooltipDescription = self.tooltip_head
 
 
 class Tab:
     def __init__(
         self,
-        parent_workspace: Workspace,  # TODO support ultiple parents, TODO default
+        parent_workspace: Workspace,
         name: str = None,  # add
         id: str = None,  # add
         position_index: int = None,
         is_visible: bool = None,
     ):
-        args, given_args = fill_args(locals(), "tab")
+        given_args = {k: v for k, v in locals().items() if v is not None}
+        self.parent_workspace = parent_workspace
+        self.name = dflts.name(name, "tab", "random")
+        self.id = dflts.id(id, "random")
+        self.position_index = dflts.no_parse(position_index, -1)
+        self.is_visible = dflts.no_parse(is_visible, True)
 
-        self.in_fusion = parent_workspace.in_fusion.toolbarTabs.itemById(args["id"])
+        self.in_fusion = parent_workspace.in_fusion.toolbarTabs.itemById(self.id)
         if self.in_fusion:
             if self.in_fusion.isNative:
-                not_setable = set(given_args.keys()) - {"id", "children"}
+                not_setable = set(given_args.keys()) - {"id"}
                 if not_setable:
-                    logging.warning(
-                        "The following arguments for the tab (id: {0}) "
-                        "were ignored since they cant be manipulated on a "
-                        "native tab: {1}".format(args["id"], not_setable)
-                    )
+                    logging.warning(msgs.setting_on_native("tab", self.id, not_setable))
             else:
                 # TODO implement if app managemnt is created
                 pass
         # create new tab
         else:
             self.in_fusion = parent_workspace.in_fusion.toolbarTabs.add(
-                args["id"], args["name"]
+                self.id, self.name
             )
-            self.in_fusion.index = args["position_index"]
-            self.in_fusion.isVisible = args["is_visible"]
+            self.in_fusion.index = self.position_index
+            self.in_fusion.isVisible = self.is_visible
 
 
 class Panel:
     def __init__(
         self,
-        parent_tab: Tab,  # TODO default
-        name: str,
-        id: str,
-        position_index: int,
-        is_visible: bool,
+        parent_tab: Tab,
+        name: str = None,
+        id: str = None,
+        position_index: int = None,
+        is_visible: bool = None,
     ):
-        args, given_args = fill_args(locals(), "panel")
+        given_args = {k: v for k, v in locals().items() if v is not None}
+        self.parent_tab = parent_tab
+        self.name = dflts.name(name, "panel", "random")
+        self.id = dflts.id(id, "random")
+        self.position_index = dflts.no_parse(position_index, -1)
+        self.is_visible = dflts.no_parse(is_visible, True)
 
-        self.in_fusion = parent_tab.in_fusion.toolbarPanels.itemById(args["id"])
+        self.in_fusion = parent_tab.in_fusion.toolbarPanels.itemById(self.id)
 
         if self.in_fusion:
             if self.in_fusion.isNative:
-                not_setable = set(given_args.keys()) - {"id", "children"}
+                not_setable = set(given_args.keys()) - {"id"}
                 if not_setable:
                     logging.warning(
-                        "The following arguments for the panel (id: {0}) "
-                        "were ignored since they cant be manipulated on a "
-                        "native panel: {1}".format(args["id"], not_setable)
+                        msgs.setting_on_native("panel", self.id, not_setable)
                     )
             else:
                 # TODO implement if app managemnt is created
                 pass
         # create new tab
         else:
-            # TODO check behaviour of related workspaces etc.
-            # TODO warning or similar
-            panel_order = {p.index: p.id for p in parent_tab.in_fusion.toolbarPanels}
+            panel_order = {
+                p.indexWithinTab(): p.id
+                for p in self.parent_tab.in_fusion.toolbarPanels
+            }
             before_id = panel_order[
-                comes_after(list(panel_order.keys()), args["position_index"])
+                comes_after(list(panel_order.keys()), self.position_index)
             ]
             self.in_fusion = parent_tab.in_fusion.toolbarPanels.add(
-                args["id"], args["name"], before_id, True
+                self.id, self.name, before_id, True
             )
+            self.in_fusion.isVisible = is_visible
 
 
 # class Button:
