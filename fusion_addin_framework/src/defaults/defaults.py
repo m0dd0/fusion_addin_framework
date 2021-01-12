@@ -10,8 +10,8 @@ import random
 
 # ### import and load jsons ###
 
-# standard_defaults_path = Path(__file__).with_name("standard_defaults.json").absolute()
-# standard_defaults = json.loads(standard_defaults_path)
+standard_defaults_path = Path(__file__).with_name("standard_defaults.json").absolute()
+standard_defaults = json.loads(standard_defaults_path)
 
 # custom_defaults_path = (
 #     Path(__file__).joinpath("../../settings/standard_defaults.json").absolute()
@@ -216,36 +216,38 @@ import random
 #     return (args, given_args)
 
 
-random_names = {"workspace": [], "tab": [], "panel": []}
+# random_names = {"workspace": ["www"], "tab": ["ttt"], "panel": ["ppp"]}
 
-default_pictures = {"lighbulb": ""}
-
-
-def name(val, choices_list, dflt):
-    if val is None:
-        val = dflt
-    if val == "random":
-        return random.choice(random_names[choices_list])
-    return val
+# default_pictures = {"lighbulb": ""}
 
 
-def id(val, dflt):
-    if val is None:
-        val = dflt
-    if val == "random":
-        return str(uuid4())
-    return val
+# def name(val, choices_list, dflt):
+#     if val is None:
+#         val = dflt
+#     if val == "random":
+#         return random.choice(random_names[choices_list])
+#     return val
 
 
-def picture(val, dflt):
-    if val is None:
-        val = dflt
-    if val in default_pictures:
-        return str(default_pictures[val])
-    return str(val)
+# def id(val, dflt):
+#     if val is None:
+#         val = dflt
+#     if val == "random":
+#         return str(uuid4())
+#     return val
 
 
-def no_parse(val, dflt):
-    if val is None:
-        val = dflt
-    return val
+# def picture(val, dflt):
+#     if val is None:
+#         val = dflt
+#     if val in default_pictures:
+#         return str(default_pictures[val])
+#     return str(val)
+
+
+# def no_parse(val, dflt):
+#     if val is None:
+#         val = dflt
+#     return val
+
+def evaluate(val, cls, attr):

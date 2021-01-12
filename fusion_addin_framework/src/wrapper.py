@@ -11,6 +11,8 @@ from . import handlers
 from . import msgs
 from .util.py_utils import comes_after
 
+# from .defaults import
+
 # ws = Workspace(id="Solid")
 # tab = Tab(id="Tools", parent_workspace=ws)
 # panel = Panel(id="Addin", parent_tab=tab)
@@ -18,6 +20,39 @@ from .util.py_utils import comes_after
 # cmd = Command(id="faf_command_id", parent_button=button)
 
 # cmd = Command(Button(Panel(Tab(Workspace))))
+
+# class FusionWrapper():
+#     def __init__(
+#         self,
+# all properties of a fusion ui element that can be set
+# ...
+# ):
+# get the given properties
+# given_args = get_given_args(locals())
+
+# parse all properties (externally) and save them as attributes (?)
+# self.property = parse(property)
+
+# app = adsk.core.Application.get()
+# paretn_coll = app.userInterface.workspaces
+
+# self.in_fusion = parent_coll.itemById(self.id)
+# if self.in_fusion:
+#     if self.in_fusion.isNative:
+#     not_setable = set(given_args.keys()) - {"id"}
+#     if not_setable:
+#         show_warning()
+# else:
+#     overwrite
+
+# create new workspace
+# else:
+#     self.in_fusion = app.userInterface.workspaces.add(
+#         self.product_type, self.id, self.name, self.picture
+#     )
+#     self.in_fusion.toolClipFilename = self.picture_tooltip
+#     self.in_fusion.tooltip = self.tooltip_head
+#     self.in_fusion.tooltipDescription = self.tooltip_head
 
 
 class Workspace:
@@ -46,7 +81,7 @@ class Workspace:
         self.in_fusion = ws_coll.itemById(self.id)
         if self.in_fusion:
             if self.in_fusion.isNative:
-                not_setable = set(given_args.keys()) - {"id"}
+                not_setable = set(given_args.keys()) - {"id", "self"}
                 if not_setable:
                     logging.warning(
                         msgs.setting_on_native("workspace", self.id, not_setable)
@@ -76,15 +111,19 @@ class Tab:
         parent_workspace: Workspace,
         name: str = None,  # add
         id: str = None,  # add
-        position_index: int = None,
-        is_visible: bool = None,
+        # position_index: int = None,
+        # is_visible: bool = None,
     ):
         given_args = {k: v for k, v in locals().items() if v is not None}
         self.parent_workspace = parent_workspace
         self.name = dflts.name(name, "tab", "random")
         self.id = dflts.id(id, "random")
-        self.position_index = dflts.no_parse(position_index, -1)
-        self.is_visible = dflts.no_parse(is_visible, True)
+        # self.position_index = dflts.no_parse(position_index, -1)
+        # self.is_visible = dflts.no_parse(is_visible, True)
+
+        logging.warning(
+            "Its currently not supported by Fusion360 to set the position of a tab within a workspace."
+        )
 
         self.in_fusion = parent_workspace.in_fusion.toolbarTabs.itemById(self.id)
         if self.in_fusion:
@@ -100,8 +139,12 @@ class Tab:
             self.in_fusion = parent_workspace.in_fusion.toolbarTabs.add(
                 self.id, self.name
             )
-            self.in_fusion.index = self.position_index
-            self.in_fusion.isVisible = self.is_visible
+
+        self.index = self.in_fusion.position_index
+        self.isVisible = self.in_fusion.is_visible
+
+        # @property
+        # def position_index(self):
 
 
 class Panel:
@@ -114,6 +157,7 @@ class Panel:
         is_visible: bool = None,
     ):
         given_args = {k: v for k, v in locals().items() if v is not None}
+        dflts.fill
         self.parent_tab = parent_tab
         self.name = dflts.name(name, "panel", "random")
         self.id = dflts.id(id, "random")
