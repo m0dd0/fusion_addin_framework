@@ -6,7 +6,7 @@ def setting_on_native(type, id, not_setable):
     return msg
 
 
-def already_exisiting(type, id, not_setable):
+def already_existing(type, id, not_setable):
     msg = (
         "A {0} with this id ({1}) already exists. Therefore the following "
         "arguments will be ignored: {2}. If you want to change these properties, "

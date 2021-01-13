@@ -3,9 +3,8 @@
         "id": "random",
         "name": "random",
         "product_type": "DesignProductType",
-        "picture": "lightbulb",
-        "picture_retina": "lightbulb",
-        "picture_tooltip": "",
+        "image": "lightbulb",
+        "tooltip_image": "",
         "tooltip_head": "",
         "tooltip_text": ""
     },

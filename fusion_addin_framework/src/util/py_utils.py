@@ -1,3 +1,7 @@
+from typing import Iterable
+import logging
+
+
 def flatten_dict(d):
     flattened = {}
 
@@ -29,3 +33,30 @@ def comes_after(l, v):
         if i < v:
             return v
     return sorted_l[-1]
+
+
+def create_default_logger(
+    name: str,
+    handlers: Iterable[logging.Handler],
+    level: int = logging.DEBUG,
+    message_format: str = "{asctime} {levelname} {module}/{funcName}: {message}",
+):
+    logger = logging.getLogger(name)
+
+    # logger always at lowest level set only handlers levels are set by level attribute
+    logger.setLevel(logging.DEBUG)
+
+    # delete allexisting handlers, to ensure no duplicated handler is added
+    # when this method is called twice
+    if logger.hasHandlers():
+        logger.handlers.clear()
+
+    # logging format (for all handlers)
+    formatter = logging.Formatter(message_format, style="{")
+
+    for handler in handlers:
+        handler.setFormatter(formatter)
+        handler.setLevel(level)
+        logger.addHandler(handler)
+
+    return logger
