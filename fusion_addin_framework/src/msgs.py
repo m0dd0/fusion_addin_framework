@@ -13,3 +13,13 @@ def already_existing(type, id, not_setable):
         "set them manually after creation"
     ).format(type, id, not_setable)
     return msg
+
+
+def using_exisitng(type, id):
+    msg = "Using existing {0}. (id: {0})".format(type, id)
+    return msg
+
+
+def created_new(type, id):
+    msg = "Created a new {0}. (id: {1})".format(type, id)
+    return msg

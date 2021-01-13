@@ -33,22 +33,32 @@ class FusionApp:
 
 
 class _FusionWrapper(ABC):
-    parent = None
+    _parent = None
+    _ident = None
     _in_fusion = None
 
     def __init__(self):
         pass
 
-    def _already_existing(self, not_setable, type: str, id: str):
+    def _already_existing(self, not_setable):
         if not_setable:
             if self._in_fusion.isNative:
-                logging.warning(msgs.setting_on_native(type, id, not_setable))
+                logging.warning(
+                    msgs.setting_on_native(self._ident, self.id, not_setable)
+                )
             else:
-                logging.warning(msgs.already_existing("workspace", id, not_setable))
+                logging.warning(
+                    msgs.already_existing(self._ident, self.id, not_setable)
+                )
                 # TODO option to overwrite with warning
+        logging.info(msgs.using_exisitng(self._ident, self.id))
 
     def _register_child(self, child, level=0):
-        self.parent.register_child(child, level + 1)
+        self.parent._register_child(child, level + 1)
+
+    def _created_new(self):
+        self.parent._register_child(self, 0)
+        logging.info(msgs.created_new(self._ident, self.id))
 
     @property
     def id(self):
@@ -58,8 +68,15 @@ class _FusionWrapper(ABC):
     def in_fusion(self):
         return self._in_fusion
 
+    @property
+    def parent(self):
+        return self._parent
+
 
 class Workspace(_FusionWrapper):
+
+    _ident = "workspace"
+
     def __init__(
         self,
         parent: FusionApp,
@@ -78,13 +95,13 @@ class Workspace(_FusionWrapper):
 
         # this could be done in only two lines with a loop
         # but its more clear if all defaults are set explicitly
-        id = dflts.evaluate(id, "workspace", "id")
-        name = dflts.evaluate(name, "workspace", "name")
-        product_type = dflts.evaluate(product_type, "workspace", "product_type")
-        image = dflts.evaluate(image, "workspace", "image")
-        tooltip_image = dflts.evaluate(tooltip_image, "workspace", "tooltip_image")
-        tooltip_head = dflts.evaluate(tooltip_head, "workspace", "tooltip_head")
-        tooltip_text = dflts.evaluate(tooltip_text, "workspace", "tooltip_text")
+        id = dflts.evaluate(id, self._ident, "id")
+        name = dflts.evaluate(name, self._ident, "name")
+        product_type = dflts.evaluate(product_type, self._ident, "product_type")
+        image = dflts.evaluate(image, self._ident, "image")
+        tooltip_image = dflts.evaluate(tooltip_image, self._ident, "tooltip_image")
+        tooltip_head = dflts.evaluate(tooltip_head, self._ident, "tooltip_head")
+        tooltip_text = dflts.evaluate(tooltip_text, self._ident, "tooltip_text")
 
         # parent is needed to be saved to register children
         self._parent = parent
@@ -97,7 +114,7 @@ class Workspace(_FusionWrapper):
         # if there is an instance, modify it if its not natice, else warning message
         if self._in_fusion is not None:
             not_setable = set(given_args) - {"id"}
-            self._already_existing(not_setable, "workspace", id)
+            self._already_existing(not_setable)
 
         # create new workspace if there is no
         else:
@@ -108,7 +125,7 @@ class Workspace(_FusionWrapper):
             self._in_fusion.tooltip = tooltip_head
             self._in_fusion.tooltipDescription = tooltip_head
 
-            self._parent._register_child(self)
+            self._created_new()
 
     @property
     def is_active(self):
@@ -185,8 +202,6 @@ class Workspace(_FusionWrapper):
         else:
             dflts.evaluate(new_tooltip_text, "workspace", "tooltip_text")
 
-    @property
-    def parent(self):
         return self._parent
 
     def tab(self, name: str = None, id: str = None, position_index: int = None):
@@ -194,6 +209,9 @@ class Workspace(_FusionWrapper):
 
 
 class Tab(_FusionWrapper):
+
+    _ident = "tab"
+
     def __init__(
         self,
         parent: Workspace,
@@ -203,8 +221,8 @@ class Tab(_FusionWrapper):
         super().__init__()
         given_args = [k for k, v in locals().items() if v is not None and k != "self"]
 
-        name = dflts.evaluate(name, "tab", "name")
-        id = dflts.evaluate(id, "tab", "id")
+        name = dflts.evaluate(name, self._ident, "name")
+        id = dflts.evaluate(id, self._ident, "id")
 
         self._parent = parent
 
@@ -212,39 +230,37 @@ class Tab(_FusionWrapper):
 
         if self.in_fusion:
             not_setable = set(given_args.keys()) - {"id"}
-            self._already_existing(not_setable, "tab", id)
+            self._already_existing(not_setable)
 
         else:
             self._in_fusion = self._parent.in_fusion.toolbarTabs.add(id, name)
             # nothing else is setable
 
-        @property
-        def position_index(self):
-            return self._in_fusion.index
+            self._created_new()
 
-        @property
-        def is_active(self):
-            return self._in_fusion.isActive
+    @property
+    def position_index(self):
+        return self._in_fusion.index
 
-        @property
-        def is_native(self):
-            return self._in_fusion.isNative
+    @property
+    def is_active(self):
+        return self._in_fusion.isActive
 
-        @property
-        def is_visible(self):
-            return self._in_fusion.isVisible
+    @property
+    def is_native(self):
+        return self._in_fusion.isNative
 
-        @property
-        def name(self):
-            return self._in_fusion.name
+    @property
+    def is_visible(self):
+        return self._in_fusion.isVisible
 
-        @property
-        def parent(self):
-            return self._parent
+    @property
+    def name(self):
+        return self._in_fusion.name
 
-        @property
-        def children(self):
-            return self._in_fusion.toolbarPanels
+    @property
+    def children(self):
+        return self._in_fusion.toolbarPanels
 
 
 # class Panel:
