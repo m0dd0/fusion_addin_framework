@@ -7,8 +7,11 @@ import adsk.core
 import adsk.fusion
 
 from . import defaults as dflts
-from . import msgs
-from .util.py_utils import comes_after
+from . import messages as msgs
+
+# TODO manage multiple parent
+# TODO default parents
+# TODO manage childre, seperation between fusion children and framework children
 
 
 class FusionApp:
@@ -17,12 +20,6 @@ class FusionApp:
         self._created_elements = {}
 
     def stop(self):
-        def delete_elem(elem):
-            for child in elem.children:
-                delete_elem(child)
-            if not elem.is_native:
-                elem.in_fusion.deleteMe()
-
         for level in reversed(sorted(list(self._created_elements.keys()))):
             elems = self._created_elements.pop(level)
             for elem in elems:
@@ -37,8 +34,8 @@ class _FusionWrapper(ABC):
     _ident = None
     _in_fusion = None
 
-    def __init__(self):
-        pass
+    def __init__(self, parent):
+        self._parent = parent
 
     def _already_existing(self, not_setable):
         if not_setable:
@@ -54,10 +51,10 @@ class _FusionWrapper(ABC):
         logging.info(msgs.using_exisitng(self._ident, self.id))
 
     def _register_child(self, child, level=0):
-        self.parent._register_child(child, level + 1)
+        self.parent._register_child(child, level + 1)  # pylint:disable=protected-access
 
     def _created_new(self):
-        self.parent._register_child(self, 0)
+        self.parent._register_child(self, 0)  # pylint:disable=protected-access
         logging.info(msgs.created_new(self._ident, self.id))
 
     @property
@@ -81,14 +78,14 @@ class Workspace(_FusionWrapper):
         self,
         parent: FusionApp,
         name: str = None,
-        id: str = None,
+        id: str = None,  # pylint:disable=redefined-builtin
         product_type: str = None,
         image: Union[str, Path] = None,
         tooltip_image: Union[str, Path] = None,
         tooltip_head: str = None,
         tooltip_text: str = None,
     ):
-        super().__init__()
+        super().__init__(parent)
 
         # get the names of all attributes that were passen to the init
         given_args = [k for k, v in locals().items() if v is not None and k != "self"]
@@ -102,9 +99,6 @@ class Workspace(_FusionWrapper):
         tooltip_image = dflts.evaluate(tooltip_image, self._ident, "tooltip_image")
         tooltip_head = dflts.evaluate(tooltip_head, self._ident, "tooltip_head")
         tooltip_text = dflts.evaluate(tooltip_text, self._ident, "tooltip_text")
-
-        # parent is needed to be saved to register children
-        self._parent = parent
 
         # try to get an existing instance
         self._in_fusion = adsk.core.Application.get().userInterface.workspaces.itemById(
@@ -202,10 +196,10 @@ class Workspace(_FusionWrapper):
         else:
             dflts.evaluate(new_tooltip_text, "workspace", "tooltip_text")
 
-        return self._parent
+        return self._in_fusion.tooltipDescription
 
-    def tab(self, name: str = None, id: str = None, position_index: int = None):
-        return Tab(self, name, id, position_index)
+    def tab(self, name: str = None, id: str = None):  # pylint:disable=redefined-builtin
+        return Tab(self, name, id)
 
 
 class Tab(_FusionWrapper):
@@ -216,30 +210,28 @@ class Tab(_FusionWrapper):
         self,
         parent: Workspace,
         name: str = None,
-        id: str = None,
+        id: str = None,  # pylint:disable=redefined-builtin
     ):
-        super().__init__()
+        super().__init__(parent)
         given_args = [k for k, v in locals().items() if v is not None and k != "self"]
 
         name = dflts.evaluate(name, self._ident, "name")
         id = dflts.evaluate(id, self._ident, "id")
 
-        self._parent = parent
-
-        self._in_fusion = self._parent.children.itemById(self.id)
+        self._in_fusion = self.parent.children.itemById(id)
 
         if self.in_fusion:
             not_setable = set(given_args.keys()) - {"id"}
             self._already_existing(not_setable)
 
         else:
-            self._in_fusion = self._parent.in_fusion.toolbarTabs.add(id, name)
+            self._in_fusion = self.parent.in_fusion.toolbarTabs.add(id, name)
             # nothing else is setable
 
             self._created_new()
 
     @property
-    def position_index(self):
+    def position(self):
         return self._in_fusion.index
 
     @property
@@ -255,6 +247,10 @@ class Tab(_FusionWrapper):
         return self._in_fusion.isVisible
 
     @property
+    def is_valid(self):
+        return self._in_fusion.isValid
+
+    @property
     def name(self):
         return self._in_fusion.name
 
@@ -262,49 +258,80 @@ class Tab(_FusionWrapper):
     def children(self):
         return self._in_fusion.toolbarPanels
 
+    def panel(
+        self,
+        name: str = None,
+        id: str = None,  # pylint:disable=redefined-builtin
+        position: int = None,
+    ):
+        return Panel(self, name, id, position)
 
-# class Panel:
-#     def __init__(
-#         self,
-#         parent_tab: Tab,
-#         name: str = None,
-#         id: str = None,
-#         position_index: int = None,
-#         is_visible: bool = None,
-#     ):
-#         given_args = {k: v for k, v in locals().items() if v is not None}
-#         dflts.fill
-#         self.parent_tab = parent_tab
-#         self.name = dflts.name(name, "panel", "random")
-#         self.id = dflts.id(id, "random")
-#         self.position_index = dflts.no_parse(position_index, -1)
-#         self.is_visible = dflts.no_parse(is_visible, True)
 
-#         self.in_fusion = parent_tab._in_fusion.toolbarPanels.itemById(self.id)
+class Panel(_FusionWrapper):
 
-#         if self.in_fusion:
-#             if self.in_fusion.isNative:
-#                 not_setable = set(given_args.keys()) - {"id"}
-#                 if not_setable:
-#                     logging.warning(
-#                         msgs.setting_on_native("panel", self.id, not_setable)
-#                     )
-#             else:
-#                 # TODO implement if app managemnt is created
-#                 pass
-#         # create new tab
-#         else:
-#             panel_order = {
-#                 p.indexWithinTab(): p.id
-#                 for p in self.parent_tab._in_fusion.toolbarPanels
-#             }
-#             before_id = panel_order[
-#                 comes_after(list(panel_order.keys()), self.position_index)
-#             ]
-#             self.in_fusion = parent_tab._in_fusion.toolbarPanels.add(
-#                 self.id, self.name, before_id, True
-#             )
-#             self.in_fusion.isVisible = is_visible
+    _ident = "panel"
+
+    def __init__(
+        self,
+        parent: Tab,
+        name: str = None,
+        id: str = None,  # pylint:disable=redefined-builtin
+        position: int = None,
+    ):
+        super().__init__(parent)
+        given_args = [k for k, v in locals().items() if v is not None and k != "self"]
+
+        name = dflts.evaluate(name, self._ident, "name")
+        id = dflts.evaluate(id, self._ident, "id")
+        position = dflts.evaluate(position, self._ident, "position")
+
+        self._in_fusion = self.parent.children.itemById(id)
+
+        if self._in_fusion:
+            not_setable = set(given_args.keys()) - {"id"}
+            self._already_existing(not_setable)
+
+        else:
+            panel_order = {p.indexWithinTab(): p.id for p in self.parent.children}
+            for i in sorted(list(panel_order.keys())):  # + [math.inf]:
+                if i > position:
+                    comes_before_id = panel_order[i]
+                    break
+            self._in_fusion = self.parent.in_fusion.toolbarPanels.add(
+                id, name, comes_before_id, True
+            )
+            # nothing else to set
+            # TODO related workspaces
+
+            self._created_new()
+
+    @property
+    def position(self):
+        return self._in_fusion.indexWithinTab()
+
+    @property
+    def children(self):
+        return self._in_fusion.controls
+
+    @property
+    def index(self):
+        return self._in_fusion.index
+
+    @property
+    def is_valid(self):
+        return self._in_fusion.isValid
+
+    @property
+    def is_visible(self):
+        return self._in_fusion.isVisible
+
+    @property
+    def name(self):
+        return self._in_fusion.name
+
+    @property
+    def promoted_controls(self):
+        return self._in_fusion.promotedControls
 
 
 # class Button:
