@@ -1,38 +1,19 @@
 import logging
 from pathlib import Path
 from abc import ABC
+from typing import Union
 
 import adsk.core
 import adsk.fusion
 
-from .util import appdirs
 from . import defaults as dflts
 from . import msgs
-from .util.py_utils import comes_after, create_default_logger
+from .util.py_utils import comes_after
 
 
 class FusionApp:
-    def __init__(
-        self,
-        name: str = None,
-        author: str = None,
-        logger: logging.Logger = None,
-        debug_to_ui: bool = True,
-    ):
-        toplevel_dir = Path(__file__).parent.parent.parent
-        self.name = toplevel_dir.name if name is None else name
-        # TODO use cokkiecutter or manifest file
-        self.author = self.name if author is None else author
-        self.logger = create_default_logger() if logger is None else logger
-
-        self.user_state_dir = appdirs.user_state_dir(self.name, self.author)
-        self.user_cache_dir = appdirs.user_cache_dir(self.name, self.author)
-        self.user_config_dir = appdirs.user_config_dir(self.name, self.author)
-        self.user_data_dir = appdirs.user_data_dir(self.name, self.author)
-        self.user_log_dir = appdirs.user_log_dir(self.name, self.author)
-
-        self.debug_to_ui = debug_to_ui
-
+    def __init__(self):
+        # TODO more feaures (see old)
         self._created_elements = {}
 
     def stop(self):
@@ -58,7 +39,7 @@ class _FusionWrapper(ABC):
     def __init__(self):
         pass
 
-    def already_existing(self, not_setable, type: str, id: str):
+    def _already_existing(self, not_setable, type: str, id: str):
         if not_setable:
             if self._in_fusion.isNative:
                 logging.warning(msgs.setting_on_native(type, id, not_setable))
@@ -66,7 +47,7 @@ class _FusionWrapper(ABC):
                 logging.warning(msgs.already_existing("workspace", id, not_setable))
                 # TODO option to overwrite with warning
 
-    def register_child(self, child, level=0):
+    def _register_child(self, child, level=0):
         self.parent.register_child(child, level + 1)
 
     @property
@@ -81,7 +62,7 @@ class _FusionWrapper(ABC):
 class Workspace(_FusionWrapper):
     def __init__(
         self,
-        parent,
+        parent: FusionApp,
         name: str = None,
         id: str = None,
         product_type: str = None,
@@ -108,28 +89,26 @@ class Workspace(_FusionWrapper):
         # parent is needed to be saved to register children
         self.parent = parent
 
-        # get the parent fusion collection where you can add instances
-        app = adsk.core.Application.get()
-        ws_coll = app.userInterface.workspaces
-
         # try to get an existing instance
-        self._in_fusion = ws_coll.itemById(id)
+        self._in_fusion = adsk.core.Application.get().userInterface.workspaces.itemById(
+            id
+        )
 
         # if there is an instance, modify it if its not natice, else warning message
         if self._in_fusion is not None:
             not_setable = set(given_args) - {"id"}
-            self.already_existing(not_setable, "workspace", id)
+            self._already_existing(not_setable, "workspace", id)
 
         # create new workspace if there is no
         else:
-            self._in_fusion = app.userInterface.workspaces.add(
+            self._in_fusion = adsk.core.Application.get().userInterface.workspaces.add(
                 product_type, id, name, image
             )
             self._in_fusion.toolClipFilename = tooltip_image
             self._in_fusion.tooltip = tooltip_head
             self._in_fusion.tooltipDescription = tooltip_head
 
-            self.parent.register_child(self)
+            self.parent._register_child(self)
 
     @property
     def is_active(self):
@@ -213,43 +192,31 @@ class Workspace(_FusionWrapper):
 class Tab(_FusionWrapper):
     def __init__(
         self,
-        parent_workspace: Workspace,
+        parent: Workspace,
         name: str = None,  # add
         id: str = None,  # add
-        position_index: int = None,
-        # is_visible: bool = None,
     ):
-        given_args = {k: v for k, v in locals().items() if v is not None}
-        self.parent_workspace = parent_workspace
-        self.name = dflts.name(name, "tab", "random")
-        self.id = dflts.id(id, "random")
-        # self.position_index = dflts.no_parse(position_index, -1)
-        # self.is_visible = dflts.no_parse(is_visible, True)
+        super().__init__()
 
-        logging.warning(
-            "Its currently not supported by Fusion360 to set the position of a tab within a workspace."
-        )
+        given_args = [k for k, v in locals().items() if v is not None and k != "self"]
 
-        self.in_fusion = parent_workspace.in_fusion.toolbarTabs.itemById(self.id)
+        name = dflts.evaluate(name, "tab", "name")
+        id = dflts.evaluate(id, "tab", "id")
+
+        self.parent = parent
+
+        self._in_fusion = parent.children.itemById(self.id)
+
         if self.in_fusion:
-            if self.in_fusion.isNative:
-                not_setable = set(given_args.keys()) - {"id"}
-                if not_setable:
-                    logging.warning(msgs.setting_on_native("tab", self.id, not_setable))
-            else:
-                # TODO implement if app managemnt is created
-                pass
-        # create new tab
+            not_setable = set(given_args.keys()) - {"id"}
+            self._already_existing(not_setable, "tab", id)
+
         else:
-            self.in_fusion = parent_workspace.in_fusion.toolbarTabs.add(
-                self.id, self.name
-            )
+            self._in_fusion = parent.in_fusion.toolbarTabs.add(id, name)
+            # nothing else is setable
 
-        self.index = self.in_fusion.position_index
-        self.isVisible = self.in_fusion.is_visible
-
-        # @property
-        # def position_index(self):
+        @property
+        def position_index(self):
 
 
 class Panel:
@@ -269,7 +236,7 @@ class Panel:
         self.position_index = dflts.no_parse(position_index, -1)
         self.is_visible = dflts.no_parse(is_visible, True)
 
-        self.in_fusion = parent_tab.in_fusion.toolbarPanels.itemById(self.id)
+        self.in_fusion = parent_tab._in_fusion.toolbarPanels.itemById(self.id)
 
         if self.in_fusion:
             if self.in_fusion.isNative:
@@ -285,12 +252,12 @@ class Panel:
         else:
             panel_order = {
                 p.indexWithinTab(): p.id
-                for p in self.parent_tab.in_fusion.toolbarPanels
+                for p in self.parent_tab._in_fusion.toolbarPanels
             }
             before_id = panel_order[
                 comes_after(list(panel_order.keys()), self.position_index)
             ]
-            self.in_fusion = parent_tab.in_fusion.toolbarPanels.add(
+            self.in_fusion = parent_tab._in_fusion.toolbarPanels.add(
                 self.id, self.name, before_id, True
             )
             self.in_fusion.isVisible = is_visible
