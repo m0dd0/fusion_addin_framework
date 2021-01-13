@@ -87,7 +87,7 @@ class Workspace(_FusionWrapper):
         tooltip_text = dflts.evaluate(tooltip_text, "workspace", "tooltip_text")
 
         # parent is needed to be saved to register children
-        self.parent = parent
+        self._parent = parent
 
         # try to get an existing instance
         self._in_fusion = adsk.core.Application.get().userInterface.workspaces.itemById(
@@ -108,7 +108,7 @@ class Workspace(_FusionWrapper):
             self._in_fusion.tooltip = tooltip_head
             self._in_fusion.tooltipDescription = tooltip_head
 
-            self.parent._register_child(self)
+            self._parent._register_child(self)
 
     @property
     def is_active(self):
@@ -185,6 +185,10 @@ class Workspace(_FusionWrapper):
         else:
             dflts.evaluate(new_tooltip_text, "workspace", "tooltip_text")
 
+    @property
+    def parent(self):
+        return self._parent
+
     def tab(self, name: str = None, id: str = None, position_index: int = None):
         return Tab(self, name, id, position_index)
 
@@ -193,74 +197,98 @@ class Tab(_FusionWrapper):
     def __init__(
         self,
         parent: Workspace,
-        name: str = None,  # add
-        id: str = None,  # add
+        name: str = None,
+        id: str = None,
     ):
         super().__init__()
-
         given_args = [k for k, v in locals().items() if v is not None and k != "self"]
 
         name = dflts.evaluate(name, "tab", "name")
         id = dflts.evaluate(id, "tab", "id")
 
-        self.parent = parent
+        self._parent = parent
 
-        self._in_fusion = parent.children.itemById(self.id)
+        self._in_fusion = self._parent.children.itemById(self.id)
 
         if self.in_fusion:
             not_setable = set(given_args.keys()) - {"id"}
             self._already_existing(not_setable, "tab", id)
 
         else:
-            self._in_fusion = parent.in_fusion.toolbarTabs.add(id, name)
+            self._in_fusion = self._parent.in_fusion.toolbarTabs.add(id, name)
             # nothing else is setable
 
         @property
         def position_index(self):
+            return self._in_fusion.index
+
+        @property
+        def is_active(self):
+            return self._in_fusion.isActive
+
+        @property
+        def is_native(self):
+            return self._in_fusion.isNative
+
+        @property
+        def is_visible(self):
+            return self._in_fusion.isVisible
+
+        @property
+        def name(self):
+            return self._in_fusion.name
+
+        @property
+        def parent(self):
+            return self._parent
+
+        @property
+        def children(self):
+            return self._in_fusion.toolbarPanels
 
 
-class Panel:
-    def __init__(
-        self,
-        parent_tab: Tab,
-        name: str = None,
-        id: str = None,
-        position_index: int = None,
-        is_visible: bool = None,
-    ):
-        given_args = {k: v for k, v in locals().items() if v is not None}
-        dflts.fill
-        self.parent_tab = parent_tab
-        self.name = dflts.name(name, "panel", "random")
-        self.id = dflts.id(id, "random")
-        self.position_index = dflts.no_parse(position_index, -1)
-        self.is_visible = dflts.no_parse(is_visible, True)
+# class Panel:
+#     def __init__(
+#         self,
+#         parent_tab: Tab,
+#         name: str = None,
+#         id: str = None,
+#         position_index: int = None,
+#         is_visible: bool = None,
+#     ):
+#         given_args = {k: v for k, v in locals().items() if v is not None}
+#         dflts.fill
+#         self.parent_tab = parent_tab
+#         self.name = dflts.name(name, "panel", "random")
+#         self.id = dflts.id(id, "random")
+#         self.position_index = dflts.no_parse(position_index, -1)
+#         self.is_visible = dflts.no_parse(is_visible, True)
 
-        self.in_fusion = parent_tab._in_fusion.toolbarPanels.itemById(self.id)
+#         self.in_fusion = parent_tab._in_fusion.toolbarPanels.itemById(self.id)
 
-        if self.in_fusion:
-            if self.in_fusion.isNative:
-                not_setable = set(given_args.keys()) - {"id"}
-                if not_setable:
-                    logging.warning(
-                        msgs.setting_on_native("panel", self.id, not_setable)
-                    )
-            else:
-                # TODO implement if app managemnt is created
-                pass
-        # create new tab
-        else:
-            panel_order = {
-                p.indexWithinTab(): p.id
-                for p in self.parent_tab._in_fusion.toolbarPanels
-            }
-            before_id = panel_order[
-                comes_after(list(panel_order.keys()), self.position_index)
-            ]
-            self.in_fusion = parent_tab._in_fusion.toolbarPanels.add(
-                self.id, self.name, before_id, True
-            )
-            self.in_fusion.isVisible = is_visible
+#         if self.in_fusion:
+#             if self.in_fusion.isNative:
+#                 not_setable = set(given_args.keys()) - {"id"}
+#                 if not_setable:
+#                     logging.warning(
+#                         msgs.setting_on_native("panel", self.id, not_setable)
+#                     )
+#             else:
+#                 # TODO implement if app managemnt is created
+#                 pass
+#         # create new tab
+#         else:
+#             panel_order = {
+#                 p.indexWithinTab(): p.id
+#                 for p in self.parent_tab._in_fusion.toolbarPanels
+#             }
+#             before_id = panel_order[
+#                 comes_after(list(panel_order.keys()), self.position_index)
+#             ]
+#             self.in_fusion = parent_tab._in_fusion.toolbarPanels.add(
+#                 self.id, self.name, before_id, True
+#             )
+#             self.in_fusion.isVisible = is_visible
 
 
 # class Button:
