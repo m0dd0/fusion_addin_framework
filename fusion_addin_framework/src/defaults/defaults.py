@@ -53,6 +53,7 @@ def _do_nothing():
 
 
 def _func_parser(value):
+    # default value is also None since functions cant be json serialized
     if value is None:
         return _do_nothing
     return value

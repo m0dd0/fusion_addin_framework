@@ -21,7 +21,7 @@ def run_framework():
     tab = faf.Tab(ws)
     panel = faf.Panel(tab)
 
-    def on_execute():
+    def on_execute(arg):
         print("FAF")
         _ui.messageBox("FAF")
 
