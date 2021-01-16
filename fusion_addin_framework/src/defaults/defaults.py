@@ -81,7 +81,7 @@ _default_parsers = {
         "name": partial(_random_select, _random_names["panel"]),
         "position_index": lambda v: v,  # arbitrary integer
     },
-    "button": {
+    "button_command": {
         "id": _random_uuid,  # random, arbitrary string
         # random, arbitraty string
         "name": partial(_random_select, _random_names["command"]),

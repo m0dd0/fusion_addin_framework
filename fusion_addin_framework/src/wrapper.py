@@ -4,6 +4,7 @@ from abc import ABC
 from typing import Union, Callable
 import traceback
 from collections import defaultdict
+from uuid import uuid4
 
 import adsk.core
 import adsk.fusion
@@ -38,7 +39,6 @@ class FusionApp:
 
         self._created_elements = defaultdict(list)
 
-        # TODO make a property out of them
         self._effective_defaults = dflts.get_effective_defaults(self.logger)
         self._default_parsers = dflts.get_default_parsers(self.logger)
 
@@ -162,7 +162,7 @@ class Workspace(_FusionWrapper):
             self._in_fusion.tooltip = tooltip_head
             self._in_fusion.tooltipDescription = tooltip_head
 
-            self.get_app().register_element(self, self.ui_level)
+            self.app.register_element(self, self.ui_level)
             self.app.logger.info(msgs.created_new(self._ident, id))
 
     # override
@@ -281,7 +281,7 @@ class Tab(_FusionWrapper):
             self._in_fusion = self.parent.in_fusion.toolbarTabs.add(id, name)
             # nothing else is setable
 
-            self.get_app().register_element(self, self.ui_level)
+            self.app.register_element(self, self.ui_level)
             self.app.logger.info(msgs.created_new(self._ident, id))
 
     @property
@@ -363,7 +363,7 @@ class Panel(_FusionWrapper):
             # nothing else to set
             # TODO related workspaces
 
-            self.get_app().register_element(self, self.ui_level)
+            self.app.register_element(self, self.ui_level)
             self.app.logger.info(msgs.created_new(self._ident, id))
 
     @property
@@ -397,7 +397,7 @@ class Panel(_FusionWrapper):
 
 class ButtonCommand(_FusionWrapper):
 
-    _ident = "button"
+    _ident = "button_command"
 
     def __init__(
         self,
@@ -464,7 +464,6 @@ class ButtonCommand(_FusionWrapper):
             cmd_def.controlDefinition.name = name
 
             # TODO all handlers
-            print(on_execute)
             cmd_def.commandCreated.add(
                 handlers.create(
                     self.app.logger,
@@ -485,15 +484,77 @@ class ButtonCommand(_FusionWrapper):
 
             self._in_fusion = cmd_ctrl
 
-            self.get_app().register_element(self, self.ui_level)
+            self.app.register_element(self, self.ui_level)
+            # self.app.register_element() # TODO dregister also cmd_def for deletion somehow
             self.app.logger.info(msgs.created_new(self._ident, id))
 
         # TODO properties
 
 
-# class Button(_FusionWrapper):
-#     def __init__(self, parent: Panel, position):
-#         pass
+class Button(_FusionWrapper):
+
+    _ident = "button"
+
+    def __init__(
+        self,
+        parent: Panel,
+        position_index: int = None,  # cmd_ctrl
+        is_visible: bool = None,  # cmd_ctrl, ctrl_def
+        is_enabled: bool = None,  # ctrl_def
+        is_promoted: bool = True,  # cmd_ctrl
+        is_promoted_by_default: bool = True,  # cmd_ctrl
+    ):
+        super().__init__(parent)
+        given_args = self._given_args(locals())
+
+        position_index = self.app.eval_arg(
+            position_index, self._ident, "position_index"
+        )
+        is_visible = self.app.eval_arg(is_visible, self._ident, "is_visible")
+        is_enabled = self.app.eval_arg(is_enabled, self._ident, "is_enabled")
+        is_promoted = self.app.eval_arg(is_promoted, self._ident, "is_promoted")
+        is_promoted_by_default = self.app.eval_arg(
+            is_promoted_by_default, self._ident, "is_promoted_by_default"
+        )
+
+        # cmd_ctrl = self.parent.children.itemById(id)
+        # cmd_def = adsk.core.Application.get().userInterface.commandDefinitions.itemById(
+        #     id
+        # )
+
+        if False:
+            pass
+        # if cmd_ctrl or cmd_def:
+        #     # not_setabel = given_args.keys() - {"id", "parent"}
+        #     # TODO implement handling
+        #     raise ValueError()
+
+        else:
+            dummy_cmd_def = adsk.core.Application.get().userInterface.commandDefinitions.addButtonDefinition(
+                str(uuid4()),
+                "<no command connected>",
+                "",
+                dflts._image_parser("lightbulb"),
+            )
+            dummy_cmd_def.controlDefinition.isVisible = is_visible
+            dummy_cmd_def.controlDefinition.isEnabled = is_enabled
+            dummy_cmd_def.controlDefinition.name = "<no command connected>"
+            # do not connect a handler since its a dummy cmd_def
+
+            # TODO parse position
+            cmd_ctrl = self.parent.children.addCommand(
+                dummy_cmd_def
+            )  # , position, True)
+            cmd_ctrl.isPromoted = is_promoted
+            cmd_ctrl.isPromotedByDefault = is_promoted_by_default
+            cmd_ctrl.isVisible = is_visible
+
+            self._in_fusion = cmd_ctrl
+
+            self.app.register_element(self, self.ui_level)
+            self.app.logger.info(msgs.created_new(self._ident, id))
+
+        # TODO properties
 
 
 # class Command(_FusionWrapper):

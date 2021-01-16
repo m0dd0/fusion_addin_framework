@@ -17,7 +17,7 @@
         "name": "random",
         "position_index": 0
     },
-    "button": {
+    "button_command": {
         "id": "random",
         "name": "random",
         "tooltip": "",
