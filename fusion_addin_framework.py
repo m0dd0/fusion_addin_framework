@@ -155,7 +155,8 @@ def run(context):
     global _to_delete
     try:
         logging.info("RUN")
-        run_classic()
+        run_framework()
+        # run_classic()
     except:
         print("Failed:\n{}".format(traceback.format_exc()))
 
@@ -163,6 +164,7 @@ def run(context):
 def stop(context):
     try:
         logging.info("STOP")
-        stop_classic()
+        stop_framework()
+        # stop_classic()
     except:
         print("Failed:\n{}".format(traceback.format_exc()))

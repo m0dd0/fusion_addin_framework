@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 from abc import ABC
-from typing import Union
+from typing import Union, Callable
 
 import adsk.core
 import adsk.fusion
@@ -61,7 +61,7 @@ class _FusionWrapper(ABC):
         logging.info(msgs.using_exisitng(self._ident, self.id))
 
     def _created_new(self):
-        self.get_app().register_element(self, self.level)
+        self.get_app().register_element(self, self.ui_level)
         logging.info(msgs.created_new(self._ident, self.id))
 
     def get_app(self):
@@ -102,7 +102,7 @@ class Workspace(_FusionWrapper):
         super().__init__(parent)
 
         # get the names of all attributes that were passen to the init
-        given_args = [k for k, v in locals().items() if v is not None and k != "self"]
+        given_args = {k for k, v in locals().items() if v is not None and k != "self"}
 
         # this could be done in only two lines with a loop
         # but its more clear if all defaults are set explicitly
@@ -121,7 +121,7 @@ class Workspace(_FusionWrapper):
 
         # if there is an instance, modify it if its not natice, else warning message
         if self._in_fusion is not None:
-            not_setable = set(given_args) - {"id"}
+            not_setable = given_args - {"id"}
             self._already_existing(not_setable)
 
         # create new workspace if there is no
@@ -227,7 +227,7 @@ class Tab(_FusionWrapper):
         id: str = None,  # pylint:disable=redefined-builtin
     ):
         super().__init__(parent)
-        given_args = [k for k, v in locals().items() if v is not None and k != "self"]
+        given_args = {k for k, v in locals().items() if v is not None and k != "self"}
 
         name = dflts.evaluate(name, self._ident, "name")
         id = dflts.evaluate(id, self._ident, "id")
@@ -235,7 +235,7 @@ class Tab(_FusionWrapper):
         self._in_fusion = self.parent.children.itemById(id)
 
         if self.in_fusion:
-            not_setable = set(given_args.keys()) - {"id"}
+            not_setable = given_args - {"id"}
             self._already_existing(not_setable)
 
         else:
@@ -293,7 +293,7 @@ class Panel(_FusionWrapper):
         position: int = None,
     ):
         super().__init__(parent)
-        given_args = [k for k, v in locals().items() if v is not None and k != "self"]
+        given_args = {k for k, v in locals().items() if v is not None and k != "self"}
 
         name = dflts.evaluate(name, self._ident, "name")
         id = dflts.evaluate(id, self._ident, "id")
@@ -302,7 +302,7 @@ class Panel(_FusionWrapper):
         self._in_fusion = self.parent.children.itemById(id)
 
         if self._in_fusion:
-            not_setable = set(given_args.keys()) - {"id"}
+            not_setable = given_args - {"id"}
             self._already_existing(not_setable)
 
         else:
@@ -356,7 +356,7 @@ class ButtonCommand(_FusionWrapper):
     def __init__(
         self,
         parent: Panel,
-        id: str = None,  # cmd_def
+        id: str = None,  # cmd_def #pylint:disable=redefined-builtin
         name: str = None,  # cmd_Def
         tooltip: str = None,  # cmd_def
         image_tooltip: Union[str, Path] = None,  # cmd_Def
@@ -373,7 +373,7 @@ class ButtonCommand(_FusionWrapper):
         on_destroy: Callable = None,  # cmd_def
     ):
         super().__init__(parent)
-        given_args = [k for k, v in locals().items() if v is not None and k != "self"]
+        given_args = {k for k, v in locals().items() if v is not None and k != "self"}
 
         id = dflts.evaluate(id, self._ident, "id")
         name = dflts.evaluate(name, self._ident, "name")

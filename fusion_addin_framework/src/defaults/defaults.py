@@ -14,11 +14,7 @@ from ..util import py_utils
 _standard_defaults_path = Path(__file__).with_name("standard_defaults.json").absolute()
 _standard_defaults = py_utils.load_json_file(_standard_defaults_path)
 
-_custom_defaults_path = (
-    Path(__file__).parents[2]
-    / "settings"
-    / "custom_defaults.json"  # .joinpath("settings/standard_defaults.json").absolute()
-)
+_custom_defaults_path = Path(__file__).parents[2] / "settings" / "custom_defaults.json"
 _custom_defaults = py_utils.load_json_file(_custom_defaults_path)
 
 _default_images_path = Path(__file__).with_name("default_images").absolute()
