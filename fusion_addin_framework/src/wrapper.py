@@ -17,6 +17,9 @@ from . import handlers
 
 
 class FusionApp:
+
+    _ui_level = 0
+
     def __init__(self):
         # TODO more feaures (see old)
         self._created_elements = {}
@@ -27,8 +30,12 @@ class FusionApp:
             for elem in elems:
                 elem.in_fusion.deleteMe()
 
-    def register_child(self, elem, level=0):
+    def register_element(self, elem, level=0):
         self._created_elements[level].append(elem)
+
+    @property
+    def ui_level(self):
+        return self._ui_level
 
 
 class _FusionWrapper(ABC):
@@ -38,6 +45,7 @@ class _FusionWrapper(ABC):
 
     def __init__(self, parent):
         self._parent = parent
+        self._ui_level = self.parent.ui_level + 1
 
     def _already_existing(self, not_setable):
         if not_setable:
@@ -52,12 +60,12 @@ class _FusionWrapper(ABC):
                 # TODO option to overwrite with warning
         logging.info(msgs.using_exisitng(self._ident, self.id))
 
-    def _register_child(self, child, level=0):
-        self.parent._register_child(child, level + 1)  # pylint:disable=protected-access
-
     def _created_new(self):
-        self.parent._register_child(self, 0)  # pylint:disable=protected-access
+        self.get_app().register_element(self, self.level)
         logging.info(msgs.created_new(self._ident, self.id))
+
+    def get_app(self):
+        return self.parent.get_app()
 
     @property
     def id(self):
@@ -70,6 +78,10 @@ class _FusionWrapper(ABC):
     @property
     def parent(self):
         return self._parent
+
+    @property
+    def ui_level(self):
+        return self._ui_level
 
 
 class Workspace(_FusionWrapper):
