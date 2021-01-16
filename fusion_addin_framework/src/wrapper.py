@@ -534,7 +534,7 @@ class Button(_FusionWrapper):
                 str(uuid4()),
                 "<no command connected>",
                 "",
-                dflts.image_parser("lightbulb"),
+                dflts.image_parser("transparent"),
             )
             dummy_cmd_def.controlDefinition.isVisible = is_visible
             dummy_cmd_def.controlDefinition.isEnabled = is_enabled
