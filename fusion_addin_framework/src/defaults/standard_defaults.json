@@ -32,6 +32,7 @@
         "on_input_changed": null,
         "on_preview": null,
         "on_execute": null,
-        "on_destroy": null
+        "on_destroy": null,
+        "on_key_down": null
     }
 }

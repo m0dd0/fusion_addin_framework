@@ -32,7 +32,7 @@ _random_names = py_utils.load_json_file(_random_names_path)
 
 def _random_uuid(value):
     if value == "random":
-        return uuid4()
+        return str(uuid4())
     return value
 
 
@@ -94,6 +94,7 @@ _default_parsers = {
         "on_preview": _func_parser,
         "on_execute": _func_parser,
         "on_destroy": _func_parser,
+        "on_key_down": _func_parser,
     },
 }
 
@@ -121,7 +122,9 @@ def get_effective_defaults(logger):
     }
 
     # create a dict with all settings, where cstm settings replace standards
-    effective_dflts = standard_defaults.update(custom_defaults)
+    standard_defaults.update(custom_defaults)
+    effective_defaults = standard_defaults
+    return effective_defaults
 
 
 def get_default_parsers(logger):

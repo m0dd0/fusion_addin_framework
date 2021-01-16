@@ -3,6 +3,7 @@ from pathlib import Path
 from abc import ABC
 from typing import Union, Callable
 import traceback
+from collections import defaultdict
 
 import adsk.core
 import adsk.fusion
@@ -34,7 +35,7 @@ class FusionApp:
             )
         self.logger = logger
 
-        self._created_elements = {}
+        self._created_elements = defaultdict(list)
 
         # TODO make a property out of them
         self._effective_defaults = dflts.get_effective_defaults(self.logger)
@@ -48,7 +49,7 @@ class FusionApp:
             return self._default_parsers[key](value)
         except:
             self.logger.error("Failed:\n{}".format(traceback.format_exc()))
-            self.error(msgs.default_evaluating_error(key, value))
+            self.logger.error(msgs.default_evaluating_error(key, value))
             return value
 
     def stop(self):
@@ -341,14 +342,16 @@ class Panel(_FusionWrapper):
         parent: Tab,
         name: str = None,
         id: str = None,  # pylint:disable=redefined-builtin
-        position: int = None,
+        position_index: int = None,
     ):
         super().__init__(parent)
         given_args = self._given_args(locals())
 
         name = self.app.eval_arg(name, self._ident, "name")
         id = self.app.eval_arg(id, self._ident, "id")
-        position = self.app.eval_arg(position, self._ident, "position")
+        position_index = self.app.eval_arg(
+            position_index, self._ident, "position_index"
+        )
 
         self._in_fusion = self.parent.children.itemById(id)
 
@@ -416,7 +419,7 @@ class ButtonCommand(_FusionWrapper):
         tooltip: str = None,  # cmd_def
         image_tooltip: Union[str, Path] = None,  # cmd_Def
         image: Union[str, Path] = None,  # cmd_def
-        position: int = None,  # cmd_ctrl
+        position_index: int = None,  # cmd_ctrl
         is_visible: bool = None,  # cmd_ctrl, ctrl_def
         is_enabled: bool = None,  # ctrl_def
         is_promoted: bool = True,  # cmd_ctrl
@@ -426,6 +429,7 @@ class ButtonCommand(_FusionWrapper):
         on_preview: Callable = None,  # cmd_def
         on_execute: Callable = None,  # cmd_def
         on_destroy: Callable = None,  # cmd_def
+        on_key_down: Callable = None,  # cmd_def
     ):
         super().__init__(parent)
         given_args = self._given_args(locals())
@@ -435,12 +439,14 @@ class ButtonCommand(_FusionWrapper):
         tooltip = self.app.eval_arg(tooltip, self._ident, "tooltip")
         image_tooltip = self.app.eval_arg(image_tooltip, self._ident, "image_tooltip")
         image = self.app.eval_arg(image, self._ident, "image")
-        position = self.app.eval_arg(position, self._ident, "position")
+        position_index = self.app.eval_arg(
+            position_index, self._ident, "position_index"
+        )
         is_visible = self.app.eval_arg(is_visible, self._ident, "is_visible")
         is_enabled = self.app.eval_arg(is_enabled, self._ident, "is_enabled")
         is_promoted = self.app.eval_arg(is_promoted, self._ident, "is_promoted")
         is_promoted_by_default = self.app.eval_arg(
-            is_promoted_by_default, self._ident, "is_promoted_by_defualt"
+            is_promoted_by_default, self._ident, "is_promoted_by_default"
         )
         on_created = self.app.eval_arg(on_created, self._ident, "on_created")
         on_input_changed = self.app.eval_arg(
@@ -461,7 +467,6 @@ class ButtonCommand(_FusionWrapper):
             raise ValueError()
 
         else:
-            print(image)
             cmd_def = adsk.core.Application.get().userInterface.commandDefinitions.addButtonDefinition(
                 id, name, tooltip, image
             )
@@ -472,7 +477,9 @@ class ButtonCommand(_FusionWrapper):
 
             # TODO all handlers
             cmd_def.commandCreated.add(
-                handlers.create(on_created, on_execute, on_preview, on_input_changed)
+                handlers.create(
+                    on_created, on_execute, on_preview, on_input_changed, on_key_down
+                )
             )
 
             # TODO parse position

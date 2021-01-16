@@ -4,28 +4,17 @@ _handlers = []  # TODO use app (maybe)
 
 # TODO all handlers
 
+
 def create(on_created, on_execute, on_preview, on_input_changed, on_key_down):
     on_created = _CommandCreatedHandler(
         on_created, on_execute, on_preview, on_input_changed, on_key_down
     )
     _handlers.append(on_created)
-    return _handlers
-
-
-# TODO define default behaviour external
-def do_nothing(args):
-    pass
+    return on_created
 
 
 class _CommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
-    def __init__(
-        self,
-        on_start=do_nothing,
-        on_execute=do_nothing,
-        on_preview=do_nothing,
-        on_input_changed=do_nothing,
-        on_key_down=do_nothing,  # TODO None default
-    ):
+    def __init__(self, on_start, on_execute, on_preview, on_input_changed, on_key_down):
         super().__init__()
         self.on_start = on_start
         self.on_execute = on_execute
