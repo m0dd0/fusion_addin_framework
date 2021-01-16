@@ -8,10 +8,12 @@ import adsk.fusion
 
 from . import defaults as dflts
 from . import messages as msgs
+from . import handlers
 
 # TODO manage multiple parent
 # TODO default parents
 # TODO manage childre, seperation between fusion children and framework children
+# TODO create empty panels, tabs, workspaces
 
 
 class FusionApp:
@@ -297,7 +299,7 @@ class Panel(_FusionWrapper):
                 if i > position:
                     comes_before_id = panel_order[i]
                     break
-            self._in_fusion = self.parent.in_fusion.toolbarPanels.add(
+            self._in_fusion = self.parent.in_fusion.children.add(
                 id, name, comes_before_id, True
             )
             # nothing else to set
@@ -334,23 +336,102 @@ class Panel(_FusionWrapper):
         return self._in_fusion.promotedControls
 
 
-# class Button:
-#     def __init__(self, parent_panel: Panel, id=None, position=None, is_promoted=None):
-#         self.parent_panel = parent_panel
-#         self.id = id
-#         self.position = position
-#         self.is_promoted = is_promoted
-#         self.in_fusion = self.create_control()
+class Button(_FusionWrapper):
+    def __init__(self, parent: Panel, position):
+        pass
 
-#     def create_control(
-#         self,
-#         name="<unused button>",
-#         tooltip="this button was created but no command has been connected to it yet",
-#         image="",
-#     ):
-#         return adsk.core.Application.get().userInterface.commandDefinitions.addButtonDefinition(
-#             self.id, name, tooltip, image  # TODO button image
-#         )
+
+class ButtonCommand(_FusionWrapper):
+
+    _ident = "button"
+
+    def __init__(
+        self,
+        parent: Panel,
+        id: str = None,  # cmd_def
+        name: str = None,  # cmd_Def
+        tooltip: str = None,  # cmd_def
+        image_tooltip: Union[str, Path] = None,  # cmd_Def
+        image: Union[str, Path] = None,  # cmd_def
+        position: int = None,  # cmd_ctrl
+        is_visible: bool = None,  # cmd_ctrl, ctrl_def
+        is_enabled: bool = None,  # ctrl_def
+        is_promoted: bool = True,  # cmd_ctrl
+        is_promoted_by_default: bool = True,  # cmd_ctrl
+        on_created: Callable = None,  # cmd_def
+        on_input_changed: Callable = None,  # cmd_def
+        on_preview: Callable = None,  # cmd_def
+        on_execute: Callable = None,  # cmd_def
+        on_destroy: Callable = None,  # cmd_def
+    ):
+        super().__init__(parent)
+        given_args = [k for k, v in locals().items() if v is not None and k != "self"]
+
+        id = dflts.evaluate(id, self._ident, "id")
+        name = dflts.evaluate(name, self._ident, "name")
+        tooltip = dflts.evaluate(tooltip, self._ident, "tooltip")
+        image_tooltip = dflts.evaluate(image_tooltip, self._ident, "image_tooltip")
+        image = dflts.evaluate(image, self._ident, "image")
+        position = dflts.evaluate(position, self._ident, "position")
+        is_visible = dflts.evaluate(is_visible, self._ident, "is_visible")
+        is_enabled = dflts.evaluate(is_enabled, self._ident, "is_enabled")
+        is_promoted = dflts.evaluate(is_promoted, self._ident, "is_promoted")
+        is_promoted_by_default = dflts.evaluate(
+            is_promoted_by_default, self._ident, "is_promoted_by_defualt"
+        )
+
+        cmd_ctrl = self.parent.children.itemById(id)
+        cmd_def = adsk.core.Application.get().userInterface.commandDefinitions.itemById(
+            id
+        )
+
+        if cmd_ctrl or cmd_def:
+            raise ValueError()
+        #     if self._in_fusion.object_type != adsk.core.CommandControl.classType():
+        #         raise ValueError(
+        #             (
+        #                 "The id {0} for the Button is already used in this panel "
+        #                 "by an other control type. Therefore it can be used for "
+        #                 "this Button"
+        #             ).format(button_id)
+        #         )
+        #     # TODO different (custom) error, msgs
+        #     not_setable = set(given_args.keys()) - {"button_id"}
+        #     self._already_existing(not_setable)
+
+        else:
+            cmd_def = adsk.core.Application.get().userInterface.commandDefinitions.addButtonDefinition(
+                id, name, tooltip, image
+            )
+            cmd_def.toolClipFilename = image_tooltip
+            cmd_def.controlDefinition.isVisible = is_visible
+            cmd_def.controlDefinition.isEnabled = is_enabled
+            cmd_def.controlDefinition.name = name
+
+            # TODO all handlers
+            cmd_def.commandCreated.add(
+                handlers.create(on_created, on_execute, on_preview, on_input_changed)
+            )
+
+            # TODO parse position
+            cmd_ctrl = self.parent.children.addCommand(cmd_def)  # , position, True)
+            cmd_ctrl.isPromoted = is_promoted
+            cmd_ctrl.isPromotedByDefault = is_promoted_by_default
+            cmd_ctrl.isVisible = is_visible
+
+            self._in_fusion = cmd_ctrl
+
+            self._created_new()
+
+    # def create_control(
+    #     self,
+    #     name="<unused button>",
+    #     tooltip="this button was created but no command has been connected to it yet",
+    #     image="",
+    # ):
+    #     return adsk.core.Application.get().userInterface.commandDefinitions.addButtonDefinition(
+    #         self.id, name, tooltip, image  # TODO button image
+    #     )
 
 
 # class Command:

@@ -1,6 +1,15 @@
 import adsk.core
 
-_handlers = []  # TODO use app
+_handlers = []  # TODO use app (maybe)
+
+# TODO all handlers
+
+def create(on_created, on_execute, on_preview, on_input_changed, on_key_down):
+    on_created = _CommandCreatedHandler(
+        on_created, on_execute, on_preview, on_input_changed, on_key_down
+    )
+    _handlers.append(on_created)
+    return _handlers
 
 
 # TODO define default behaviour external
