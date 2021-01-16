@@ -1,23 +1,57 @@
 import adsk.core
 
-_handlers = []  # TODO use app
+from . import messages as msgs
+import traceback
+
+_handlers = []
+
+# TODO all handlers
+# TODO warning if handler functions have wrong number of arguments
 
 
-# TODO define default behaviour external
-def do_nothing(args):
-    pass
+def create(
+    logger, cmd_name, on_created, on_execute, on_preview, on_input_changed, on_key_down
+):
+    on_created_handler = _CommandCreatedHandler(
+        logger,
+        cmd_name,
+        "OnCommandCreated",
+        on_created,
+        on_execute,
+        on_preview,
+        on_input_changed,
+        on_key_down,
+    )
+    _handlers.append(on_created_handler)
+    return on_created_handler
+
+
+# TODO (try) parent class
+# class _GenericHandler(ABC):
+#     def __init__(self, logger, cmd_name, type):
+#         self.logger = logger
+#         self.cmd_name = cmd_name
+#         self.type = type
 
 
 class _CommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
     def __init__(
         self,
-        on_start=do_nothing,
-        on_execute=do_nothing,
-        on_preview=do_nothing,
-        on_input_changed=do_nothing,
-        on_key_down=do_nothing,  # TODO None default
+        logger,
+        cmd_name,
+        type,
+        on_start,
+        on_execute,
+        on_preview,
+        on_input_changed,
+        on_key_down,
     ):
         super().__init__()
+
+        self.logger = logger
+        self.cmd_name = cmd_name
+        self.type = type
+
         self.on_start = on_start
         self.on_execute = on_execute
         self.on_preview = on_preview
@@ -25,63 +59,128 @@ class _CommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
         self.on_key_down = on_key_down
 
     def notify(self, args: adsk.core.CommandCreatedEventArgs):
+        self.logger.info(msgs.starting_handler(self.type, self.cmd_name))
 
         cmd = args.command
 
-        on_execute_handler = _CommandEventHandler(self.on_execute)
+        on_execute_handler = _CommandEventHandler(
+            self.logger, self.cmd_name, "OnExecute", self.on_execute
+        )
         cmd.execute.add(on_execute_handler)
         _handlers.append(on_execute_handler)
 
-        on_input_changed_handler = _InputChangedHandler(self.on_input_changed)
+        on_input_changed_handler = _InputChangedHandler(
+            self.logger, self.cmd_name, "OnInputChanged", self.on_input_changed
+        )
         cmd.inputChanged.add(on_input_changed_handler)
         _handlers.append(on_input_changed_handler)
 
-        on_destroy_handler = _CommandEventHandler(self.on_destroy)
+        on_destroy_handler = _CommandEventHandler(
+            self.logger, self.cmd_name, "OnDestroy", self.on_destroy
+        )
         cmd.destroy.add(on_destroy_handler)
         _handlers.append(on_destroy_handler)
 
-        on_execute_preview_handler = _CommandEventHandler(self.on_preview)
+        on_execute_preview_handler = _CommandEventHandler(
+            self.logger, self.cmd_name, "OnPreview", self.on_preview
+        )
         cmd.executePreview.add(on_execute_preview_handler)
         _handlers.append(on_execute_preview_handler)
 
-        on_keydown_handler = _KeyboardHandler(self.on_key_down)
+        on_keydown_handler = _KeyboardHandler(
+            self.logger, self.cmd_name, "OnKeyDown", self.on_key_down
+        )
         cmd.keyDown.add(on_keydown_handler)
         _handlers.append(on_keydown_handler)
 
-        self.on_start(args)
+        try:
+            self.on_start(args)
+        except:
+            self.logger.error("Failed:\n{}".format(traceback.format_exc()))
+            # no exception gets raised outside the handlers so this try, except
+            # block is mandatory to prevent silent errors !!!!!!!
 
 
 class _CommandEventHandler(adsk.core.CommandEventHandler):
-    def __init__(self, action):
+    def __init__(self, logger, cmd_name, type, action):
         super().__init__()
+
+        self.logger = logger
+        self.cmd_name = cmd_name
+        self.type = type
+
         self.action = action
 
     def notify(self, args: adsk.core.CommandEventArgs):
-        self.action(args)
+        self.logger.info(msgs.starting_handler(self.type, self.cmd_name))
+
+        try:
+            self.action(args)
+        except:
+            self.logger.error("Failed:\n{}".format(traceback.format_exc()))
+            # no exception gets raised outside the handlers so this try, except
+            # block is mandatory to prevent silent errors !!!!!!!
 
 
 class _InputChangedHandler(adsk.core.InputChangedEventHandler):
-    def __init__(self, action):
+    def __init__(self, logger, cmd_name, type, action):
         super().__init__()
+
+        self.logger = logger
+        self.cmd_name = cmd_name
+        self.type = type
+
         self.action = action
 
     def notify(self, args: adsk.core.InputChangedEventArgs):
-        self.action(args)
+        self.logger.info(msgs.starting_handler(self.type, self.cmd_name))
+
+        try:
+            self.action(args)
+        except:
+            self.logger.error("Failed:\n{}".format(traceback.format_exc()))
+            # no exception gets raised outside the handlers so this try, except
+            # block is mandatory to prevent silent errors !!!!!!!
 
 
 class _KeyboardHandler(adsk.core.KeyboardEventHandler):
-    def __init__(self, action):
+    def __init__(self, logger, cmd_name, type, action):
         super().__init__()
+
+        self.logger = logger
+        self.cmd_name = cmd_name
+        self.type = type
+
         self.action = action
 
     def notify(self, args):
-        self.action(args)
+        self.logger.info(msgs.starting_handler(self.type, self.cmd_name))
+
+        try:
+            self.action(args)
+        except:
+            self.logger.error("Failed:\n{}".format(traceback.format_exc()))
+            # no exception gets raised outside the handlers so this try, except
+            # block is mandatory to prevent silent errors !!!!!!!
 
 
-class _CustomCommandEventHandler(adsk.core.CustomEventHandler):
-    def __init__(self, action):
-        super().__init__()
-        self.action = action
+# TODO use custom commands
+# class _CustomCommandEventHandler(adsk.core.CustomEventHandler):
+#     def __init__(self, logger, cmd_name, type, action):
+#         super().__init__()
 
-    def notify(self, args):
-        self.action(args)
+#         self.logger = logger
+#         self.cmd_name = cmd_name
+#         self.type = type
+
+#         try:
+#     self.action(args)
+# except:
+#     self.logger.error("Failed:\n{}".format(traceback.format_exc()))
+# no exception gets raised outside the handlers so this try, except
+# block is mandatory to prevent silent errors !!!!!!!
+
+#     def notify(self, args):
+#         self.logger.info(msgs.starting_handler(self.type, self.cmd_name))
+
+#         self.action(args)
