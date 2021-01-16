@@ -348,11 +348,6 @@ class Panel(_FusionWrapper):
         return self._in_fusion.promotedControls
 
 
-class Button(_FusionWrapper):
-    def __init__(self, parent: Panel, position):
-        pass
-
-
 class ButtonCommand(_FusionWrapper):
 
     _ident = "button"
@@ -405,18 +400,8 @@ class ButtonCommand(_FusionWrapper):
         )
 
         if cmd_ctrl or cmd_def:
+            # TODO implement handling
             raise ValueError()
-        #     if self._in_fusion.object_type != adsk.core.CommandControl.classType():
-        #         raise ValueError(
-        #             (
-        #                 "The id {0} for the Button is already used in this panel "
-        #                 "by an other control type. Therefore it can be used for "
-        #                 "this Button"
-        #             ).format(button_id)
-        #         )
-        #     # TODO different (custom) error, msgs
-        #     not_setable = set(given_args.keys()) - {"button_id"}
-        #     self._already_existing(not_setable)
 
         else:
             cmd_def = adsk.core.Application.get().userInterface.commandDefinitions.addButtonDefinition(
@@ -442,32 +427,14 @@ class ButtonCommand(_FusionWrapper):
 
             self._created_new()
 
+        # TODO properties
 
-# class Command:
-#     def __init__(
-#         self,
-#         name: str = None,
-#         id: str = None,
-#         parent_button: Button = None,
-#         tooltip: str = None,
-#         image: Path = None,
-#         on_created: Callable = None,
-#         on_input_changed: Callable = None,
-#         on_preview: Callable = None,
-#         on_execute: Callable = None,
-#         on_destroy: Callable = None,
-#     ):
-#         button.in_fusion.deleteMe()
-#         button.create_control(name, tooltip, image)
-#         self.in_fusion = button.cmd-
-#         button.cmd_def.commandCreated.add(
-#             handlers._CommandCreatedHandler(
-#                 on_created, on_input_changed, on_execute, on_destroy
-#             )
-#         )
 
-#     def add_control(self):
+# class Button(_FusionWrapper):
+#     def __init__(self, parent: Panel, position):
 #         pass
 
-#     def remove_control(self, control):
+
+# class Command(_FusionWrapper):
+#     def __init__(self):
 #         pass
