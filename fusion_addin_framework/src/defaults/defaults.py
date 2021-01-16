@@ -48,11 +48,12 @@ def _image_parser(value):
     return str(value)
 
 
-def _func_parser(value):
-    def do_nothing():
-        pass
+def _do_nothing():
+    pass
 
-    return do_nothing
+
+def _func_parser(value):
+    return _do_nothing
 
 
 _default_parsers = {

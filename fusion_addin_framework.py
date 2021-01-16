@@ -12,17 +12,19 @@ _handlers = []
 
 
 def run_framework():
+    def on_execute():
+        _ui.messageBox("FAF")
+
     global _app
     _app = faf.FusionApp()
     ws = faf.Workspace(_app)
     tab = faf.Tab(ws)
     panel = faf.Panel(tab)
-    cmd_btn = faf.ButtonCommand(panel)
+    cmd_btn = faf.ButtonCommand(panel, on_execute=on_execute)
 
 
 def stop_framework():
-    pass
-    # _app.stop()
+    _app.stop()
 
 
 def run_classic():

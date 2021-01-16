@@ -72,25 +72,8 @@ class _FusionWrapper(ABC):
 
     def __init__(self, parent):
         self._parent = parent
-        self.app = self.get_app()
+        self._app = self.get_app()
         self._ui_level = self.parent.ui_level + 1
-
-    # def _already_existing(self, not_setable):
-    #     if not_setable:
-    #         if self._in_fusion.isNative:
-    #             logging.warning(
-    #                 msgs.setting_on_native(self._ident, self.id, not_setable)
-    #             )
-    #         else:
-    #             logging.warning(
-    #                 msgs.already_existing(self._ident, self.id, not_setable)
-    #             )
-    #             # TODO option to overwrite with warning
-    #     logging.info(msgs.using_exisitng(self._ident, self.id))
-
-    # def _created_new(self):
-    #     self.get_app().register_element(self, self.ui_level)
-    #     logging.info(msgs.created_new(self._ident, self.id))
 
     def get_app(self):
         return self.parent.get_app()
@@ -117,6 +100,10 @@ class _FusionWrapper(ABC):
     @property
     def ui_level(self):
         return self._ui_level
+
+    @property
+    def app(self):
+        return self._app
 
 
 class Workspace(_FusionWrapper):
