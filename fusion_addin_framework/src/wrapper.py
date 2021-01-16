@@ -40,7 +40,7 @@ class FusionApp:
         self._effective_defaults = dflts.get_effective_defaults(self.logger)
         self._default_parsers = dflts.get_default_parsers(self.logger)
 
-    def evaluate_default(self, value, *keys):
+    def eval_arg(self, value, *keys):
         try:
             key = tuple(keys)
             if value is None:
@@ -140,13 +140,13 @@ class Workspace(_FusionWrapper):
 
         # this could be done in only two lines with a loop
         # but its more clear if all defaults are set explicitly
-        id = dflts.evaluate(id, self._ident, "id")
-        name = dflts.evaluate(name, self._ident, "name")
-        product_type = dflts.evaluate(product_type, self._ident, "product_type")
-        image = dflts.evaluate(image, self._ident, "image")
-        tooltip_image = dflts.evaluate(tooltip_image, self._ident, "tooltip_image")
-        tooltip_head = dflts.evaluate(tooltip_head, self._ident, "tooltip_head")
-        tooltip_text = dflts.evaluate(tooltip_text, self._ident, "tooltip_text")
+        id = self.app.eval_arg(id, self._ident, "id")
+        name = self.app.eval_arg(name, self._ident, "name")
+        product_type = self.app.eval_arg(product_type, self._ident, "product_type")
+        image = self.app.eval_arg(image, self._ident, "image")
+        tooltip_image = self.app.eval_arg(tooltip_image, self._ident, "tooltip_image")
+        tooltip_head = self.app.eval_arg(tooltip_head, self._ident, "tooltip_head")
+        tooltip_text = self.app.eval_arg(tooltip_text, self._ident, "tooltip_text")
 
         # try to get an existing instance
         self._in_fusion = adsk.core.Application.get().userInterface.workspaces.itemById(
@@ -276,8 +276,8 @@ class Tab(_FusionWrapper):
         super().__init__(parent)
         given_args = self._given_args(locals())
 
-        name = dflts.evaluate(name, self._ident, "name")
-        id = dflts.evaluate(id, self._ident, "id")
+        name = self.app.eval_arg(name, self._ident, "name")
+        id = self.app.eval_arg(id, self._ident, "id")
 
         self._in_fusion = self.parent.children.itemById(id)
 
@@ -346,9 +346,9 @@ class Panel(_FusionWrapper):
         super().__init__(parent)
         given_args = self._given_args(locals())
 
-        name = dflts.evaluate(name, self._ident, "name")
-        id = dflts.evaluate(id, self._ident, "id")
-        position = dflts.evaluate(position, self._ident, "position")
+        name = self.app.eval_arg(name, self._ident, "name")
+        id = self.app.eval_arg(id, self._ident, "id")
+        position = self.app.eval_arg(position, self._ident, "position")
 
         self._in_fusion = self.parent.children.itemById(id)
 
@@ -430,25 +430,25 @@ class ButtonCommand(_FusionWrapper):
         super().__init__(parent)
         given_args = self._given_args(locals())
 
-        id = dflts.evaluate(id, self._ident, "id")
-        name = dflts.evaluate(name, self._ident, "name")
-        tooltip = dflts.evaluate(tooltip, self._ident, "tooltip")
-        image_tooltip = dflts.evaluate(image_tooltip, self._ident, "image_tooltip")
-        image = dflts.evaluate(image, self._ident, "image")
-        position = dflts.evaluate(position, self._ident, "position")
-        is_visible = dflts.evaluate(is_visible, self._ident, "is_visible")
-        is_enabled = dflts.evaluate(is_enabled, self._ident, "is_enabled")
-        is_promoted = dflts.evaluate(is_promoted, self._ident, "is_promoted")
-        is_promoted_by_default = dflts.evaluate(
+        id = self.app.eval_arg(id, self._ident, "id")
+        name = self.app.eval_arg(name, self._ident, "name")
+        tooltip = self.app.eval_arg(tooltip, self._ident, "tooltip")
+        image_tooltip = self.app.eval_arg(image_tooltip, self._ident, "image_tooltip")
+        image = self.app.eval_arg(image, self._ident, "image")
+        position = self.app.eval_arg(position, self._ident, "position")
+        is_visible = self.app.eval_arg(is_visible, self._ident, "is_visible")
+        is_enabled = self.app.eval_arg(is_enabled, self._ident, "is_enabled")
+        is_promoted = self.app.eval_arg(is_promoted, self._ident, "is_promoted")
+        is_promoted_by_default = self.app.eval_arg(
             is_promoted_by_default, self._ident, "is_promoted_by_defualt"
         )
-        on_created = dflts.evaluate(on_created, self._ident, "on_created")
-        on_input_changed = dflts.evaluate(
+        on_created = self.app.eval_arg(on_created, self._ident, "on_created")
+        on_input_changed = self.app.eval_arg(
             on_input_changed, self._ident, "on_input_changed"
         )
-        on_preview = dflts.evaluate(on_preview, self._ident, "on_preview")
-        on_execute = dflts.evaluate(on_execute, self._ident, "on_execute")
-        on_destroy = dflts.evaluate(on_destroy, self._ident, "on_destroy")
+        on_preview = self.app.eval_arg(on_preview, self._ident, "on_preview")
+        on_execute = self.app.eval_arg(on_execute, self._ident, "on_execute")
+        on_destroy = self.app.eval_arg(on_destroy, self._ident, "on_destroy")
 
         cmd_ctrl = self.parent.children.itemById(id)
         cmd_def = adsk.core.Application.get().userInterface.commandDefinitions.itemById(
