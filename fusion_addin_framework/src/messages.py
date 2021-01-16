@@ -1,3 +1,5 @@
+### FUSION WRAPPERS ###
+
 # TODO use in setters
 # def setting_on_native(type, id, not_setable):  # pylint:disable=redefined-builtin
 #     msg = (
@@ -23,4 +25,33 @@ def using_exisitng(type, id):  # pylint:disable=redefined-builtin
 
 def created_new(type, id):  # pylint:disable=redefined-builtin
     msg = "Created a new {0}. (id: {1})".format(type, id)
+    return msg
+
+
+### DEFAULTS ###
+
+
+def unknown_defaults(unknown_custom_defaults):
+    msg = (
+        "The following custom defaults are not known and will be ignored: {0}. "
+        "Check the Documentation for all available options."
+    ).format(unknown_custom_defaults)
+    return msg
+
+
+def json_error_in_defaults():
+    msg = (
+        "Couldnt decode custom default setting. Make sure to use proper json "
+        "encoding. Standard default settings are used."
+    )
+    return msg
+
+
+### FRAMEWORK ERRORS ###
+
+
+def default_evaluating_error(keys, value):
+    msg = "Error while evaluating {0} defualt. Returning value {1}. SORRY THIS SHOULDNT HAPPEN.".format(
+        keys, value
+    )
     return msg

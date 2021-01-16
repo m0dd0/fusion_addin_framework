@@ -8,6 +8,7 @@ import random
 import traceback
 
 from ..util import py_utils
+from .. import messages as msgs
 
 ### LOADING JSONS ###
 
@@ -54,7 +55,7 @@ def _func_parser(value):
     return do_nothing
 
 
-default_parsers = {
+_default_parsers = {
     "workspace": {
         "id": _random_uuid,  # random or arbitrary string
         # random, arbitraty string
@@ -97,40 +98,34 @@ default_parsers = {
 }
 
 
-### COMPOSE DEFAULT DICT ###
+def get_effective_defaults(logger):
+    # try to load custom defaults
+    try:
+        custom_defaults = py_utils.load_json_file(_custom_defaults_path)
+    except json.JSONDecodeError:
+        logger.warning(msgs.json_error_in_defaults())
+        custom_defaults = {}
 
-# try to load custom defaults
-try:
-    _custom_defaults = py_utils.load_json_file(_custom_defaults_path)
-except json.JSONDecodeError:
-    # TODO msgs
-    logging.warning(
-        "Couldnt decode custom default setting. Make sure to use proper "
-        "json encoding. Standard default settings are used."
+    # flatten the dicts to make live easier
+    custom_defaults = py_utils.flatten_dict(custom_defaults)
+    standard_defaults = py_utils.flatten_dict(_standard_defaults)
+
+    # drop all settings whose keys is not in standard defaults
+    unknown_custom_defaults = set(custom_defaults.keys()) - set(
+        standard_defaults.keys()
     )
-    _custom_defaults = {}
+    if unknown_custom_defaults:
+        logger.warning(msgs.unknown_defaults(unknown_custom_defaults))
+    custom_defaults = {
+        k: v for k, v in custom_defaults.items() if k not in unknown_custom_defaults
+    }
 
-# flatten all the dict to make live easier, abbreviation indicates flattened dict
-_cstm_dflts = py_utils.flatten_dict(_custom_defaults)
-_std_dflts = py_utils.flatten_dict(_standard_defaults)
+    # create a dict with all settings, where cstm settings replace standards
+    effective_dflts = standard_defaults.update(custom_defaults)
 
-# drop all settings whose keys is not in standard defaults
-_unknown_custom_settings = set(_cstm_dflts.keys()) - set(_std_dflts.keys())
-if _unknown_custom_settings:
-    # TODO msgs
-    logging.warning(
-        "The following default setttings are not known and will be ignored: {0}. "
-        "Check the Documentation for all available options".format(
-            _unknown_custom_settings
-        )
-    )
-_cstm_dflts = {
-    k: v for k, v in _cstm_dflts.items() if k not in _unknown_custom_settings
-}
 
-# create a dict with all settings, where cstm settings replace standards
-eff_dflts = deepcopy(_std_dflts)
-eff_dflts.update(_cstm_dflts)
+def get_default_parsers(logger):
+    return py_utils.flatten_dict(_default_parsers)
 
 
 def evaluate(value, *keys):
@@ -138,7 +133,7 @@ def evaluate(value, *keys):
         key = tuple(keys)
         if value is None:
             value = eff_dflts[key]
-        return default_parsers[key](value)
+        return dflt_parsers[key](value)
     except:
         logging.error("Failed:\n{}".format(traceback.format_exc()))
         # TODO msgs

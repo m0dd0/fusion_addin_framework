@@ -2,6 +2,7 @@ import logging
 from pathlib import Path
 from abc import ABC
 from typing import Union, Callable
+import traceback
 
 import adsk.core
 import adsk.fusion
@@ -32,7 +33,23 @@ class FusionApp:
                 # TODO fix format
             )
         self.logger = logger
+
         self._created_elements = {}
+
+        # TODO make a property out of them
+        self._effective_defaults = dflts.get_effective_defaults(self.logger)
+        self._default_parsers = dflts.get_default_parsers(self.logger)
+
+    def evaluate_default(self, value, *keys):
+        try:
+            key = tuple(keys)
+            if value is None:
+                value = self._effective_defaults[key]
+            return self._default_parsers[key](value)
+        except:
+            self.logger.error("Failed:\n{}".format(traceback.format_exc()))
+            self.error(msgs.default_evaluating_error(key, value))
+            return value
 
     def stop(self):
         for level in reversed(sorted(list(self._created_elements.keys()))):
@@ -327,7 +344,7 @@ class Panel(_FusionWrapper):
         position: int = None,
     ):
         super().__init__(parent)
-        given_args = self._given_args(locals)
+        given_args = self._given_args(locals())
 
         name = dflts.evaluate(name, self._ident, "name")
         id = dflts.evaluate(id, self._ident, "id")
@@ -444,6 +461,7 @@ class ButtonCommand(_FusionWrapper):
             raise ValueError()
 
         else:
+            print(image)
             cmd_def = adsk.core.Application.get().userInterface.commandDefinitions.addButtonDefinition(
                 id, name, tooltip, image
             )
