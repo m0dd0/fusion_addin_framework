@@ -53,7 +53,9 @@ def _do_nothing():
 
 
 def _func_parser(value):
-    return _do_nothing
+    if value is None:
+        return _do_nothing
+    return value
 
 
 _default_parsers = {
@@ -130,20 +132,3 @@ def get_effective_defaults(logger):
 
 def get_default_parsers(logger):
     return py_utils.flatten_dict(_default_parsers)
-
-
-def evaluate(value, *keys):
-    try:
-        key = tuple(keys)
-        if value is None:
-            value = eff_dflts[key]
-        return dflt_parsers[key](value)
-    except:
-        logging.error("Failed:\n{}".format(traceback.format_exc()))
-        # TODO msgs
-        logging.error(
-            "error while evaluating {0} defualt. returning value {1}".format(
-                keys, value
-            )
-        )
-        return value

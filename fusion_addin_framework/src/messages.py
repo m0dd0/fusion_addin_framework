@@ -51,7 +51,7 @@ def json_error_in_defaults():
 
 
 def starting_handler(handler_type, cmd_name):
-    msg = "Executing {0} handler of {1} command.".format(handler_type, cmd_name)
+    msg = "Executing {0} handler of '{1}' command.".format(handler_type, cmd_name)
     return msg
 
 

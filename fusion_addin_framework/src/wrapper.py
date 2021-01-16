@@ -30,6 +30,7 @@ class FusionApp:
             logger = create_default_logger(
                 name="faf_logger",
                 # TODO log to logfile with appdirs
+                # TODO log to ui option
                 handlers=[logging.StreamHandler()],  # , logging.FileHandler(logfile)],
                 # TODO fix format
             )
@@ -463,9 +464,16 @@ class ButtonCommand(_FusionWrapper):
             cmd_def.controlDefinition.name = name
 
             # TODO all handlers
+            print(on_execute)
             cmd_def.commandCreated.add(
                 handlers.create(
-                    on_created, on_execute, on_preview, on_input_changed, on_key_down
+                    self.app.logger,
+                    name,
+                    on_created,
+                    on_execute,
+                    on_preview,
+                    on_input_changed,
+                    on_key_down,
                 )
             )
 
