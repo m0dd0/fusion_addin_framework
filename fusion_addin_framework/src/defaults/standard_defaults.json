@@ -1,6 +1,6 @@
 {
     "workspace": {
-        "id": "random",
+        "id": "FusionSolidEnvironment",
         "name": "random",
         "product_type": "DesignProductType",
         "image": "lightbulb",
@@ -9,7 +9,7 @@
         "tooltip_text": ""
     },
     "tab": {
-        "id": "random",
+        "id": "ToolsTab",
         "name": "random"
     },
     "panel": {

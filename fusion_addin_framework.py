@@ -2,6 +2,8 @@ import logging
 
 import adsk.core, adsk.fusion, adsk.cam, traceback
 
+from . import fusion_addin_framework as faf
+
 _app = None
 _ui = None
 _root = None
@@ -10,11 +12,15 @@ _handlers = []
 
 
 def run_framework():
-    pass
+    _app = faf.FusionApp()
+    ws = faf.Workspace(_app)
+    tab = faf.Tab(ws)
+    panel = faf.Panel(tab)
+    cmd_btn = faf.ButtonCommand(panel)
 
 
 def stop_framework():
-    pass
+    _app.stop()
 
 
 def run_classic():
@@ -30,8 +36,9 @@ def run_classic():
     ws = _ui.workspaces.itemById("FusionSolidEnvironment")
     tab = ws.toolbarTabs.itemById("ToolsTab")
     panel = tab.toolbarPanels.add("my_panel_id", "My Panel")
-    panel2 = tab.toolbarPanels.add("my_panel2_id", "My Panel2")
     _to_delete.append(panel)
+    # panel2 = tab.toolbarPanels.add("my_panel2_id", "My Panel2")
+    # _to_delete.append(pass2)
 
     cmd_def = _ui.commandDefinitions.addButtonDefinition(
         "button_cmd_def_id",
@@ -40,15 +47,13 @@ def run_classic():
         r"C:\Users\mohes\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\fusion_addin_framework\fusion_addin_framework\src\defaults\default_images\lightbulb",
     )
     cmd_def.commandCreated.add(on_command_created)
+    ctrl_def = cmd_def.controlDefinition
     _to_delete.append(cmd_def)
 
     cmd_ctrl = panel.controls.addCommand(cmd_def)
     _to_delete.append(cmd_ctrl)
-    cmd_ctrl2 = panel2.controls.addCommand(cmd_def)
-    _to_delete.append(cmd_ctrl)
-
-    print(panel.controls.itemById("button_cmd_def_id"))
-    print(_ui.commandDefinitions.itemById("button_cmd_def_id"))
+    # cmd_ctrl2 = panel2.controls.addCommand(cmd_def)
+    # _to_delete.append(cmd_ctrl2)
 
 
 def stop_classic():

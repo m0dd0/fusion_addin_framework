@@ -306,13 +306,14 @@ class Panel(_FusionWrapper):
             self._already_existing(not_setable)
 
         else:
-            panel_order = {p.indexWithinTab(): p.id for p in self.parent.children}
-            for i in sorted(list(panel_order.keys())):  # + [math.inf]:
-                if i > position:
-                    comes_before_id = panel_order[i]
-                    break
+            # TODO position
+            # panel_order = {p.indexWithinTab(): p.id for p in self.parent.children}
+            # for i in sorted(list(panel_order.keys())):  # + [math.inf]:
+            #     if i > position:
+            #         comes_before_id = panel_order[i]
+            #         break
             self._in_fusion = self.parent.in_fusion.children.add(
-                id, name, comes_before_id, True
+                id, name  # , comes_before_id, True
             )
             # nothing else to set
             # TODO related workspaces

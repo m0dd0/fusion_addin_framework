@@ -1,5 +1,6 @@
 from typing import Iterable
 import logging
+import json
 
 
 def flatten_dict(d):
@@ -60,3 +61,9 @@ def create_default_logger(
         logger.addHandler(handler)
 
     return logger
+
+
+def load_json_file(path):
+    with open(path) as json_file:
+        json_data = json.load(json_file)
+    return json_data

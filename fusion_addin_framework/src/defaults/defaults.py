@@ -12,18 +12,20 @@ from ..util import py_utils
 ### LOADING JSONS ###
 
 _standard_defaults_path = Path(__file__).with_name("standard_defaults.json").absolute()
-_standard_defaults = json.loads(_standard_defaults_path)
+_standard_defaults = py_utils.load_json_file(_standard_defaults_path)
 
 _custom_defaults_path = (
-    Path(__file__).joinpath("../../settings/standard_defaults.json").absolute()
+    Path(__file__).parents[2]
+    / "settings"
+    / "custom_defaults.json"  # .joinpath("settings/standard_defaults.json").absolute()
 )
-_custom_defaults = json.loads(_custom_defaults_path)
+_custom_defaults = py_utils.load_json_file(_custom_defaults_path)
 
 _default_images_path = Path(__file__).with_name("default_images").absolute()
-_default_pictures = {p.stem(): p.absolute() for p in _default_images_path.iterdir()}
+_default_pictures = {p.stem: p.absolute() for p in _default_images_path.iterdir()}
 
 _random_names_path = Path(__file__).with_name("random_names.json").absolute()
-_random_names = json.loads(_random_names_path)
+_random_names = py_utils.load_json_file(_random_names_path)
 
 
 ### PARSING ###
@@ -103,7 +105,7 @@ default_parsers = {
 
 # try to load custom defaults
 try:
-    _custom_defaults = json.load(_custom_defaults_path)
+    _custom_defaults = py_utils.load_json_file(_custom_defaults_path)
 except json.JSONDecodeError:
     # TODO msgs
     logging.warning(
