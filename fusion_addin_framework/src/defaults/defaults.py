@@ -47,6 +47,11 @@ def _image_parser(value):
         return str(_default_pictures[value])
     return str(value)
 
+def image_parser(value):
+    if value in _default_pictures:
+        return str(_default_pictures[value])
+    return str(value)
+
 
 def _do_nothing():
     pass
@@ -99,6 +104,13 @@ _default_parsers = {
         "on_execute": _func_parser,
         "on_destroy": _func_parser,
         "on_key_down": _func_parser,
+    },
+    "button": {
+        "position_index": lambda v: v,
+        "is_visible": lambda v: v,
+        "is_enabled": lambda v: v,
+        "is_promoted": lambda v: v,
+        "is_promoted_by_default": lambda v: v,
     },
 }
 

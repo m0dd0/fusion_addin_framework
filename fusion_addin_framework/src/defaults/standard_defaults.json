@@ -34,5 +34,12 @@
         "on_execute": null,
         "on_destroy": null,
         "on_key_down": null
+    },
+    "button": {
+        "position_index": 0,
+        "is_visible": true,
+        "is_enabled": true,
+        "is_promoted": true,
+        "is_promoted_by_default": true
     }
 }

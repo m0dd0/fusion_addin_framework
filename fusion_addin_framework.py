@@ -20,12 +20,13 @@ def run_framework():
     ws = faf.Workspace(_app)
     tab = faf.Tab(ws)
     panel = faf.Panel(tab)
+    btn = faf.Button(panel)
 
-    def on_execute(arg):
-        print("FAF")
-        _ui.messageBox("FAF")
+    # def on_execute(arg):
+    #     print("FAF")
+    #     _ui.messageBox("FAF")
 
-    cmd_btn = faf.ButtonCommand(panel, on_execute=on_execute)
+    # cmd_btn = faf.ButtonCommand(panel, on_execute=on_execute)
 
 
 def stop_framework():

@@ -1,1 +1,1 @@
-from .src.wrapper import Workspace, Panel, Tab, ButtonCommand, FusionApp
+from .src.wrapper import Workspace, Panel, Tab, ButtonCommand, FusionApp, Button
