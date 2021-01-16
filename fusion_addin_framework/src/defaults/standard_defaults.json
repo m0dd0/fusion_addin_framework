@@ -4,20 +4,34 @@
         "name": "random",
         "product_type": "DesignProductType",
         "image": "lightbulb",
-        "tooltip_image": "",
+        "tooltip_image": "lightbulb",
         "tooltip_head": "",
         "tooltip_text": ""
     },
     "tab": {
         "id": "random",
-        "name": "random",
-        "position_index": 0,
-        "is_visible": true
+        "name": "random"
     },
     "panel": {
         "id": "random",
         "name": "random",
+        "position_index": 0
+    },
+    "button": {
+        "id": "random",
+        "name": "random",
+        "tooltip": "",
+        "image_tooltip": "lightbulb",
+        "image": "lightbulb",
         "position_index": 0,
-        "is_visible": true
+        "is_visible": true,
+        "is_enabled": true,
+        "is_promoted": true,
+        "is_promoted_by_default": true,
+        "on_created": null,
+        "on_input_changed": null,
+        "on_preview": null,
+        "on_execute": null,
+        "on_destroy": null
     }
 }

@@ -391,6 +391,13 @@ class ButtonCommand(_FusionWrapper):
         is_promoted_by_default = dflts.evaluate(
             is_promoted_by_default, self._ident, "is_promoted_by_defualt"
         )
+        on_created = dflts.evaluate(on_created, self._ident, "on_created")
+        on_input_changed = dflts.evaluate(
+            on_input_changed, self._ident, "on_input_changed"
+        )
+        on_preview = dflts.evaluate(on_preview, self._ident, "on_preview")
+        on_execute = dflts.evaluate(on_execute, self._ident, "on_execute")
+        on_destroy = dflts.evaluate(on_destroy, self._ident, "on_destroy")
 
         cmd_ctrl = self.parent.children.itemById(id)
         cmd_def = adsk.core.Application.get().userInterface.commandDefinitions.itemById(
@@ -434,16 +441,6 @@ class ButtonCommand(_FusionWrapper):
             self._in_fusion = cmd_ctrl
 
             self._created_new()
-
-    # def create_control(
-    #     self,
-    #     name="<unused button>",
-    #     tooltip="this button was created but no command has been connected to it yet",
-    #     image="",
-    # ):
-    #     return adsk.core.Application.get().userInterface.commandDefinitions.addButtonDefinition(
-    #         self.id, name, tooltip, image  # TODO button image
-    #     )
 
 
 # class Command:

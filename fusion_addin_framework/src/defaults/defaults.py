@@ -5,6 +5,7 @@ import json
 from copy import deepcopy
 from uuid import uuid4
 import random
+import traceback
 
 from ..util import py_utils
 
@@ -48,31 +49,52 @@ def _image_parser(value):
     return str(value)
 
 
+def _func_parser(value):
+    def do_nothing():
+        pass
+
+    return do_nothing
+
+
 default_parsers = {
     "workspace": {
         "id": _random_uuid,  # random or arbitrary string
         # random, arbitraty string
         "name": partial(_random_select, _random_names["workspace"]),
         "product_type": lambda v: v,  # ['Designproducttype']
-        "picture": _image_parser,  # pfad, random, [<default_images>]
-        "picture_tooltip": lambda v: v,  # arbitrary string
+        "image": _image_parser,  # pfad, random, [<default_images>]
+        "tooltip_image": _image_parser,  # pfad, random, [<default_images>]
         "tooltip_head": lambda v: v,  # arbitrary string
         "tooltip_text": lambda v: v,  # arbitrary string
     },
     "tab": {
         "id": _random_uuid,  # random, arbitrary string
-        "name": partial(
-            _random_select, _random_names["tab"]
-        ),  # random, arbitraty string
-        "position_index": lambda v: v,  # arbitrary integer
-        "is_visible": lambda v: v,  # arbitrary bool
+        # random, arbitraty string
+        "name": partial(_random_select, _random_names["tab"]),
     },
     "panel": {
         "id": _random_uuid,  # random, arbitrary string
         # random, arbitraty string
         "name": partial(_random_select, _random_names["panel"]),
         "position_index": lambda v: v,  # arbitrary integer
-        "is_visible": lambda v: v,  # arbitrary bool
+    },
+    "button": {
+        "id": _random_uuid,  # random, arbitrary string
+        # random, arbitraty string
+        "name": partial(_random_select, _random_names["command"]),
+        "tooltip": lambda v: v,
+        "image_tooltip": _image_parser,
+        "image": _image_parser,
+        "position_index": lambda v: v,
+        "is_visible": lambda v: v,
+        "is_enabled": lambda v: v,
+        "is_promoted": lambda v: v,
+        "is_promoted_by_default": lambda v: v,
+        "on_created": _func_parser,
+        "on_input_changed": _func_parser,
+        "on_preview": _func_parser,
+        "on_execute": _func_parser,
+        "on_destroy": _func_parser,
     },
 }
 
@@ -83,6 +105,7 @@ default_parsers = {
 try:
     _custom_defaults = json.load(_custom_defaults_path)
 except json.JSONDecodeError:
+    # TODO msgs
     logging.warning(
         "Couldnt decode custom default setting. Make sure to use proper "
         "json encoding. Standard default settings are used."
@@ -96,6 +119,7 @@ _std_dflts = py_utils.flatten_dict(_standard_defaults)
 # drop all settings whose keys is not in standard defaults
 _unknown_custom_settings = set(_cstm_dflts.keys()) - set(_std_dflts.keys())
 if _unknown_custom_settings:
+    # TODO msgs
     logging.warning(
         "The following default setttings are not known and will be ignored: {0}. "
         "Check the Documentation for all available options".format(
@@ -112,7 +136,17 @@ eff_dflts.update(_cstm_dflts)
 
 
 def evaluate(value, *keys):
-    key = tuple(keys)
-    if value is None:
-        value = eff_dflts[key]
-    return default_parsers[key](value)
+    try:
+        key = tuple(keys)
+        if value is None:
+            value = eff_dflts[key]
+        return default_parsers[key](value)
+    except:
+        logging.error("Failed:\n{}".format(traceback.format_exc()))
+        # TODO msgs
+        logging.error(
+            "error while evaluating {0} defualt. returning value {1}".format(
+                keys, value
+            )
+        )
+        return value
