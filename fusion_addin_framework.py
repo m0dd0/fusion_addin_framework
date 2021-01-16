@@ -12,6 +12,7 @@ _handlers = []
 
 
 def run_framework():
+    global _app
     _app = faf.FusionApp()
     ws = faf.Workspace(_app)
     tab = faf.Tab(ws)
@@ -20,7 +21,8 @@ def run_framework():
 
 
 def stop_framework():
-    _app.stop()
+    pass
+    # _app.stop()
 
 
 def run_classic():

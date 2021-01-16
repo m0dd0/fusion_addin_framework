@@ -10,6 +10,8 @@ from . import defaults as dflts
 from . import messages as msgs
 from . import handlers
 
+from .util.py_utils import create_default_logger
+
 # TODO manage multiple parent
 # TODO default parents
 # TODO manage childre, seperation between fusion children and framework children
@@ -20,8 +22,16 @@ class FusionApp:
 
     _ui_level = 0
 
-    def __init__(self):
+    def __init__(self, logger=None):
         # TODO more feaures (see old)
+        if logger is None:
+            logger = create_default_logger(
+                name="faf_logger",
+                # TODO log to logfile with appdirs
+                handlers=[logging.StreamHandler()],  # , logging.FileHandler(logfile)],
+                # TODO fix format
+            )
+        self.logger = logger
         self._created_elements = {}
 
     def stop(self):
@@ -40,29 +50,29 @@ class FusionApp:
 
 class _FusionWrapper(ABC):
     _parent = None
-    _ident = None
     _in_fusion = None
 
     def __init__(self, parent):
         self._parent = parent
+        self.app = self.get_app()
         self._ui_level = self.parent.ui_level + 1
 
-    def _already_existing(self, not_setable):
-        if not_setable:
-            if self._in_fusion.isNative:
-                logging.warning(
-                    msgs.setting_on_native(self._ident, self.id, not_setable)
-                )
-            else:
-                logging.warning(
-                    msgs.already_existing(self._ident, self.id, not_setable)
-                )
-                # TODO option to overwrite with warning
-        logging.info(msgs.using_exisitng(self._ident, self.id))
+    # def _already_existing(self, not_setable):
+    #     if not_setable:
+    #         if self._in_fusion.isNative:
+    #             logging.warning(
+    #                 msgs.setting_on_native(self._ident, self.id, not_setable)
+    #             )
+    #         else:
+    #             logging.warning(
+    #                 msgs.already_existing(self._ident, self.id, not_setable)
+    #             )
+    #             # TODO option to overwrite with warning
+    #     logging.info(msgs.using_exisitng(self._ident, self.id))
 
-    def _created_new(self):
-        self.get_app().register_element(self, self.ui_level)
-        logging.info(msgs.created_new(self._ident, self.id))
+    # def _created_new(self):
+    #     self.get_app().register_element(self, self.ui_level)
+    #     logging.info(msgs.created_new(self._ident, self.id))
 
     def get_app(self):
         return self.parent.get_app()
@@ -122,7 +132,12 @@ class Workspace(_FusionWrapper):
         # if there is an instance, modify it if its not natice, else warning message
         if self._in_fusion is not None:
             not_setable = given_args - {"id"}
-            self._already_existing(not_setable)
+            if not_setable:
+                self.app.logger.warning(
+                    msgs.already_existing(self._ident, id, not_setable)
+                )
+            self.app.logger.info(msgs.using_exisitng(self._ident, id))
+            # print(msgs.using_exisitng(self._ident, id))
 
         # create new workspace if there is no
         else:
@@ -133,7 +148,12 @@ class Workspace(_FusionWrapper):
             self._in_fusion.tooltip = tooltip_head
             self._in_fusion.tooltipDescription = tooltip_head
 
-            self._created_new()
+            self.get_app().register_element(self, self.ui_level)
+            self.app.logger.info(msgs.created_new(self._ident, id))
+
+    # override
+    def get_app(self):
+        return self.parent
 
     @property
     def is_active(self):
@@ -162,7 +182,9 @@ class Workspace(_FusionWrapper):
     @image.setter
     def image(self, new_image):
         if self.is_native:
-            logging.warning(msgs.setting_on_native("workspace", new_image, "image"))
+            self.app.logger.warning(
+                msgs.setting_on_native("workspace", new_image, "image")
+            )
         else:
             new_image = dflts.evaluate(new_image, "workspace", "image")
             self._in_fusion.resourceFolder = new_image
@@ -178,7 +200,7 @@ class Workspace(_FusionWrapper):
     @tooltip_image.setter
     def tooltip_image(self, new_tooltip_image):
         if self.is_native:
-            logging.warning(
+            self.app.logger.warning(
                 msgs.setting_on_native("workspace", new_tooltip_image, "tooltip_image")
             )
         else:
@@ -191,7 +213,7 @@ class Workspace(_FusionWrapper):
     @tooltip_head.setter
     def tooltip_head(self, new_tooltip_head):
         if self.is_native:
-            logging.warning(
+            self.app.logger.warning(
                 msgs.setting_on_native("workspace", new_tooltip_head, "tooltip_head")
             )
         else:
@@ -204,7 +226,7 @@ class Workspace(_FusionWrapper):
     @tooltip_text.setter
     def tooltip_text(self, new_tooltip_text):
         if self.is_native:
-            logging.warning(
+            self.app.logger.warning(
                 msgs.setting_on_native("workspace", new_tooltip_text, "tooltip_text")
             )
         else:
@@ -236,13 +258,17 @@ class Tab(_FusionWrapper):
 
         if self.in_fusion:
             not_setable = given_args - {"id"}
-            self._already_existing(not_setable)
-
+            if not_setable:
+                self.app.logger.warning(
+                    msgs.already_existing(self._ident, id, not_setable)
+                )
+            self.app.logger.info(msgs.using_exisitng(self._ident, id))
         else:
             self._in_fusion = self.parent.in_fusion.toolbarTabs.add(id, name)
             # nothing else is setable
 
-            self._created_new()
+            self.get_app().register_element(self, self.ui_level)
+            self.app.logger.info(msgs.created_new(self._ident, id))
 
     @property
     def position(self):
@@ -303,8 +329,11 @@ class Panel(_FusionWrapper):
 
         if self._in_fusion:
             not_setable = given_args - {"id"}
-            self._already_existing(not_setable)
-
+            if not_setable:
+                self.app.logger.warning(
+                    msgs.already_existing(self._ident, id, not_setable)
+                )
+            self.app.logger.info(msgs.using_exisitng(self._ident, id))
         else:
             # TODO position
             # panel_order = {p.indexWithinTab(): p.id for p in self.parent.children}
@@ -312,13 +341,14 @@ class Panel(_FusionWrapper):
             #     if i > position:
             #         comes_before_id = panel_order[i]
             #         break
-            self._in_fusion = self.parent.in_fusion.children.add(
+            self._in_fusion = self.parent.children.add(
                 id, name  # , comes_before_id, True
             )
             # nothing else to set
             # TODO related workspaces
 
-            self._created_new()
+            self.get_app().register_element(self, self.ui_level)
+            self.app.logger.info(msgs.created_new(self._ident, id))
 
     @property
     def position(self):
@@ -426,7 +456,8 @@ class ButtonCommand(_FusionWrapper):
 
             self._in_fusion = cmd_ctrl
 
-            self._created_new()
+            self.get_app().register_element(self, self.ui_level)
+            self.app.logger.info(msgs.created_new(self._ident, id))
 
         # TODO properties
 
