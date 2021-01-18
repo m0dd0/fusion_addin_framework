@@ -47,10 +47,10 @@ def _image_parser(value):
         return str(_default_pictures[value])
     return str(value)
 
+
+# alias because it is also needed fom outside
 def image_parser(value):
-    if value in _default_pictures:
-        return str(_default_pictures[value])
-    return str(value)
+    return _image_parser(value)
 
 
 def _do_nothing():

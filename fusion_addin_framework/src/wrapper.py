@@ -57,9 +57,14 @@ class FusionApp:
         for level in reversed(sorted(list(self._created_elements.keys()))):
             elems = self._created_elements.pop(level)
             for elem in elems:
-                elem.in_fusion.deleteMe()
+                try:
+                    elem.deleteMe()
+                except:
+                    pass  # TODO pass only at definied error
 
     def register_element(self, elem, level=0):
+        if isinstance(elem, _FusionWrapper):
+            elem = elem.in_fusion
         self._created_elements[level].append(elem)
 
     @property
@@ -73,11 +78,8 @@ class _FusionWrapper(ABC):
 
     def __init__(self, parent):
         self._parent = parent
-        self._app = self.get_app()
+        self._app = self.parent.app
         self._ui_level = self.parent.ui_level + 1
-
-    def get_app(self):
-        return self.parent.get_app()
 
     def _given_args(self, locals):
         return {
@@ -123,6 +125,7 @@ class Workspace(_FusionWrapper):
         tooltip_text: str = None,
     ):
         super().__init__(parent)
+        self.app = parent  # override
 
         # get the names of all attributes that were passen to the init
         given_args = self._given_args(locals())
@@ -164,10 +167,6 @@ class Workspace(_FusionWrapper):
 
             self.app.register_element(self, self.ui_level)
             self.app.logger.info(msgs.created_new(self._ident, id))
-
-    # override
-    def get_app(self):
-        return self.parent
 
     @property
     def is_active(self):
@@ -517,46 +516,123 @@ class Button(_FusionWrapper):
             is_promoted_by_default, self._ident, "is_promoted_by_default"
         )
 
-        # cmd_ctrl = self.parent.children.itemById(id)
-        # cmd_def = adsk.core.Application.get().userInterface.commandDefinitions.itemById(
-        #     id
-        # )
+        # a button can always be created since it has no id
 
-        if False:
-            pass
-        # if cmd_ctrl or cmd_def:
-        #     # not_setabel = given_args.keys() - {"id", "parent"}
-        #     # TODO implement handling
-        #     raise ValueError()
+        dummy_cmd_def = adsk.core.Application.get().userInterface.commandDefinitions.addButtonDefinition(
+            str(uuid4()),
+            "<no command connected>",
+            "",
+            dflts.image_parser("transparent"),
+        )
+        dummy_cmd_def.controlDefinition.isVisible = is_visible
+        dummy_cmd_def.controlDefinition.isEnabled = is_enabled
+        dummy_cmd_def.controlDefinition.name = "<no command connected>"
+        # do not connect a handler since its a dummy cmd_def
+
+        # TODO parse position
+        cmd_ctrl = self.parent.children.addCommand(dummy_cmd_def)  # , position, True)
+        cmd_ctrl.isPromoted = is_promoted
+        cmd_ctrl.isPromotedByDefault = is_promoted_by_default
+        cmd_ctrl.isVisible = is_visible
+
+        self._in_fusion = cmd_ctrl
+
+        self.app.register(dummy_cmd_def, self.ui_level)
+        self.app.register_element(self, self.ui_level + 1)
+        self.app.logger.info(msgs.created_new(self._ident, None))
+
+        # self.is_dummy = True  # TODO better solution
+
+    # TODO properties
+
+
+class Command(_FusionWrapper):
+
+    _ident = "command"
+
+    def __init__(
+        self,
+        parent: Button,
+        id: str = None,  # cmd_def #pylint:disable=redefined-builtin
+        name: str = None,  # cmd_Def
+        tooltip: str = None,  # cmd_def
+        image_tooltip: Union[str, Path] = None,  # cmd_Def
+        image: Union[str, Path] = None,  # cmd_def
+        on_created: Callable = None,  # cmd_def
+        on_input_changed: Callable = None,  # cmd_def
+        on_preview: Callable = None,  # cmd_def
+        on_execute: Callable = None,  # cmd_def
+        on_destroy: Callable = None,  # cmd_def
+        on_key_down: Callable = None,  # cmd_def
+    ):
+        super().__init__(parent)
+        given_args = self._given_args(locals())
+
+        id = self.app.eval_arg(id, self._ident, "id")
+        name = self.app.eval_arg(name, self._ident, "name")
+        tooltip = self.app.eval_arg(tooltip, self._ident, "tooltip")
+        image_tooltip = self.app.eval_arg(image_tooltip, self._ident, "image_tooltip")
+        image = self.app.eval_arg(image, self._ident, "image")
+        on_created = self.app.eval_arg(on_created, self._ident, "on_created")
+        on_input_changed = self.app.eval_arg(
+            on_input_changed, self._ident, "on_input_changed"
+        )
+        on_preview = self.app.eval_arg(on_preview, self._ident, "on_preview")
+        on_execute = self.app.eval_arg(on_execute, self._ident, "on_execute")
+        on_destroy = self.app.eval_arg(on_destroy, self._ident, "on_destroy")
+
+        cmd_ctrl = self.parent.children.itemById(id)
+        cmd_def = adsk.core.Application.get().userInterface.commandDefinitions.itemById(
+            id
+        )
+
+        if cmd_ctrl:
+            # nothingwill be done
+            pass  # TODO implement
+        elif cmd_def:
+            # add definiton to button
+            pass  # TODO implement
 
         else:
-            dummy_cmd_def = adsk.core.Application.get().userInterface.commandDefinitions.addButtonDefinition(
-                str(uuid4()),
-                "<no command connected>",
-                "",
-                dflts.image_parser("transparent"),
+            # create definition and recreate control
+            cmd_def = adsk.core.Application.get().userInterface.commandDefinitions.addButtonDefinition(
+                id, name, tooltip, image
             )
-            dummy_cmd_def.controlDefinition.isVisible = is_visible
-            dummy_cmd_def.controlDefinition.isEnabled = is_enabled
-            dummy_cmd_def.controlDefinition.name = "<no command connected>"
-            # do not connect a handler since its a dummy cmd_def
+            cmd_def.toolClipFilename = image_tooltip
+            cmd_def.controlDefinition.isVisible = self.parent.is_visible
+            cmd_def.controlDefinition.isEnabled = self.parent.is_enabled
+            cmd_def.controlDefinition.name = name
+
+            # TODO all handlers
+            cmd_def.commandCreated.add(
+                handlers.create(
+                    self.app.logger,
+                    name,
+                    on_created,
+                    on_execute,
+                    on_preview,
+                    on_input_changed,
+                    on_key_down,
+                )
+            )
 
             # TODO parse position
-            cmd_ctrl = self.parent.children.addCommand(
-                dummy_cmd_def
+            cmd_ctrl = self.parent.parent.children.addCommand(
+                cmd_def
             )  # , position, True)
-            cmd_ctrl.isPromoted = is_promoted
-            cmd_ctrl.isPromotedByDefault = is_promoted_by_default
-            cmd_ctrl.isVisible = is_visible
+            cmd_ctrl.isPromoted = self.parent.is_promoted
+            cmd_ctrl.isPromotedByDefault = self.parent.is_promoted_by_default
+            cmd_ctrl.isVisible = self.parent.is_visible
+
+            # delete dummy if existing
+            if self.parent.dummy is not None:
+                self.parent.in_fusion.deleteMe()
 
             self._in_fusion = cmd_ctrl
 
+            self.app
             self.app.register_element(self, self.ui_level)
+            # self.app.register_element() # TODO dregister also cmd_def for deletion somehow
             self.app.logger.info(msgs.created_new(self._ident, id))
 
         # TODO properties
-
-
-# class Command(_FusionWrapper):
-#     def __init__(self):
-#         pass
