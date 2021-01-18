@@ -28,6 +28,11 @@ def created_new(type, id):  # pylint:disable=redefined-builtin
     return msg
 
 
+def button_not_empty(cmd_id):
+    msg = "There is already a command {0} connected to this button.".format(cmd_id)
+    return msg
+
+
 ### DEFAULTS ###
 
 

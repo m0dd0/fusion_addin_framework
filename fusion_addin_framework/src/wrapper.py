@@ -541,7 +541,11 @@ class Button(_FusionWrapper):
         self.app.register_element(self, self.ui_level + 1)
         self.app.logger.info(msgs.created_new(self._ident, None))
 
-        # self.is_dummy = True  # TODO better solution
+        self._is_dummy = True  # TODO better solution
+
+    @property
+    def is_dummy(self):
+        return self._is_dummy
 
     # TODO properties
 
@@ -586,12 +590,20 @@ class Command(_FusionWrapper):
             id
         )
 
+        if not self.parent.is_dummy:
+            raise ValueError(msgs.button_not_empty(self.parent.child.id))
+
         if cmd_ctrl:
-            # nothingwill be done
-            pass  # TODO implement
+            not_setable = given_args.keys() - {"id", "parent"}
+            self.app.logger.warning(msgs.already_existing(self._ident, id, not_setable))
         elif cmd_def:
-            # add definiton to button
-            pass  # TODO implement
+            # TODO parse position
+            cmd_ctrl = self.parent.parent.children.addCommand(
+                cmd_def
+            )  # , position, True)
+            cmd_ctrl.isPromoted = self.parent.is_promoted
+            cmd_ctrl.isPromotedByDefault = self.parent.is_promoted_by_default
+            cmd_ctrl.isVisible = self.parent.is_visible
 
         else:
             # create definition and recreate control
