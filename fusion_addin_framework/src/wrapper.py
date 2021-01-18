@@ -14,6 +14,7 @@ from . import messages as msgs
 from . import handlers
 
 from .util.py_utils import create_default_logger
+from .util import appdirs
 
 # TODO manage multiple parent
 # TODO default parents
@@ -24,9 +25,13 @@ from .util.py_utils import create_default_logger
 class FusionApp:
 
     _ui_level = 0
+    _ident = "app"
 
-    def __init__(self, logger=None):
+    def __init__(self, logger=None, name=None, author=None):
         # TODO more feaures (see old)
+        self._name = name
+        self._author = author
+        
         if logger is None:
             logger = create_default_logger(
                 name="faf_logger",
@@ -41,6 +46,8 @@ class FusionApp:
 
         self._effective_defaults = dflts.get_effective_defaults(self.logger)
         self._default_parsers = dflts.get_default_parsers(self.logger)
+
+    def 
 
     def eval_arg(self, value, *keys):
         try:
@@ -70,6 +77,42 @@ class FusionApp:
     @property
     def ui_level(self):
         return self._ui_level
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, new_name):
+        self._name = new_name
+
+    @property
+    def author(self):
+        return self._author
+
+    @author.setter
+    def author(self, new_author):
+        self._author = new_author
+
+    @property
+    def user_state_dir(self):
+        return appdirs.user_state_dir(self.name, self.author)
+
+    @property
+    def user_cache_dir(self):
+        return appdirs.user_cache_dir(self.name, self.author)
+
+    @property
+    def user_config_dir(self):
+        return appdirs.user_config_dir(self.name, self.author)
+
+    @property
+    def user_data_dir(self):
+        return appdirs.user_data_dir(self.name, self.author)
+
+    @property
+    def user_log_dir(self):
+        return appdirs.user_log_dir(self.name, self.author)
 
 
 class _FusionWrapper(ABC):
