@@ -10,7 +10,7 @@ _root = None
 _to_delete = []
 _handlers = []
 
-# ##
+
 def run_framework():
     global _app
     global _ui
@@ -22,11 +22,13 @@ def run_framework():
     panel = faf.Panel(tab)
     btn = faf.Button(panel)
 
-    # def on_execute(arg):
-    #     print("FAF")
-    #     _ui.messageBox("FAF")
+    _app.workspace()
 
-    # cmd_btn = faf.ButtonCommand(panel, on_execute=on_execute)
+    def on_execute(arg):
+        print("FAF")
+        _ui.messageBox("FAF")
+
+    cmd = faf.Command(btn, on_execute=on_execute)
 
 
 def stop_framework():

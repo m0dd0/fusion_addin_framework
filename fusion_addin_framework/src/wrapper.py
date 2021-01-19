@@ -84,6 +84,27 @@ class FusionApp:
             elem = elem.in_fusion
         self._created_elements[level].append(elem)
 
+    def workspace(
+        self,
+        id: str = None,  # pylint:disable=redefined-builtin
+        name: str = None,
+        product_type: str = None,
+        image: Union[str, Path] = None,
+        tooltip_image: Union[str, Path] = None,
+        tooltip_head: str = None,
+        tooltip_text: str = None,
+    ):
+        return Workspace(
+            self,
+            id,
+            name,
+            product_type,
+            image,
+            tooltip_image,
+            tooltip_head,
+            tooltip_text,
+        )
+
     @property
     def ui_level(self):
         return self._ui_level
@@ -133,8 +154,8 @@ class Workspace(_FusionWrapper):
     def __init__(
         self,
         parent: FusionApp,
-        name: str = None,
         id: str = None,  # pylint:disable=redefined-builtin
+        name: str = None,
         product_type: str = None,
         image: Union[str, Path] = None,
         tooltip_image: Union[str, Path] = None,
@@ -271,8 +292,8 @@ class Workspace(_FusionWrapper):
             )
             self._in_fusion.tooltipDescription = new_tooltip_text
 
-    def tab(self, name: str = None, id: str = None):  # pylint:disable=redefined-builtin
-        return Tab(self, name, id)
+    def tab(self, id: str = None, name: str = None):  # pylint:disable=redefined-builtin
+        return Tab(self, id, name)
 
 
 class Tab(_FusionWrapper):
@@ -282,8 +303,8 @@ class Tab(_FusionWrapper):
     def __init__(
         self,
         parent: Workspace,
-        name: str = None,
         id: str = None,  # pylint:disable=redefined-builtin
+        name: str = None,
     ):
         super().__init__(parent)
         given_args = self._given_args(locals())
@@ -337,8 +358,8 @@ class Tab(_FusionWrapper):
 
     def panel(
         self,
-        name: str = None,
         id: str = None,  # pylint:disable=redefined-builtin
+        name: str = None,
         position: int = None,
     ):
         return Panel(self, name, id, position)
@@ -351,8 +372,8 @@ class Panel(_FusionWrapper):
     def __init__(
         self,
         parent: Tab,
-        name: str = None,
         id: str = None,  # pylint:disable=redefined-builtin
+        name: str = None,
         position_index: int = None,
     ):
         super().__init__(parent)
@@ -417,101 +438,7 @@ class Panel(_FusionWrapper):
     def promoted_controls(self):
         return self._in_fusion.promotedControls
 
-
-class ButtonCommand(_FusionWrapper):
-
-    _ident = "button_command"
-
-    def __init__(
-        self,
-        parent: Panel,
-        id: str = None,  # cmd_def #pylint:disable=redefined-builtin
-        name: str = None,  # cmd_Def
-        tooltip: str = None,  # cmd_def
-        image_tooltip: Union[str, Path] = None,  # cmd_Def
-        image: Union[str, Path] = None,  # cmd_def
-        position_index: int = None,  # cmd_ctrl
-        is_visible: bool = None,  # cmd_ctrl, ctrl_def
-        is_enabled: bool = None,  # ctrl_def
-        is_promoted: bool = True,  # cmd_ctrl
-        is_promoted_by_default: bool = True,  # cmd_ctrl
-        on_created: Callable = None,  # cmd_def
-        on_input_changed: Callable = None,  # cmd_def
-        on_preview: Callable = None,  # cmd_def
-        on_execute: Callable = None,  # cmd_def
-        on_destroy: Callable = None,  # cmd_def
-        on_key_down: Callable = None,  # cmd_def
-    ):
-        super().__init__(parent)
-        given_args = self._given_args(locals())
-
-        id = self.app.eval_arg(id, self._ident, "id")
-        name = self.app.eval_arg(name, self._ident, "name")
-        tooltip = self.app.eval_arg(tooltip, self._ident, "tooltip")
-        image_tooltip = self.app.eval_arg(image_tooltip, self._ident, "image_tooltip")
-        image = self.app.eval_arg(image, self._ident, "image")
-        position_index = self.app.eval_arg(
-            position_index, self._ident, "position_index"
-        )
-        is_visible = self.app.eval_arg(is_visible, self._ident, "is_visible")
-        is_enabled = self.app.eval_arg(is_enabled, self._ident, "is_enabled")
-        is_promoted = self.app.eval_arg(is_promoted, self._ident, "is_promoted")
-        is_promoted_by_default = self.app.eval_arg(
-            is_promoted_by_default, self._ident, "is_promoted_by_default"
-        )
-        on_created = self.app.eval_arg(on_created, self._ident, "on_created")
-        on_input_changed = self.app.eval_arg(
-            on_input_changed, self._ident, "on_input_changed"
-        )
-        on_preview = self.app.eval_arg(on_preview, self._ident, "on_preview")
-        on_execute = self.app.eval_arg(on_execute, self._ident, "on_execute")
-        on_destroy = self.app.eval_arg(on_destroy, self._ident, "on_destroy")
-
-        cmd_ctrl = self.parent.children.itemById(id)
-        cmd_def = adsk.core.Application.get().userInterface.commandDefinitions.itemById(
-            id
-        )
-
-        if cmd_ctrl or cmd_def:
-            # not_setabel = given_args.keys() - {"id", "parent"}
-            # TODO implement handling
-            raise ValueError()
-
-        else:
-            cmd_def = adsk.core.Application.get().userInterface.commandDefinitions.addButtonDefinition(
-                id, name, tooltip, image
-            )
-            cmd_def.toolClipFilename = image_tooltip
-            cmd_def.controlDefinition.isVisible = is_visible
-            cmd_def.controlDefinition.isEnabled = is_enabled
-            cmd_def.controlDefinition.name = name
-
-            # TODO all handlers
-            cmd_def.commandCreated.add(
-                handlers.create(
-                    self.app.logger,
-                    name,
-                    on_created,
-                    on_execute,
-                    on_preview,
-                    on_input_changed,
-                    on_key_down,
-                )
-            )
-
-            # TODO parse position
-            cmd_ctrl = self.parent.children.addCommand(cmd_def)  # , position, True)
-            cmd_ctrl.isPromoted = is_promoted
-            cmd_ctrl.isPromotedByDefault = is_promoted_by_default
-            cmd_ctrl.isVisible = is_visible
-
-            self._in_fusion = cmd_ctrl
-
-            self.app.register_element(self, self.ui_level)
-            # self.app.register_element() # TODO dregister also cmd_def for deletion somehow
-            self.app.logger.info(msgs.created_new(self._ident, id))
-
-        # TODO properties
+    # def button()
 
 
 class Button(_FusionWrapper):
