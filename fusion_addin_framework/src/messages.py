@@ -1,12 +1,12 @@
 ### FUSION WRAPPERS ###
 
-# TODO use in setters
-# def setting_on_native(type, id, not_setable):  # pylint:disable=redefined-builtin
-#     msg = (
-#         "The following arguments for the {0} (id: {1}) were ignored since "
-#         "they cant be manipulated on a native {0}: {2}"
-#     ).format(type, id, not_setable)
-#     return msg
+
+def setting_on_native(type, id, not_setable):  # pylint:disable=redefined-builtin
+    msg = (
+        "The following arguments for the {0} (id: {1}) were ignored since "
+        "they cant be manipulated on a native {0}: {2}"
+    ).format(type, id, not_setable)
+    return msg
 
 
 def already_existing(type, id, not_setable):  # pylint:disable=redefined-builtin
@@ -57,14 +57,4 @@ def json_error_in_defaults():
 
 def starting_handler(handler_type, cmd_name):
     msg = "Executing {0} handler of '{1}' command.".format(handler_type, cmd_name)
-    return msg
-
-
-### FRAMEWORK ERRORS ###
-
-
-def default_evaluating_error(keys, value):
-    msg = "Error while evaluating {0} defualt. Returning value {1}. SORRY THIS SHOULDNT HAPPEN.".format(
-        keys, value
-    )
     return msg

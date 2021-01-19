@@ -28,18 +28,16 @@ class FusionApp:
     _ident = "app"
 
     def __init__(self, logger=None, name=None, author=None, debug_to_ui=None):
-        # TODO use defaults parser
         # no need ot use properties since its ok to set them
-        self.name = name
-        self.author = author
+        self.name = self.eval_arg(name, self._ident, "name")
+        self.author = self.eval_arg(author, self._ident, "author")
+        self.debug_to_ui = self.eval_arg(debug_to_ui, self._ident, "debug_to_ui")
 
-        self.user_state_dir = appdirs.user_state_dir(name, author)
-        self.user_cache_dir = appdirs.user_cache_dir(name, author)
-        self.user_config_dir = appdirs.user_config_dir(name, author)
-        self.user_data_dir = appdirs.user_data_dir(name, author)
-        self.user_log_dir = appdirs.user_log_dir(name, author)
-
-        self.debug_to_ui = debug_to_ui
+        self.user_state_dir = appdirs.user_state_dir(self.name, self.author)
+        self.user_cache_dir = appdirs.user_cache_dir(self.name, self.author)
+        self.user_config_dir = appdirs.user_config_dir(self.name, self.author)
+        self.user_data_dir = appdirs.user_data_dir(self.name, self.author)
+        self.user_log_dir = appdirs.user_log_dir(self.name, self.author)
 
         if logger is None:
             logger = create_default_logger(
@@ -58,15 +56,10 @@ class FusionApp:
         self._default_parsers = dflts.get_default_parsers(self.logger)
 
     def eval_arg(self, value, *keys):
-        try:
-            key = tuple(keys)
-            if value is None:
-                value = self._effective_defaults[key]
-            return self._default_parsers[key](value)
-        except:
-            self.logger.error("Failed:\n{}".format(traceback.format_exc()))
-            self.logger.error(msgs.default_evaluating_error(key, value))
-            return value
+        key = tuple(keys)
+        if value is None:
+            value = self._effective_defaults[key]
+        return self._default_parsers[key](value)
 
     def stop(self):
         for level in reversed(sorted(list(self._created_elements.keys()))):

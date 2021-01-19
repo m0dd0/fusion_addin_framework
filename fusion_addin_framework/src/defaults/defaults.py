@@ -62,6 +62,11 @@ def _func_parser(value):
 
 
 _default_parsers = {
+    "app": {
+        "name": lambda v: v,
+        "author": lambda v: v,
+        "debug_to_ui": lambda v: v,
+    },
     "workspace": {
         "id": _random_uuid,  # random or arbitrary string
         # random, arbitraty string
