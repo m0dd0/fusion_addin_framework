@@ -27,18 +27,28 @@ class FusionApp:
     _ui_level = 0
     _ident = "app"
 
-    def __init__(self, logger=None, name=None, author=None):
-        # TODO more feaures (see old)
-        self._name = name
-        self._author = author
-        
+    def __init__(self, logger=None, name=None, author=None, debug_to_ui=None):
+        # TODO use defaults parser
+        # no need ot use properties since its ok to set them
+        self.name = name
+        self.author = author
+
+        self.user_state_dir = appdirs.user_state_dir(name, author)
+        self.user_cache_dir = appdirs.user_cache_dir(name, author)
+        self.user_config_dir = appdirs.user_config_dir(name, author)
+        self.user_data_dir = appdirs.user_data_dir(name, author)
+        self.user_log_dir = appdirs.user_log_dir(name, author)
+
+        self.debug_to_ui = debug_to_ui
+
         if logger is None:
             logger = create_default_logger(
                 name="faf_logger",
-                # TODO log to logfile with appdirs
-                # TODO log to ui option
-                handlers=[logging.StreamHandler()],  # , logging.FileHandler(logfile)],
-                # TODO fix format
+                handlers=[
+                    logging.StreamHandler(),
+                    logging.FileHandler(self.user_log_dir),
+                ],
+                message_format="{asctime} {levelname} {module}/{funcName}: {message}",
             )
         self.logger = logger
 
@@ -46,8 +56,6 @@ class FusionApp:
 
         self._effective_defaults = dflts.get_effective_defaults(self.logger)
         self._default_parsers = dflts.get_default_parsers(self.logger)
-
-    def 
 
     def eval_arg(self, value, *keys):
         try:
@@ -67,7 +75,9 @@ class FusionApp:
                 try:
                     elem.deleteMe()
                 except:
-                    pass  # TODO pass only at definied error
+                    # element is probably already deleted
+                    # TODO catch only this error
+                    pass
 
     def register_element(self, elem, level=0):
         if isinstance(elem, _FusionWrapper):
@@ -77,42 +87,6 @@ class FusionApp:
     @property
     def ui_level(self):
         return self._ui_level
-
-    @property
-    def name(self):
-        return self._name
-
-    @name.setter
-    def name(self, new_name):
-        self._name = new_name
-
-    @property
-    def author(self):
-        return self._author
-
-    @author.setter
-    def author(self, new_author):
-        self._author = new_author
-
-    @property
-    def user_state_dir(self):
-        return appdirs.user_state_dir(self.name, self.author)
-
-    @property
-    def user_cache_dir(self):
-        return appdirs.user_cache_dir(self.name, self.author)
-
-    @property
-    def user_config_dir(self):
-        return appdirs.user_config_dir(self.name, self.author)
-
-    @property
-    def user_data_dir(self):
-        return appdirs.user_data_dir(self.name, self.author)
-
-    @property
-    def user_log_dir(self):
-        return appdirs.user_log_dir(self.name, self.author)
 
 
 class _FusionWrapper(ABC):
@@ -124,7 +98,7 @@ class _FusionWrapper(ABC):
         self._app = self.parent.app
         self._ui_level = self.parent.ui_level + 1
 
-    def _given_args(self, locals):
+    def _given_args(self, locals):  # pylint:disable=redefined-builtin
         return {
             k: v
             for k, v in locals.items()
@@ -260,7 +234,10 @@ class Workspace(_FusionWrapper):
                 msgs.setting_on_native("workspace", new_tooltip_image, "tooltip_image")
             )
         else:
-            dflts.evaluate(new_tooltip_image, "workspace", "tooltip_image")
+            new_tooltip_image = dflts.evaluate(
+                new_tooltip_image, "workspace", "tooltip_image"
+            )
+            self._in_fusion.toolClipFilename = new_tooltip_image
 
     @property
     def tooltip_head(self):
@@ -273,7 +250,10 @@ class Workspace(_FusionWrapper):
                 msgs.setting_on_native("workspace", new_tooltip_head, "tooltip_head")
             )
         else:
-            dflts.evaluate(new_tooltip_head, "workspace", "tooltip_head")
+            new_tooltip_head = dflts.evaluate(
+                new_tooltip_head, "workspace", "tooltip_head"
+            )
+            self._in_fusion.tooltip = new_tooltip_head
 
     @property
     def tooltip_text(self):
@@ -286,9 +266,10 @@ class Workspace(_FusionWrapper):
                 msgs.setting_on_native("workspace", new_tooltip_text, "tooltip_text")
             )
         else:
-            dflts.evaluate(new_tooltip_text, "workspace", "tooltip_text")
-
-        return self._in_fusion.tooltipDescription
+            new_tooltip_text = dflts.evaluate(
+                new_tooltip_text, "workspace", "tooltip_text"
+            )
+            self._in_fusion.tooltipDescription = new_tooltip_text
 
     def tab(self, name: str = None, id: str = None):  # pylint:disable=redefined-builtin
         return Tab(self, name, id)
@@ -661,7 +642,7 @@ class Command(_FusionWrapper):
             # TODO all handlers
             cmd_def.commandCreated.add(
                 handlers.create(
-                    self.app.logger,
+                    self.app,
                     name,
                     on_created,
                     on_execute,

@@ -1,4 +1,10 @@
 {
+    "app": {
+        "logger": null,
+        "name": null,
+        "author": null,
+        "debug_to_ui": true
+    },
     "workspace": {
         "id": "FusionSolidEnvironment",
         "name": "random",
