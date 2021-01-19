@@ -2,7 +2,7 @@ import logging
 
 import adsk.core, adsk.fusion, adsk.cam, traceback
 
-from . import fusion_addin_framework as faf
+# from . import fusion_addin_framework as faf
 
 _app = None
 _ui = None
@@ -12,6 +12,7 @@ _handlers = []
 
 
 def run_framework():
+    # pass
     global _app
     global _ui
 
@@ -49,8 +50,6 @@ def run_classic():
     tab = ws.toolbarTabs.itemById("ToolsTab")
     panel = tab.toolbarPanels.add("my_panel_id", "My Panel")
     _to_delete.append(panel)
-    # panel2 = tab.toolbarPanels.add("my_panel2_id", "My Panel2")
-    # _to_delete.append(pass2)
 
     cmd_def = _ui.commandDefinitions.addButtonDefinition(
         "button_cmd_def_id",
@@ -59,13 +58,12 @@ def run_classic():
         r"C:\Users\mohes\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\fusion_addin_framework\fusion_addin_framework\src\defaults\default_images\lightbulb",
     )
     cmd_def.commandCreated.add(on_command_created)
-    ctrl_def = cmd_def.controlDefinition
+    # ctrl_def = cmd_def.controlDefinition
     _to_delete.append(cmd_def)
 
     cmd_ctrl = panel.controls.addCommand(cmd_def)
     _to_delete.append(cmd_ctrl)
-    # cmd_ctrl2 = panel2.controls.addCommand(cmd_def)
-    # _to_delete.append(cmd_ctrl2)
+    cmd_ctrl.deleteMe()
 
 
 def stop_classic():
@@ -167,8 +165,8 @@ def run(context):
     global _to_delete
     try:
         logging.info("RUN")
-        run_framework()
-        # run_classic()
+        # run_framework()
+        run_classic()
     except:
         print("Failed:\n{}".format(traceback.format_exc()))
 
@@ -176,7 +174,7 @@ def run(context):
 def stop(context):
     try:
         logging.info("STOP")
-        stop_framework()
-        # stop_classic()
+        # stop_framework()
+        stop_classic()
     except:
         print("Failed:\n{}".format(traceback.format_exc()))

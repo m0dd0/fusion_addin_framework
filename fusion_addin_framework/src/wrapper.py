@@ -16,11 +16,6 @@ from . import handlers
 from .util.py_utils import create_default_logger
 from .util import appdirs
 
-# TODO manage multiple parent
-# TODO default parents
-# TODO manage childre, seperation between fusion children and framework children
-# TODO create empty panels, tabs, workspaces
-
 
 class FusionApp:
 
@@ -69,7 +64,6 @@ class FusionApp:
                     elem.deleteMe()
                 except:
                     # element is probably already deleted
-                    # TODO catch only this error
                     pass
 
     def register_element(self, elem, level=0):
@@ -185,7 +179,6 @@ class Workspace(_FusionWrapper):
                     msgs.already_existing(self._ident, id, not_setable)
                 )
             self.app.logger.info(msgs.using_exisitng(self._ident, id))
-            # print(msgs.using_exisitng(self._ident, id))
 
         # create new workspace if there is no
         else:
@@ -234,7 +227,7 @@ class Workspace(_FusionWrapper):
             self._in_fusion.resourceFolder = new_image
 
     @property
-    def children(self):
+    def child_tabs(self):
         return self._in_fusion.toolbarTabs
 
     @property
@@ -305,7 +298,7 @@ class Tab(_FusionWrapper):
         name = self.app.eval_arg(name, self._ident, "name")
         id = self.app.eval_arg(id, self._ident, "id")
 
-        self._in_fusion = self.parent.children.itemById(id)
+        self._in_fusion = self.parent.child_tabs.itemById(id)
 
         if self.in_fusion:
             not_setable = given_args.keys() - {"id", "parent"}
@@ -346,7 +339,7 @@ class Tab(_FusionWrapper):
         return self._in_fusion.name
 
     @property
-    def children(self):
+    def child_panels(self):
         return self._in_fusion.toolbarPanels
 
     def panel(
@@ -378,7 +371,7 @@ class Panel(_FusionWrapper):
             position_index, self._ident, "position_index"
         )
 
-        self._in_fusion = self.parent.children.itemById(id)
+        self._in_fusion = self.parent.child_panels.itemById(id)
 
         if self._in_fusion:
             not_setable = given_args.keys() - {"id", "parent"}
@@ -388,17 +381,23 @@ class Panel(_FusionWrapper):
                 )
             self.app.logger.info(msgs.using_exisitng(self._ident, id))
         else:
-            # TODO position
-            # panel_order = {p.indexWithinTab(): p.id for p in self.parent.children}
-            # for i in sorted(list(panel_order.keys())):  # + [math.inf]:
-            #     if i > position:
-            #         comes_before_id = panel_order[i]
-            #         break
-            self._in_fusion = self.parent.children.add(
-                id, name  # , comes_before_id, True
+            panel_order = {p.indexWithinTab(): p.id for p in self.parent.child_panels}
+            sorted_indices = sorted(list(panel_order.keys()))
+            comes_before_id = None
+            for i in sorted_indices:
+                if i > position:
+                    comes_before_id = panel_order[i]
+                    break
+            # check if index is greater than highest existing index
+            comes_before_flag = True
+            if not comes_before_id:
+                comes_before_id = sorted_indices[-1]
+                comes_before_flag = False
+
+            self._in_fusion = self.parent.child_panels.add(
+                id, name, comes_before_id, comes_before_flag
             )
             # nothing else to set
-            # TODO related workspaces
 
             self.app.register_element(self, self.ui_level)
             self.app.logger.info(msgs.created_new(self._ident, id))
@@ -408,7 +407,7 @@ class Panel(_FusionWrapper):
         return self._in_fusion.indexWithinTab()
 
     @property
-    def children(self):
+    def child_controls(self):
         return self._in_fusion.controls
 
     @property
@@ -457,11 +456,11 @@ class Button(_FusionWrapper):
     def __init__(
         self,
         parent: Panel,
-        position_index: int = None,  # cmd_ctrl
-        is_visible: bool = None,  # cmd_ctrl, ctrl_def
-        is_enabled: bool = None,  # ctrl_def
-        is_promoted: bool = True,  # cmd_ctrl
-        is_promoted_by_default: bool = True,  # cmd_ctrl
+        position_index: int = None,
+        is_visible: bool = None,
+        is_enabled: bool = None,
+        is_promoted: bool = True,
+        is_promoted_by_default: bool = True,
     ):
         super().__init__(parent)
         given_args = self._given_args(locals())
@@ -490,7 +489,9 @@ class Button(_FusionWrapper):
         # do not connect a handler since its a dummy cmd_def
 
         # TODO parse position
-        cmd_ctrl = self.parent.children.addCommand(dummy_cmd_def)  # , position, True)
+        cmd_ctrl = self.parent.child_controls.addCommand(
+            dummy_cmd_def
+        )  # , position, True)
         cmd_ctrl.isPromoted = is_promoted
         cmd_ctrl.isPromotedByDefault = is_promoted_by_default
         cmd_ctrl.isVisible = is_visible
@@ -501,11 +502,11 @@ class Button(_FusionWrapper):
         self.app.register_element(self, self.ui_level + 1)
         self.app.logger.info(msgs.created_new(self._ident, None))
 
-        self._is_dummy = True  # TODO better solution
+        self._connected_command = None
 
     @property
-    def is_dummy(self):
-        return self._is_dummy
+    def connected_command(self):
+        return self.connected_command
 
     def command(
         self,
