@@ -438,7 +438,23 @@ class Panel(_FusionWrapper):
     def promoted_controls(self):
         return self._in_fusion.promotedControls
 
-    # def button()
+    def button(
+        self,
+        parent: Panel,
+        position_index: int = None,
+        is_visible: bool = None,
+        is_enabled: bool = None,
+        is_promoted: bool = True,
+        is_promoted_by_default: bool = True,
+    ):
+        return Button(
+            self,
+            position_index,
+            is_visible,
+            is_enabled,
+            is_promoted,
+            is_promoted_by_default,
+        )
 
 
 class Button(_FusionWrapper):
@@ -498,6 +514,23 @@ class Button(_FusionWrapper):
     def is_dummy(self):
         return self._is_dummy
 
+    def command(
+        self,
+        parent: Button,
+        id: str = None,  # pylint:disable=redefined-builtin
+        name: str = None,
+        image: Union[str, Path] = None,
+        tooltip: str = None,
+        tooltip_image: Union[str, Path] = None,
+        on_created: Callable = None,
+        on_input_changed: Callable = None,
+        on_preview: Callable = None,
+        on_execute: Callable = None,
+        on_destroy: Callable = None,
+        on_key_down: Callable = None,
+    ):
+        return Command(self, id, name, image, tooltip, tooltip_image)
+
     # TODO properties
 
 
@@ -510,9 +543,9 @@ class Command(_FusionWrapper):
         parent: Button,
         id: str = None,  # cmd_def #pylint:disable=redefined-builtin
         name: str = None,  # cmd_Def
-        tooltip: str = None,  # cmd_def
-        image_tooltip: Union[str, Path] = None,  # cmd_Def
         image: Union[str, Path] = None,  # cmd_def
+        tooltip: str = None,  # cmd_def
+        tooltip_image: Union[str, Path] = None,  # cmd_Def
         on_created: Callable = None,  # cmd_def
         on_input_changed: Callable = None,  # cmd_def
         on_preview: Callable = None,  # cmd_def
@@ -526,7 +559,7 @@ class Command(_FusionWrapper):
         id = self.app.eval_arg(id, self._ident, "id")
         name = self.app.eval_arg(name, self._ident, "name")
         tooltip = self.app.eval_arg(tooltip, self._ident, "tooltip")
-        image_tooltip = self.app.eval_arg(image_tooltip, self._ident, "image_tooltip")
+        tooltip_image = self.app.eval_arg(tooltip_image, self._ident, "image_tooltip")
         image = self.app.eval_arg(image, self._ident, "image")
         on_created = self.app.eval_arg(on_created, self._ident, "on_created")
         on_input_changed = self.app.eval_arg(
@@ -561,7 +594,7 @@ class Command(_FusionWrapper):
             cmd_def = adsk.core.Application.get().userInterface.commandDefinitions.addButtonDefinition(
                 id, name, tooltip, image
             )
-            cmd_def.toolClipFilename = image_tooltip
+            cmd_def.toolClipFilename = tooltip_image
             cmd_def.controlDefinition.isVisible = self.parent.is_visible
             cmd_def.controlDefinition.isEnabled = self.parent.is_enabled
             cmd_def.controlDefinition.name = name
