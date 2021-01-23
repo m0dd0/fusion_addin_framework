@@ -1,9 +1,9 @@
-.. fusion_addin_framework documentation master file, created by
-   sphinx-quickstart on Tue Jan 19 21:13:30 2021.
+.. Fusion Addin Framework documentation master file, created by
+   sphinx-quickstart on Sat Jan 23 19:23:36 2021.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to fusion_addin_framework's documentation!
+Welcome to Fusion Addin Framework's documentation!
 ==================================================
 
 .. toctree::
