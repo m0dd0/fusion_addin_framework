@@ -3,8 +3,12 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Fusion Addin Framework's documentation!
+Welcome to the documentation of the Fusion Addin Framework!
 ==================================================
+
+This Framework was created to simplify the creation of Addins for the CAD Software Fusion360.
+
+
 
 .. toctree::
    :maxdepth: 2
