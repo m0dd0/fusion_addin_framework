@@ -1,3 +1,4 @@
+# pylint:disable=all
 # Configuration file for the Sphinx documentation builder.
 #
 # This file only contains a selection of the most common options. For a full
@@ -12,7 +13,8 @@
 #
 # import os
 # import sys
-# sys.path.insert(0, os.path.abspath('.'))
+
+# sys.path.insert(0, os.path.abspath("."))
 
 
 # -- Project information -----------------------------------------------------
@@ -30,6 +32,8 @@ release = "0.2.0"
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
+import sphinx_rtd_theme
+
 extensions = ["sphinx_rtd_theme"]
 
 # Add any paths that contain templates here, relative to this directory.

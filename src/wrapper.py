@@ -23,17 +23,7 @@ class FusionApp:
     _ident = "app"
 
     def __init__(self, logger=None, name=None, author=None, debug_to_ui=None):
-        """[summary]
-
-        :param logger: [description], defaults to None
-        :type logger: [type], optional
-        :param name: [description], defaults to None
-        :type name: [type], optional
-        :param author: [description], defaults to None
-        :type author: [type], optional
-        :param debug_to_ui: [description], defaults to None
-        :type debug_to_ui: [type], optional
-        """
+        
         # no need ot use properties since its ok to set them
         self.name = self.eval_arg(name, self._ident, "name")
         self.author = self.eval_arg(author, self._ident, "author")

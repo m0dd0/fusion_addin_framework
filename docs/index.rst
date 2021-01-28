@@ -1,14 +1,16 @@
 .. Fusion Addin Framework documentation master file, created by
-   sphinx-quickstart on Sat Jan 23 20:31:39 2021.
+   sphinx-quickstart on Sun Jan 24 20:18:47 2021.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to the documentation of the Fusion Addin Framework!
+Welcome to Fusion Addin Framework's documentation!
 ==================================================
 
-This Framework was created to simplify the creation of Addins for the CAD Software Fusion360.
+test
+____
 
-
+test2
+=====
 
 .. toctree::
    :maxdepth: 2
