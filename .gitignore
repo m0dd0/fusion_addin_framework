@@ -6,4 +6,7 @@ __pycache__/
 .DS_STORE
 .DS_Store
 venv
+docs/_build/*
+!docs/_build/.gitkeep
+
 
