@@ -9,20 +9,28 @@ from uuid import uuid4
 import adsk.core
 import adsk.fusion
 
-from . import defaults as dflts
-from . import messages as msgs
-from . import handlers
+try:
+    from . import defaults as dflts
+    from . import messages as msgs
+    from . import handlers
 
-from .util.py_utils import create_default_logger
-from .util import appdirs
-
+    from .util.py_utils import create_default_logger
+    from .util import appdirs
+except:
+    pass
 
 class FusionApp:
+    """[summary]
+
+    :return: [description]
+    :rtype: [type]
+    """
 
     _ui_level = 0
     _ident = "app"
 
     def __init__(self, logger=None, name=None, author=None, debug_to_ui=None):
+
         # no need ot use properties since its ok to set them
         self.name = self.eval_arg(name, self._ident, "name")
         self.author = self.eval_arg(author, self._ident, "author")
@@ -432,7 +440,6 @@ class Panel(_FusionWrapper):
 
     def button(
         self,
-        parent: Panel,
         position_index: int = None,
         is_visible: bool = None,
         is_enabled: bool = None,
@@ -510,7 +517,6 @@ class Button(_FusionWrapper):
 
     def command(
         self,
-        parent: Button,
         id: str = None,  # pylint:disable=redefined-builtin
         name: str = None,
         image: Union[str, Path] = None,
