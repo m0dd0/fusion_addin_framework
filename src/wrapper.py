@@ -101,6 +101,10 @@ class FusionApp:
     def ui_level(self):
         return self._ui_level
 
+    @property
+    def app(self):
+        return self
+
 
 class _FusionWrapper(ABC):
     _parent = None
@@ -155,7 +159,6 @@ class Workspace(_FusionWrapper):
         tooltip_text: str = None,
     ):
         super().__init__(parent)
-        self.app = parent  # override
 
         # get the names of all attributes that were passen to the init
         given_args = self._given_args(locals())
