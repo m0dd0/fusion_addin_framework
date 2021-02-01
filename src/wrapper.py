@@ -9,15 +9,12 @@ from uuid import uuid4
 import adsk.core
 import adsk.fusion
 
-try:
-    from . import defaults as dflts
-    from . import messages as msgs
-    from . import handlers
+from . import defaults as dflts
+from . import messages as msgs
+from . import handlers
 
-    from .util.py_utils import create_default_logger
-    from .util import appdirs
-except:
-    pass
+from .util.py_utils import create_default_logger
+from .util import appdirs
 
 class FusionApp:
     """[summary]
@@ -30,6 +27,9 @@ class FusionApp:
     _ident = "app"
 
     def __init__(self, logger=None, name=None, author=None, debug_to_ui=None):
+        # needs to be executed first to allow evaluation of parameters
+        self._effective_defaults = dflts.get_effective_defaults(logging.getLogger())
+        self._default_parsers = dflts.get_default_parsers(logging.getLogger())
 
         # no need ot use properties since its ok to set them
         self.name = self.eval_arg(name, self._ident, "name")
@@ -54,9 +54,6 @@ class FusionApp:
         self.logger = logger
 
         self._created_elements = defaultdict(list)
-
-        self._effective_defaults = dflts.get_effective_defaults(self.logger)
-        self._default_parsers = dflts.get_default_parsers(self.logger)
 
     def eval_arg(self, value, *keys):
         key = tuple(keys)
