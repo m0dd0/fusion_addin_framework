@@ -27,9 +27,18 @@ class FusionApp:
     _ident = "app"
 
     def __init__(self, logger=None, name=None, author=None, debug_to_ui=None):
-        # needs to be executed first to allow evaluation of parameters
-        self._effective_defaults = dflts.get_effective_defaults(logging.getLogger())
-        self._default_parsers = dflts.get_default_parsers(logging.getLogger())
+        if logger is None:
+            logger = create_default_logger(
+                name="faf_logger",
+                handlers=[
+                    logging.StreamHandler(),
+                ],
+                message_format="{asctime} {levelname} {module}/{funcName}: {message}",
+            )
+        self.logger = logger
+
+        self._effective_defaults = dflts.get_effective_defaults(self.logger)
+        self._default_parsers = dflts.get_default_parsers(self.logger)
 
         # no need ot use properties since its ok to set them
         self.name = self.eval_arg(name, self._ident, "name")
@@ -42,16 +51,7 @@ class FusionApp:
         self.user_data_dir = appdirs.user_data_dir(self.name, self.author)
         self.user_log_dir = appdirs.user_log_dir(self.name, self.author)
 
-        if logger is None:
-            logger = create_default_logger(
-                name="faf_logger",
-                handlers=[
-                    logging.StreamHandler(),
-                    logging.FileHandler(self.user_log_dir),
-                ],
-                message_format="{asctime} {levelname} {module}/{funcName}: {message}",
-            )
-        self.logger = logger
+        self.logger.handlers.append(logging.FileHandler(self.user_log_dir))
 
         self._created_elements = defaultdict(list)
 
