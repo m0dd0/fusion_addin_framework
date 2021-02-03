@@ -14,7 +14,7 @@ from pathlib import Path
 import sys
 import os
 
-module_path = str(Path(__file__).parents[2])
+module_path = str(Path(__file__).parents[3])
 sys.path.append(module_path)
 
 

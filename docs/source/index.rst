@@ -1,7 +1,7 @@
 Introduction
 ============
 
-.. autoclass:: src.wrapper.FusionApp
+.. autoclass:: fusion_addin_framework.FusionApp
    :members:
 
 .. toctree::
