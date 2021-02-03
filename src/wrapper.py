@@ -2,7 +2,6 @@ import logging
 from pathlib import Path
 from abc import ABC
 from typing import Union, Callable
-import traceback
 from collections import defaultdict
 from uuid import uuid4
 
@@ -16,12 +15,17 @@ from . import handlers
 from .util.py_utils import create_default_logger
 from .util import appdirs
 
-class FusionApp:
-    """[summaryqweqwewqe]
 
-    Returns:
-        [type]: [description]
-    """ 
+class FusionApp:
+    """[summary]
+
+    Args:
+        logger ([type], optional): [description]. Defaults to None.
+        name ([type], optional): [description]. Defaults to None.
+        author ([type], optional): [description]. Defaults to None.
+        debug_to_ui ([type], optional): [description]. Defaults to None.
+    """
+
     _ui_level = 0
     _ident = "app"
 
@@ -55,12 +59,21 @@ class FusionApp:
         self._created_elements = defaultdict(list)
 
     def eval_arg(self, value, *keys):
+        """[summary]
+
+        Args:
+            value ([type]): [description]
+
+        Returns:
+            [type]: [description]
+        """
         key = tuple(keys)
         if value is None:
             value = self._effective_defaults[key]
         return self._default_parsers[key](value)
 
     def stop(self):
+        """[summary]"""
         for level in reversed(sorted(list(self._created_elements.keys()))):
             elems = self._created_elements.pop(level)
             for elem in elems:
@@ -71,6 +84,12 @@ class FusionApp:
                     pass
 
     def register_element(self, elem, level=0):
+        """[summary]
+
+        Args:
+            elem ([type]): [description]
+            level (int, optional): [description]. Defaults to 0.
+        """
         if isinstance(elem, _FusionWrapper):
             elem = elem.in_fusion
         self._created_elements[level].append(elem)
@@ -80,11 +99,25 @@ class FusionApp:
         id: str = None,  # pylint:disable=redefined-builtin
         name: str = None,
         product_type: str = None,
-        image: Union[str, Path] = None,
-        tooltip_image: Union[str, Path] = None,
+        image: Union[str, Path] = None,  # pylint:disable=unsubscriptable-object
+        tooltip_image: Union[str, Path] = None,  # pylint:disable=unsubscriptable-object
         tooltip_head: str = None,
         tooltip_text: str = None,
     ):
+        """[summary]
+
+        Args:
+            id (str, optional): [description]. Defaults to None.
+            name (str, optional): [description]. Defaults to None.
+            product_type (str, optional): [description]. Defaults to None.
+            image (Union[str, Path], optional): [description]. Defaults to None.
+            tooltip_image (Union[str, Path], optional): [description]. Defaults to None.
+            tooltip_head (str, optional): [description]. Defaults to None.
+            tooltip_text (str, optional): [description]. Defaults to None.
+
+        Returns:
+            [type]: [description]
+        """
         return Workspace(
             self,
             id,
@@ -98,10 +131,20 @@ class FusionApp:
 
     @property
     def ui_level(self):
+        """[summary]
+
+        Returns:
+            [type]: [description]
+        """
         return self._ui_level
 
     @property
     def app(self):
+        """[summary]
+
+        Returns:
+            [type]: [description]
+        """
         return self
 
 

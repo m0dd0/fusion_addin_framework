@@ -9,10 +9,9 @@
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#
+# pylint:disable=invalid-name
 from pathlib import Path
 import sys
-import os
 
 module_path = str(Path(__file__).parents[3])
 sys.path.append(module_path)
@@ -21,7 +20,7 @@ sys.path.append(module_path)
 # -- Project information -----------------------------------------------------
 
 project = "Fusion Addin Framework"
-copyright = "2021, Moritz Hesche"
+copyright = "2021, Moritz Hesche"  # pylint:disable=redefined-builtin
 author = "Moritz Hesche"
 
 # The full version, including alpha/beta/rc tags
@@ -58,6 +57,8 @@ html_static_path = []
 
 
 autodoc_mock_imports = ["adsk"]
+
+autodoc_member_order = "bysource"
 
 # Napoleon settings
 napoleon_google_docstring = True
