@@ -17,12 +17,11 @@ from .util.py_utils import create_default_logger
 from .util import appdirs
 
 class FusionApp:
-    """[summary]
+    """[summaryqweqwewqe]
 
-    :return: [description]
-    :rtype: [type]
-    """
-
+    Returns:
+        [type]: [description]
+    """ 
     _ui_level = 0
     _ident = "app"
 
