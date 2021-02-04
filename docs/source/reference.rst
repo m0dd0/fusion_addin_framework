@@ -4,9 +4,9 @@ Reference
 UI Wrapper
 ----------
 
-.. autoclass:: fusion_addin_framework.FusionApp
-   :members:
-   :exclude-members: app
+.. autosummary::
+   :toctree: stubs
+   :template: classmembers.rst
 
-.. autoclass:: fusion_addin_framework.Workspace
-   :members:
+   fusion_addin_framework.FusionApp
+   fusion_addin_framework.Workspace
