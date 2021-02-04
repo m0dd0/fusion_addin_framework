@@ -59,6 +59,7 @@ html_static_path = []
 autodoc_mock_imports = ["adsk"]
 
 autodoc_member_order = "bysource"
+autoclass_content = "init"
 
 # Napoleon settings
 napoleon_google_docstring = True

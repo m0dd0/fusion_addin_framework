@@ -17,19 +17,18 @@ from .util import appdirs
 
 
 class FusionApp:
-    """[summary]
-
-    Args:
-        logger ([type], optional): [description]. Defaults to None.
-        name ([type], optional): [description]. Defaults to None.
-        author ([type], optional): [description]. Defaults to None.
-        debug_to_ui ([type], optional): [description]. Defaults to None.
-    """
-
     _ui_level = 0
     _ident = "app"
 
     def __init__(self, logger=None, name=None, author=None, debug_to_ui=None):
+        """[summaryyyy]
+
+        Args:
+            logger ([type], optional): [description]. Defaults to None.
+            name ([type], optional): [description]. Defaults to None.
+            author ([type], optional): [description]. Defaults to None.
+            debug_to_ui ([type], optional): [description]. Defaults to None.
+        """
         if logger is None:
             logger = create_default_logger(
                 name="faf_logger",
@@ -153,11 +152,24 @@ class _FusionWrapper(ABC):
     _in_fusion = None
 
     def __init__(self, parent):
+        """[summary]
+
+        Args:
+            parent ([type]): [description]
+        """
         self._parent = parent
         self._app = self.parent.app
         self._ui_level = self.parent.ui_level + 1
 
     def _given_args(self, locals):  # pylint:disable=redefined-builtin
+        """[summary]
+
+        Args:
+            locals ([type]): [description]
+
+        Returns:
+            [type]: [description]
+        """
         return {
             k: v
             for k, v in locals.items()
@@ -166,27 +178,51 @@ class _FusionWrapper(ABC):
 
     @property
     def id(self):
+        """[summary]
+
+        Returns:
+            [type]: [description]
+        """
         return self._in_fusion.id
 
     @property
     def in_fusion(self):
+        """[summary]
+
+        Returns:
+            [type]: [description]
+        """
         return self._in_fusion
 
     @property
     def parent(self):
+        """[summary]
+
+        Returns:
+            [type]: [description]
+        """
         return self._parent
 
     @property
     def ui_level(self):
+        """[summary]
+
+        Returns:
+            [type]: [description]
+        """
         return self._ui_level
 
     @property
     def app(self):
+        """[summary]
+
+        Returns:
+            [type]: [description]
+        """
         return self._app
 
 
 class Workspace(_FusionWrapper):
-
     _ident = "workspace"
 
     def __init__(
@@ -200,6 +236,17 @@ class Workspace(_FusionWrapper):
         tooltip_head: str = None,
         tooltip_text: str = None,
     ):
+        """[summary]
+
+        Args:
+            parent (FusionApp): [description]
+            id (str, optional): [description]. Defaults to None.
+            product_type (str, optional): [description]. Defaults to None.
+            image (Union[str, Path], optional): [description]. Defaults to None.
+            tooltip_image (Union[str, Path], optional): [description]. Defaults to None.
+            tooltip_head (str, optional): [description]. Defaults to None.
+            tooltip_text (str, optional): [description]. Defaults to None.
+        """
         super().__init__(parent)
 
         # get the names of all attributes that were passen to the init
@@ -244,26 +291,56 @@ class Workspace(_FusionWrapper):
 
     @property
     def is_active(self):
+        """[summary]
+
+        Returns:
+            [type]: [description]
+        """
         return self._in_fusion.isActive
 
     @property
     def is_native(self):
+        """[summary]
+
+        Returns:
+            [type]: [description]
+        """
         return self._in_fusion.isNative
 
     @property
     def is_valid(self):
+        """[summary]
+
+        Returns:
+            [type]: [description]
+        """
         return self._in_fusion.isValid
 
     @property
     def name(self):
+        """[summary]
+
+        Returns:
+            [type]: [description]
+        """
         return self._in_fusion.name
 
     @property
     def product_type(self):
+        """[summary]
+
+        Returns:
+            [type]: [description]
+        """
         return self._in_fusion.productType
 
     @property
     def image(self):
+        """[summary]
+
+        Returns:
+            [type]: [description]
+        """
         return self._in_fusion.resourceFolder
 
     @image.setter
@@ -278,10 +355,20 @@ class Workspace(_FusionWrapper):
 
     @property
     def child_tabs(self):
+        """[summary]
+
+        Returns:
+            [type]: [description]
+        """
         return self._in_fusion.toolbarTabs
 
     @property
     def tooltip_image(self):
+        """[summary]
+
+        Returns:
+            [type]: [description]
+        """
         return self._in_fusion.toolClipFilename
 
     @tooltip_image.setter
@@ -298,6 +385,11 @@ class Workspace(_FusionWrapper):
 
     @property
     def tooltip_head(self):
+        """[summary]
+
+        Returns:
+            [type]: [description]
+        """
         return self._in_fusion.tooltip
 
     @tooltip_head.setter
@@ -314,6 +406,11 @@ class Workspace(_FusionWrapper):
 
     @property
     def tooltip_text(self):
+        """[summary]
+
+        Returns:
+            [type]: [description]
+        """
         return self._in_fusion.tooltip_description
 
     @tooltip_text.setter
@@ -329,6 +426,15 @@ class Workspace(_FusionWrapper):
             self._in_fusion.tooltipDescription = new_tooltip_text
 
     def tab(self, id: str = None, name: str = None):  # pylint:disable=redefined-builtin
+        """[summary]
+
+        Args:
+            id (str, optional): [description]. Defaults to None.
+            name (str, optional): [description]. Defaults to None.
+
+        Returns:
+            [type]: [description]
+        """
         return Tab(self, id, name)
 
 
