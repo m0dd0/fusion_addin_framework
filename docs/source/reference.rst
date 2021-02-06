@@ -6,7 +6,8 @@ UI Wrapper
 
 .. autosummary::
    :toctree: stubs
-   :template: classmembers.rst
+   :nosignatures:
+   :template: customclasstemplate.rst
 
    fusion_addin_framework.FusionApp
    fusion_addin_framework.Workspace
