@@ -73,7 +73,7 @@ _default_parsers = {
         "name": partial(_random_select, _random_names["workspace"]),
         "product_type": lambda v: v,  # ['Designproducttype']
         "image": _image_parser,  # pfad, random, [<default_images>]
-        "tooltip_image": _image_parser,  # pfad, random, [<default_images>]
+        "tooltip_image": _image_parser,  # pfad, random, [<default_images>] # TODO different parser sinc the full image path is needed and not only the containing directory
         "tooltip_head": lambda v: v,  # arbitrary string
         "tooltip_text": lambda v: v,  # arbitrary string
     },

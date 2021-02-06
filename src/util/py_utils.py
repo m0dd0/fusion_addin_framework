@@ -1,9 +1,23 @@
+"""[summary]
+
+Returns:
+    [type]: [description]
+"""
+
 from typing import Iterable
 import logging
 import json
 
 
 def flatten_dict(d):
+    """[summary]
+
+    Args:
+        d ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
     flattened = {}
 
     def _traverse_dict(d, upper_keys):
@@ -23,6 +37,17 @@ def create_default_logger(
     level: int = logging.DEBUG,
     message_format: str = "{asctime} {levelname} {module}/{funcName}: {message}",
 ):
+    """[summary]
+
+    Args:
+        name (str): [description]
+        handlers (Iterable[logging.Handler]): [description]
+        level (int, optional): [description]. Defaults to logging.DEBUG.
+        message_format (str, optional): [description]. Defaults to "{asctime} {levelname} {module}/{funcName}: {message}".
+
+    Returns:
+        [type]: [description]
+    """
     logger = logging.getLogger(name)
 
     # logger always at lowest level set only handlers levels are set by level attribute
@@ -45,6 +70,14 @@ def create_default_logger(
 
 
 def load_json_file(path):
+    """[summary]
+
+    Args:
+        path ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
     with open(path) as json_file:
         json_data = json.load(json_file)
     return json_data
