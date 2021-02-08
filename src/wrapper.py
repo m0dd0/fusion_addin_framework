@@ -521,34 +521,6 @@ class Tab(_FusionWrapper):
             self.app.register_element(self, self.ui_level)
             self.app.logger.info(msgs.created_new(self._ident, id))
 
-    @property
-    def position(self):
-        return self._in_fusion.index
-
-    @property
-    def is_active(self):
-        return self._in_fusion.isActive
-
-    @property
-    def is_native(self):
-        return self._in_fusion.isNative
-
-    @property
-    def is_visible(self):
-        return self._in_fusion.isVisible
-
-    @property
-    def is_valid(self):
-        return self._in_fusion.isValid
-
-    @property
-    def name(self):
-        return self._in_fusion.name
-
-    @property
-    def child_panels(self):
-        return self._in_fusion.toolbarPanels
-
     def panel(
         self,
         id: str = None,  # pylint:disable=redefined-builtin
@@ -556,6 +528,60 @@ class Tab(_FusionWrapper):
         position: int = None,
     ):
         return Panel(self, name, id, position)
+
+    @property
+    def position(self):
+        """ "Gets the position this tab is in within the toolbar. The first tab is
+        at position 0. This value is with respect to the complete list of tabs so
+        this value could be outside of the expected range if you have a collection
+        of tabs associated with a workspace, which is a subset of the entire list of tabs."
+        (Read only, `official docs <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-DA16E678-F571-422B-A42F-D964C092B49C>_`)
+        """
+        return self._in_fusion.index
+
+    @property
+    def is_active(self):
+        """ "Gets if this toolbar tab is currently active - i.e. displayed."
+        (Read only, `official docs <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-B54F2692-F167-4950-B465-4330379B9B3D>_`)
+        """
+        return self._in_fusion.isActive
+
+    @property
+    def is_native(self):
+        """ "Gets if this tab is native to Fusion 360 or was created via the API."
+        (Read only, `official docs <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-F5DE1649-C025-46DB-8F2E-AA9B7852BB4A>_`)
+        """
+        return self._in_fusion.isNative
+
+    @property
+    def is_visible(self):
+        """ "Gets whether this tab is currently being displayed in the user interface."
+        (Read only, `official docs <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-0DA0535A-EC20-450F-B4E0-6DAA7F21B022>_`)
+        """
+        return self._in_fusion.isVisible
+
+    @property
+    def is_valid(self):
+        """ "Indicates if this object is still valid, i.e. hasn't been deleted or
+        some other action done to invalidate the reference."
+        (Read only, `official docs <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-3B2DC592-EA8D-4A7D-B147-1E5E8897A0E5>_`)
+        """
+        return self._in_fusion.isValid
+
+    @property
+    def name(self):
+        """ "Gets the name of the tab as seen in the user interface."
+        (Read only, `official docs <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-BF03BCDB-32F3-4066-A9EE-B32599DDC27D>_`)
+        """
+        return self._in_fusion.name
+
+    @property
+    def child_panels(self):
+        """ "Gets the collection containing the panels associated with this tab.
+        It's through this collection that you can add new toolbar panels."
+        (Read only, `official docs <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-DE74300B-BA9D-433C-9A08-69218005E8BA>_`)
+        """
+        return self._in_fusion.toolbarPanels
 
 
 class Panel(_FusionWrapper):
