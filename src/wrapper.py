@@ -635,34 +635,6 @@ class Panel(_FusionWrapper):
             self.app.register_element(self, self.ui_level)
             self.app.logger.info(msgs.created_new(self._ident, id))
 
-    @property
-    def position(self):
-        return self._in_fusion.indexWithinTab()
-
-    @property
-    def child_controls(self):
-        return self._in_fusion.controls
-
-    @property
-    def index(self):
-        return self._in_fusion.index
-
-    @property
-    def is_valid(self):
-        return self._in_fusion.isValid
-
-    @property
-    def is_visible(self):
-        return self._in_fusion.isVisible
-
-    @property
-    def name(self):
-        return self._in_fusion.name
-
-    @property
-    def promoted_controls(self):
-        return self._in_fusion.promotedControls
-
     def button(
         self,
         position_index: int = None,
@@ -679,6 +651,65 @@ class Panel(_FusionWrapper):
             is_promoted,
             is_promoted_by_default,
         )
+
+    @property
+    def position(self):
+        """ "Gets the position this panel is in within the toolbar tab. The first
+        panel in the tab is at position 0."
+        (Read only, `official docs <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-148C2831-F0E3-4DF9-8ED2-AC1F0B561B77>_`)
+        """
+        return self._in_fusion.indexWithinTab()
+
+    @property
+    def child_controls(self):
+        """ "Gets the controls associated with this panel. These are all in the
+        panel's drop-down (assuming their visible property is true) and are
+        selectively shown within the panel."
+        (Read only, `official docs <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-34d0c84b-302d-4bbf-819d-c92beb3db4ff>_`)
+        """
+        return self._in_fusion.controls
+
+    @property
+    def index(self):
+        """ "Gets the position this panel is in within the toolbar. The first panel
+        is at position 0. This value is with respect to the complete list of panels
+        so this value could be outside of the expected range if you have a collection
+        of panels associated with a workspace, which is a subset of the entire list of panels."
+        (Read only, `official docs <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-2aa563c4-93bf-4c8b-8c66-ec204e405716>_`)
+        """
+        return self._in_fusion.index
+
+    @property
+    def is_valid(self):
+        """ "Indicates if this object is still valid, i.e. hasn't been deleted or
+        some other action done to invalidate the reference."
+        (Read only, `official docs <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-43d2846d-6a4f-448d-a494-f46e77dbfc96>_`)
+        """
+        return self._in_fusion.isValid
+
+    @property
+    def is_visible(self):
+        """ ""
+        (Read only, `official docs <>_`)
+        """
+        return self._in_fusion.isVisible
+
+    @property
+    def name(self):
+        """ "Gets whether this panel is currently being displayed in the user interface.
+        Visibility of a panel is controlled by it being associated with the currently
+        active workspace."
+        (Read only, `official docs <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-f660e4f0-bdd5-469b-9d7e-eb2a8be38050>_`)
+        """
+        return self._in_fusion.name
+
+    @property
+    def promoted_controls(self):
+        """ "Gets the controls in the panel that have been promoted.
+        Promoted controls are the controls that are displayed within the panel."
+        (Read only, `official docs <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-234ef3f2-7c5c-4daf-a6e8-94ea423dd2d8>_`)
+        """
+        return self._in_fusion.promotedControls
 
 
 class Button(_FusionWrapper):
