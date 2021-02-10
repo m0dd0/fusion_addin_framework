@@ -76,7 +76,7 @@ html_static_path = []
 autodoc_mock_imports = ["adsk"]
 
 autodoc_member_order = "bysource"
-autoclass_content = "init"
+autoclass_content = "both"
 autosummary_generate = True
 
 # Napoleon settings

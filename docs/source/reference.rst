@@ -5,20 +5,13 @@ UI Wrapper
 ----------
 
 .. autosummary::
-   :toctree: stubs
+   :toctree: wrapper_classes
    :nosignatures:
    :template: customclasstemplate.rst
 
    fusion_addin_framework.FusionApp
    fusion_addin_framework.Workspace
-
-
-Utilities
----------
-
-.. autosummary::
-   :toctree: stubs
-   :nosignatures:
-   :template: custommoduletemplate.rst
-
-   fusion_addin_framework.py_utils
+   fusion_addin_framework.Tab
+   fusion_addin_framework.Panel
+   fusion_addin_framework.Button
+   fusion_addin_framework.Command

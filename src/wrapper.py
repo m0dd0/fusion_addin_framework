@@ -102,6 +102,16 @@ class _FusionWrapper(ABC):
 
 
 class FusionApp:
+    """
+    An Addin object is the entry point to create all your elements that will
+    appear in the user interface. It handles their creation and deletes them
+    if the addin is deactivated (by closing Fusion or stopping the Addin
+    manually).
+    It also manages the creation of logfiles, creating directories for user
+    data, setting some logging configurations and other utilities you might
+    find useful.
+    """
+
     _ui_level = 0
     _ident = "app"
 
@@ -114,13 +124,8 @@ class FusionApp:
     ):
         """A Addin Instance.
 
-        An Addin object is the entry point to create all your elements that will
-        appear in the user interface. It handles their creation and deletes them
-        if the addin is deactivated (by closing Fusion or stopping the Addin
-        manually).
-        It also manages the creation of logfiles, creating directories for user
-        data, setting some logging configurations and other utilities you might
-        find useful.
+        inti
+
 
         Args:
             logger (logging.Logger, optional): The logger that is used by the
