@@ -1,40 +1,157 @@
 import logging
 from pathlib import Path
 from abc import ABC
-from typing import Union, Callable
-import traceback
+from typing import Union, Callable, Any, List
 from collections import defaultdict
 from uuid import uuid4
 
 import adsk.core
 import adsk.fusion
 
-try:
-    from . import defaults as dflts
-    from . import messages as msgs
-    from . import handlers
+from . import defaults as dflts
+from . import messages as msgs
+from . import handlers
 
-    from .util.py_utils import create_default_logger
-    from .util import appdirs
-except:
-    pass
+from .util.py_utils import create_default_logger
+from .util import appdirs
 
-class FusionApp:
-    """[summary]
 
-    :return: [description]
-    :rtype: [type]
+class _FusionWrapper(ABC):
+    """Base class for all Fusion UI wrapper classes.
+
+    Provides basic functionality used by the framework to handle the wrapper instances.
+    Such as having a app attribute, which contains the controlling addin instance.
+    Also sets the ui_level which is a atrtibute used by all wrapper classes.
+    Defining class variables shared by all wrapper classes.
     """
 
+    _parent = None
+    _in_fusion = None
+
+    def __init__(self, parent):
+        """Initialises FusionWrapper instance.
+
+        Sets the attributes an
+
+        Args:
+            parent ([type]): [description]
+        """
+        self._parent = parent
+        self._app = self.parent.app
+        self._ui_level = self.parent.ui_level + 1
+
+    def _given_args(self, locals):  # pylint:disable=redefined-builtin
+        """[summary]
+
+        Args:
+            locals ([type]): [description]
+
+        Returns:
+            [type]: [description]
+        """
+        return {
+            k: v
+            for k, v in locals.items()
+            if v is not None and k not in ["self", "__class__"]
+        }
+
+    @property
+    def id(self):
+        """[summary]
+
+        Returns:
+            [type]: [description]
+        """
+        return self._in_fusion.id
+
+    @property
+    def in_fusion(self):
+        """[summary]
+
+        Returns:
+            [type]: [description]
+        """
+        return self._in_fusion
+
+    @property
+    def parent(self):
+        """[summary]
+
+        Returns:
+            [type]: [description]
+        """
+        return self._parent
+
+    @property
+    def ui_level(self):
+        """[summary]
+
+        Returns:
+            [type]: [description]
+        """
+        return self._ui_level
+
+    @property
+    def app(self):
+        """[summary]
+
+        Returns:
+            [type]: [description]
+        """
+        return self._app
+
+
+class FusionApp:
     _ui_level = 0
     _ident = "app"
 
-    def __init__(self, logger=None, name=None, author=None, debug_to_ui=None):
+    def __init__(
+        self,
+        logger: logging.Logger = None,
+        name: str = None,
+        author: str = None,
+        debug_to_ui: bool = None,
+    ):
+        """A Addin Instance.
+
+        An Addin object is the entry point to create all your elements that will
+        appear in the user interface. It handles their creation and deletes them
+        if the addin is deactivated (by closing Fusion or stopping the Addin
+        manually).
+        It also manages the creation of logfiles, creating directories for user
+        data, setting some logging configurations and other utilities you might
+        find useful.
+
+        Args:
+            logger (logging.Logger, optional): The logger that is used by the
+                framework for logging messages about building your UI elements etc.
+                Defaults to a basic logger.
+            name (str, optional): The name of the addin. Used by appdirs to create
+                directories. Defaults to None.
+            author (str, optional): The name of the addins author. Used by appdirs
+                to create directories. Defaults to None.
+            debug_to_ui (bool, optional): Flag indicating if erorr messages caused
+                by errrors in the callbacks are displayed in a `messageBox
+                <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-1692a9a4-3be0-4474-9e15-02fac696b2b2>`_
+                or not. Defaults to True.
+        """
+        if logger is None:
+            logger = create_default_logger(
+                name="faf_logger",
+                handlers=[
+                    logging.StreamHandler(),
+                ],
+                message_format="{asctime} {levelname} {module}/{funcName}: {message}",
+            )
+        self.logger = logger
+
+        self._effective_defaults = dflts.get_effective_defaults(self.logger)
+        self._default_parsers = dflts.get_default_parsers(self.logger)
 
         # no need ot use properties since its ok to set them
-        self.name = self.eval_arg(name, self._ident, "name")
-        self.author = self.eval_arg(author, self._ident, "author")
-        self.debug_to_ui = self.eval_arg(debug_to_ui, self._ident, "debug_to_ui")
+        self.name = self.eval_arg(name, [self._ident, "name"])
+        self.author = self.eval_arg(author, [self._ident, "author"])
+        self.debug_to_ui = self.eval_arg(debug_to_ui, [self._ident, "debug_to_ui"])
 
         self.user_state_dir = appdirs.user_state_dir(self.name, self.author)
         self.user_cache_dir = appdirs.user_cache_dir(self.name, self.author)
@@ -42,53 +159,37 @@ class FusionApp:
         self.user_data_dir = appdirs.user_data_dir(self.name, self.author)
         self.user_log_dir = appdirs.user_log_dir(self.name, self.author)
 
-        if logger is None:
-            logger = create_default_logger(
-                name="faf_logger",
-                handlers=[
-                    logging.StreamHandler(),
-                    logging.FileHandler(self.user_log_dir),
-                ],
-                message_format="{asctime} {levelname} {module}/{funcName}: {message}",
-            )
-        self.logger = logger
+        self.logger.handlers.append(logging.FileHandler(self.user_log_dir))
 
         self._created_elements = defaultdict(list)
-
-        self._effective_defaults = dflts.get_effective_defaults(self.logger)
-        self._default_parsers = dflts.get_default_parsers(self.logger)
-
-    def eval_arg(self, value, *keys):
-        key = tuple(keys)
-        if value is None:
-            value = self._effective_defaults[key]
-        return self._default_parsers[key](value)
-
-    def stop(self):
-        for level in reversed(sorted(list(self._created_elements.keys()))):
-            elems = self._created_elements.pop(level)
-            for elem in elems:
-                try:
-                    elem.deleteMe()
-                except:
-                    # element is probably already deleted
-                    pass
-
-    def register_element(self, elem, level=0):
-        if isinstance(elem, _FusionWrapper):
-            elem = elem.in_fusion
-        self._created_elements[level].append(elem)
 
     def workspace(
         self,
         id: str = None,  # pylint:disable=redefined-builtin
         name: str = None,
         product_type: str = None,
-        image: Union[str, Path] = None,
-        tooltip_image: Union[str, Path] = None,
+        image: Union[str, Path] = None,  # pylint:disable=unsubscriptable-object
+        tooltip_image: Union[str, Path] = None,  # pylint:disable=unsubscriptable-object
         tooltip_head: str = None,
         tooltip_text: str = None,
     ):
+        """Creates a workspace as a child of this Adddin.
+
+        Calling this method is the same as calling fusion_addin_framework.Workspace()
+        with this addin instance as parent.
+
+        Args:
+            id (str, optional): The id of the workspace. Defaults to a random uuid.
+            name (str, optional): [description]. Defaults to None.
+            product_type (str, optional): [description]. Defaults to None.
+            image (Union[str, Path], optional): [description]. Defaults to None.
+            tooltip_image (Union[str, Path], optional): [description]. Defaults to None.
+            tooltip_head (str, optional): [description]. Defaults to None.
+            tooltip_text (str, optional): [description]. Defaults to None.
+
+        Returns:
+            [type]: [description]
+        """
         return Workspace(
             self,
             id,
@@ -100,50 +201,87 @@ class FusionApp:
             tooltip_text,
         )
 
+    def stop(self):
+        """Stops the addin and deletes all created ui elements.
+
+        This methods needs to get called from the stop(context) function of the
+        main file of your addin o ensure proper cleanup.
+        If you dont call it, strange thigs can happen the next time you want to
+        run the addin.
+        """
+        for level in reversed(sorted(list(self._created_elements.keys()))):
+            elems = self._created_elements.pop(level)
+            for elem in elems:
+                try:
+                    elem.deleteMe()
+                except:
+                    # element is probably already deleted
+                    pass
+
+    def eval_arg(self, value: Any, keys: List[str]):
+        """Evaluates a given arguments with the parser at keys position.
+
+        The value argument can be any argument that you can pass to one of the
+        initalising methodes of any ui wrapper class.
+        The method returns the result of the input validation of this value with
+        the parser of the position defined by the keys.
+        For example if you provide the value "lightbulb" and ["workspace", "image"]
+        as key, the parser will return a string representing the full path of the
+        source of the lighbulb image.
+        This method is not needed in the regular use. However, you can use it with
+        None as value to quickly check the defualt parameter for a class initialisation
+        or for debugging purpose.
+
+        Args:
+            value (Any): The initialsation argument to evaluate
+            keys (List[str]): The "position" of the parser which is used to evaluate
+                the value
+
+        Returns:
+            Any: The reult of evaluating the given value
+        """
+        key = tuple(keys)
+        if value is None:
+            value = self._effective_defaults[key]
+        return self._default_parsers[key](value)
+
+    def register_element(self, elem: _FusionWrapper, level: int = 0):
+        """Registers a instance of a ui wrapper object to the addin.
+
+        All wrapper objects that are registered will get deleted if the addin stops.
+        The order of the deletion is determind by the level. Instances with a
+        higher level will get deleted first.
+        All elements that are created will be registered by the framework internally,
+        so there is no need to use this method in noraml use og the framework.
+
+        Args:
+            elem (_FusionWrapper): The wrapper instance to register.
+            level (int, optional): The Ui level of the element. Defaults to 0.
+        """
+        if isinstance(elem, _FusionWrapper):
+            elem = elem.in_fusion
+        self._created_elements[level].append(elem)
+
     @property
     def ui_level(self):
-        return self._ui_level
+        """[summary]
 
-
-class _FusionWrapper(ABC):
-    _parent = None
-    _in_fusion = None
-
-    def __init__(self, parent):
-        self._parent = parent
-        self._app = self.parent.app
-        self._ui_level = self.parent.ui_level + 1
-
-    def _given_args(self, locals):  # pylint:disable=redefined-builtin
-        return {
-            k: v
-            for k, v in locals.items()
-            if v is not None and k not in ["self", "__class__"]
-        }
-
-    @property
-    def id(self):
-        return self._in_fusion.id
-
-    @property
-    def in_fusion(self):
-        return self._in_fusion
-
-    @property
-    def parent(self):
-        return self._parent
-
-    @property
-    def ui_level(self):
+        Returns:
+            [type]: [description]
+        """
         return self._ui_level
 
     @property
     def app(self):
-        return self._app
+        """[summary]
+
+        Returns:
+            [type]: [description]
+        """
+        return self
 
 
 class Workspace(_FusionWrapper):
-
     _ident = "workspace"
 
     def __init__(
@@ -157,8 +295,18 @@ class Workspace(_FusionWrapper):
         tooltip_head: str = None,
         tooltip_text: str = None,
     ):
+        """[summary]
+
+        Args:
+            parent (FusionApp): [description]
+            id (str, optional): [description]. Defaults to None.
+            product_type (str, optional): [description]. Defaults to None.
+            image (Union[str, Path], optional): [description]. Defaults to None.
+            tooltip_image (Union[str, Path], optional): [description]. Defaults to None.
+            tooltip_head (str, optional): [description]. Defaults to None.
+            tooltip_text (str, optional): [description]. Defaults to None.
+        """
         super().__init__(parent)
-        self.app = parent  # override
 
         # get the names of all attributes that were passen to the init
         given_args = self._given_args(locals())
@@ -202,26 +350,45 @@ class Workspace(_FusionWrapper):
 
     @property
     def is_active(self):
+        """ "Gets if the workspace is currently active - i.e. displayed"
+        (Read only, `source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-fed83f5e-f240-4fa6-9149-d4ffb25cdf41>_`)
+        """
         return self._in_fusion.isActive
 
     @property
     def is_native(self):
+        """ "Gets if this workspace is native to Fusion 360 or was created via the API."
+        (Read only, ``source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-6463695c-156a-49dd-ae4e-7ba0bdc3a86e>`_)
+        """
         return self._in_fusion.isNative
 
     @property
     def is_valid(self):
+        """ "Indicates if this object is still valid, i.e. hasn't been deleted or some other action done to invalidate the reference."
+        (Read only, ´source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-3bd18973-0b8a-40a3-9fc8-b40658b730a9>_`
+        """
         return self._in_fusion.isValid
 
     @property
     def name(self):
+        """ "Gets the visible name of the workspace as seen in the user interface. This is the localized name."
+        (Read only `source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-144afd36-e125-4e28-8821-79a0134f207e>_`)
+        """
         return self._in_fusion.name
 
     @property
     def product_type(self):
+        """ "Returns the name of the product this workspace is associated with."
+        (Read only, `source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-974691b7-5ff6-4bec-8fbc-1683f7b33fe5>_`)
+        """
         return self._in_fusion.productType
 
     @property
     def image(self):
+        """The directory path with the images used by the workspace.
+        (`source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-19c3a0e8-7a55-4a03-8aa3-c8ca9b845e84>_)
+        Can be set with the same values you can pass to the construcor (image name or path)
+        """
         return self._in_fusion.resourceFolder
 
     @image.setter
@@ -236,10 +403,18 @@ class Workspace(_FusionWrapper):
 
     @property
     def child_tabs(self):
+        """ "Gets the collection containing the tabs associated with this workspace."
+        (Read only, `source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-99D28385-358B-4A86-9E25-24454EEF5671>_`)
+        """
         return self._in_fusion.toolbarTabs
 
     @property
     def tooltip_image(self):
+        """ "Gets or sets the full filename of the image file (png) used for the tool clip.
+        The tool clip is the image shown when the user hovers the mouse over the workspace name in the workspace drop-down."
+        Can be set with the same values you can pass to the construcor (image name or path)
+        (`source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-5C744005-AF96-4EEB-B060-FC246373B159>_`)
+        """
         return self._in_fusion.toolClipFilename
 
     @tooltip_image.setter
@@ -256,6 +431,16 @@ class Workspace(_FusionWrapper):
 
     @property
     def tooltip_head(self):
+        """ "Gets or sets the tooltip text displayed for the workspace.
+        This is the first line of text shown when the user hovers over the workspace
+        name in the Fusion 360 toolbar drop-down. This is typically the name of
+        the workspace. This is different from the name in the that the name is a
+        short name shown in the drop-down. The tooltip is only shown when the user
+        hovers over the name and box appears providing more information about the
+        workspace. For example, the name of the model workspace is "Model" and the
+        tooltip is "Model Workspace"."
+        (source `<http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-6AD46B6E-269C-4FC9-96BB-C6180BAA35ED>_`)
+        """
         return self._in_fusion.tooltip
 
     @tooltip_head.setter
@@ -272,6 +457,11 @@ class Workspace(_FusionWrapper):
 
     @property
     def tooltip_text(self):
+        """[summary]
+
+        Returns:
+            [type]: [description]
+        """
         return self._in_fusion.tooltip_description
 
     @tooltip_text.setter
@@ -287,6 +477,15 @@ class Workspace(_FusionWrapper):
             self._in_fusion.tooltipDescription = new_tooltip_text
 
     def tab(self, id: str = None, name: str = None):  # pylint:disable=redefined-builtin
+        """[summary]
+
+        Args:
+            id (str, optional): [description]. Defaults to None.
+            name (str, optional): [description]. Defaults to None.
+
+        Returns:
+            [type]: [description]
+        """
         return Tab(self, id, name)
 
 
@@ -322,34 +521,6 @@ class Tab(_FusionWrapper):
             self.app.register_element(self, self.ui_level)
             self.app.logger.info(msgs.created_new(self._ident, id))
 
-    @property
-    def position(self):
-        return self._in_fusion.index
-
-    @property
-    def is_active(self):
-        return self._in_fusion.isActive
-
-    @property
-    def is_native(self):
-        return self._in_fusion.isNative
-
-    @property
-    def is_visible(self):
-        return self._in_fusion.isVisible
-
-    @property
-    def is_valid(self):
-        return self._in_fusion.isValid
-
-    @property
-    def name(self):
-        return self._in_fusion.name
-
-    @property
-    def child_panels(self):
-        return self._in_fusion.toolbarPanels
-
     def panel(
         self,
         id: str = None,  # pylint:disable=redefined-builtin
@@ -357,6 +528,60 @@ class Tab(_FusionWrapper):
         position: int = None,
     ):
         return Panel(self, name, id, position)
+
+    @property
+    def position(self):
+        """ "Gets the position this tab is in within the toolbar. The first tab is
+        at position 0. This value is with respect to the complete list of tabs so
+        this value could be outside of the expected range if you have a collection
+        of tabs associated with a workspace, which is a subset of the entire list of tabs."
+        (Read only, `official docs <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-DA16E678-F571-422B-A42F-D964C092B49C>_`)
+        """
+        return self._in_fusion.index
+
+    @property
+    def is_active(self):
+        """ "Gets if this toolbar tab is currently active - i.e. displayed."
+        (Read only, `official docs <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-B54F2692-F167-4950-B465-4330379B9B3D>_`)
+        """
+        return self._in_fusion.isActive
+
+    @property
+    def is_native(self):
+        """ "Gets if this tab is native to Fusion 360 or was created via the API."
+        (Read only, `official docs <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-F5DE1649-C025-46DB-8F2E-AA9B7852BB4A>_`)
+        """
+        return self._in_fusion.isNative
+
+    @property
+    def is_visible(self):
+        """ "Gets whether this tab is currently being displayed in the user interface."
+        (Read only, `official docs <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-0DA0535A-EC20-450F-B4E0-6DAA7F21B022>_`)
+        """
+        return self._in_fusion.isVisible
+
+    @property
+    def is_valid(self):
+        """ "Indicates if this object is still valid, i.e. hasn't been deleted or
+        some other action done to invalidate the reference."
+        (Read only, `official docs <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-3B2DC592-EA8D-4A7D-B147-1E5E8897A0E5>_`)
+        """
+        return self._in_fusion.isValid
+
+    @property
+    def name(self):
+        """ "Gets the name of the tab as seen in the user interface."
+        (Read only, `official docs <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-BF03BCDB-32F3-4066-A9EE-B32599DDC27D>_`)
+        """
+        return self._in_fusion.name
+
+    @property
+    def child_panels(self):
+        """ "Gets the collection containing the panels associated with this tab.
+        It's through this collection that you can add new toolbar panels."
+        (Read only, `official docs <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-DE74300B-BA9D-433C-9A08-69218005E8BA>_`)
+        """
+        return self._in_fusion.toolbarPanels
 
 
 class Panel(_FusionWrapper):
@@ -410,34 +635,6 @@ class Panel(_FusionWrapper):
             self.app.register_element(self, self.ui_level)
             self.app.logger.info(msgs.created_new(self._ident, id))
 
-    @property
-    def position(self):
-        return self._in_fusion.indexWithinTab()
-
-    @property
-    def child_controls(self):
-        return self._in_fusion.controls
-
-    @property
-    def index(self):
-        return self._in_fusion.index
-
-    @property
-    def is_valid(self):
-        return self._in_fusion.isValid
-
-    @property
-    def is_visible(self):
-        return self._in_fusion.isVisible
-
-    @property
-    def name(self):
-        return self._in_fusion.name
-
-    @property
-    def promoted_controls(self):
-        return self._in_fusion.promotedControls
-
     def button(
         self,
         position_index: int = None,
@@ -454,6 +651,65 @@ class Panel(_FusionWrapper):
             is_promoted,
             is_promoted_by_default,
         )
+
+    @property
+    def position(self):
+        """ "Gets the position this panel is in within the toolbar tab. The first
+        panel in the tab is at position 0."
+        (Read only, `official docs <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-148C2831-F0E3-4DF9-8ED2-AC1F0B561B77>_`)
+        """
+        return self._in_fusion.indexWithinTab()
+
+    @property
+    def child_controls(self):
+        """ "Gets the controls associated with this panel. These are all in the
+        panel's drop-down (assuming their visible property is true) and are
+        selectively shown within the panel."
+        (Read only, `official docs <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-34d0c84b-302d-4bbf-819d-c92beb3db4ff>_`)
+        """
+        return self._in_fusion.controls
+
+    @property
+    def index(self):
+        """ "Gets the position this panel is in within the toolbar. The first panel
+        is at position 0. This value is with respect to the complete list of panels
+        so this value could be outside of the expected range if you have a collection
+        of panels associated with a workspace, which is a subset of the entire list of panels."
+        (Read only, `official docs <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-2aa563c4-93bf-4c8b-8c66-ec204e405716>_`)
+        """
+        return self._in_fusion.index
+
+    @property
+    def is_valid(self):
+        """ "Indicates if this object is still valid, i.e. hasn't been deleted or
+        some other action done to invalidate the reference."
+        (Read only, `official docs <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-43d2846d-6a4f-448d-a494-f46e77dbfc96>_`)
+        """
+        return self._in_fusion.isValid
+
+    @property
+    def is_visible(self):
+        """ ""
+        (Read only, `official docs <>_`)
+        """
+        return self._in_fusion.isVisible
+
+    @property
+    def name(self):
+        """ "Gets whether this panel is currently being displayed in the user interface.
+        Visibility of a panel is controlled by it being associated with the currently
+        active workspace."
+        (Read only, `official docs <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-f660e4f0-bdd5-469b-9d7e-eb2a8be38050>_`)
+        """
+        return self._in_fusion.name
+
+    @property
+    def promoted_controls(self):
+        """ "Gets the controls in the panel that have been promoted.
+        Promoted controls are the controls that are displayed within the panel."
+        (Read only, `official docs <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-234ef3f2-7c5c-4daf-a6e8-94ea423dd2d8>_`)
+        """
+        return self._in_fusion.promotedControls
 
 
 class Button(_FusionWrapper):
