@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 from abc import ABC
-from typing import Union, Callable, Any, List
+from typing import Union, Callable, Any, List, Dict
 from collections import defaultdict
 from uuid import uuid4
 
@@ -28,26 +28,35 @@ class _FusionWrapper(ABC):
     _parent = None
     _in_fusion = None
 
-    def __init__(self, parent):
-        """Initialises FusionWrapper instance.
-
-        Sets the attributes an
+    def __init__(self, parent: Union[_FusionWrapper, FusionApp]):
+        """
+        Sets the attributes app attribute of the wrapped instance by getting its
+        parents app attribute.
+        Sets the ui_level attribute by incrementing the parents ui_level attribute.
 
         Args:
-            parent ([type]): [description]
+            parent (Union[_FusionWrapper, FusionApp]): the parent ui object instance
+                e.g.: the parent of a panel is always a tab.
         """
         self._parent = parent
         self._app = self.parent.app
         self._ui_level = self.parent.ui_level + 1
 
-    def _given_args(self, locals):  # pylint:disable=redefined-builtin
-        """[summary]
+    def _given_args(self, locals: Dict):  # pylint:disable=redefined-builtin
+        """Removes None and unwanted entries from the locals dict.
+
+        To get a dictionairy containing only the values passed to a method, the
+        dictionairy returned by locals() called in a method needs to be cleaned.
+        When calling locals() inside a method, 'self' and '__class__' will always be
+        included in the locals()-dict. They are dropped.
+        Also all pairs having a None value are dropped.
 
         Args:
-            locals ([type]): [description]
+            locals (Dict): The dictionairy returned by a locals() call at the beginning
+                of a method
 
         Returns:
-            [type]: [description]
+            Dict: The cleaned dict, containing only the passed values.
         """
         return {
             k: v
@@ -57,53 +66,36 @@ class _FusionWrapper(ABC):
 
     @property
     def id(self):
-        """[summary]
-
-        Returns:
-            [type]: [description]
-        """
+        """Id of the wrapped instance."""
         return self._in_fusion.id
 
     @property
     def in_fusion(self):
-        """[summary]
-
-        Returns:
-            [type]: [description]
-        """
+        """The instance, this object is wrapped around."""
         return self._in_fusion
 
     @property
     def parent(self):
-        """[summary]
-
-        Returns:
-            [type]: [description]
-        """
+        """The wrapped parent instance of this object."""
         return self._parent
 
     @property
     def ui_level(self):
-        """[summary]
+        """The level this instance is in the user interface hierachy.
 
-        Returns:
-            [type]: [description]
+        For Example: Workspace is always level 1, Tab always level 2
         """
         return self._ui_level
 
     @property
     def app(self):
-        """[summary]
-
-        Returns:
-            [type]: [description]
-        """
+        """The app instance which manages this instance."""
         return self._app
 
 
 class FusionApp:
     """
-    An Addin object is the entry point to create all your elements that will
+    An App object is the entry point to create all your elements that will
     appear in the user interface. It handles their creation and deletes them
     if the addin is deactivated (by closing Fusion or stopping the Addin
     manually).
@@ -352,6 +344,11 @@ class Workspace(_FusionWrapper):
 
             self.app.register_element(self, self.ui_level)
             self.app.logger.info(msgs.created_new(self._ident, id))
+
+    @property
+    def id(self):
+        """Id of the workspace."""
+        return self._in_fusion.id
 
     @property
     def is_active(self):
