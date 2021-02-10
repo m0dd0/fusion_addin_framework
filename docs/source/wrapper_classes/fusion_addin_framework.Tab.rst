@@ -11,8 +11,10 @@
 
 .. autosummary::
 
-    ~Tab.__init__
-    ~Tab.panel
+    
+     
+        ~Tab.panel
+    
 
 
 

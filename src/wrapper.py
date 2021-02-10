@@ -28,7 +28,9 @@ class _FusionWrapper(ABC):
     _parent = None
     _in_fusion = None
 
-    def __init__(self, parent):  # do NOT use tylehint --> docs generation will crash
+    def __init__(
+        self, parent
+    ):  # do NOT use for parent typehint --> docs generation will crash
         """
         Sets the attributes app attribute of the wrapped instance by getting its
         parents app attribute.
@@ -114,23 +116,19 @@ class FusionApp:
         author: str = None,
         debug_to_ui: bool = None,
     ):
-        """A Addin Instance.
-
-        inti
-
-
+        """
         Args:
             logger (logging.Logger, optional): The logger that is used by the
                 framework for logging messages about building your UI elements etc.
                 Defaults to a basic logger.
-            name (str, optional): The name of the addin. Used by appdirs to create
-                directories. Defaults to None.
-            author (str, optional): The name of the addins author. Used by appdirs
-                to create directories. Defaults to None.
+            name (str, optional): The name of the addin. Used to create app
+                directories with meaningful names. Defaults to None.
+            author (str, optional): The name of the addins author. Used to create
+                app directories with meaningful names. Defaults to None.
             debug_to_ui (bool, optional): Flag indicating if erorr messages caused
                 by errrors in the callbacks are displayed in a `messageBox
                 <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-1692a9a4-3be0-4474-9e15-02fac696b2b2>`_
-                or not. Defaults to True.
+                or not. If not they will get logged anyways. Defaults to True.
         """
         if logger is None:
             logger = create_default_logger(
@@ -140,6 +138,7 @@ class FusionApp:
                 ],
                 message_format="{asctime} {levelname} {module}/{funcName}: {message}",
             )
+        # no need to make logger a property since its ok to set them
         self.logger = logger
 
         self._effective_defaults = dflts.get_effective_defaults(self.logger)
@@ -172,12 +171,18 @@ class FusionApp:
     ):
         """Creates a workspace as a child of this Adddin.
 
-        Calling this method is the same as calling fusion_addin_framework.Workspace()
-        with this addin instance as parent.
+        Calling this method is the same as initialsing a :class:`.Workspace`
+        with this addin instance as parent parameters. Therfore the same parameters
+        are passed.
 
         Args:
-            id (str, optional): The id of the workspace. Defaults to a random uuid.
-            name (str, optional): [description]. Defaults to None.
+            id (str, optional): The id of the :class:`.Workspace`. If 'random' is passed a
+                random uuid will be used. If you provide an id of a native workspace
+                the other arguments will be ignored. Defaults to 'FusionSolidEnvironment'.
+                (`unwrapped <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-33f9ed37-e5c7-4153-ba85-c3254a199dd1>`_)
+            name (str, optional): The name of the Workspace as seen in the user
+                interface. If 'random' is passed a random name will be choosen.
+                Defaults to 'random'.
             product_type (str, optional): [description]. Defaults to None.
             image (Union[str, Path], optional): [description]. Defaults to None.
             tooltip_image (Union[str, Path], optional): [description]. Defaults to None.

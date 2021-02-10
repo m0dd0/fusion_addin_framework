@@ -11,8 +11,10 @@
 
 .. autosummary::
 
-    ~Panel.__init__
-    ~Panel.button
+    
+     
+        ~Panel.button
+    
 
 
 

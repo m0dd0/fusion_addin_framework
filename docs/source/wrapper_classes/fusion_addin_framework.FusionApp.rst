@@ -11,11 +11,19 @@
 
 .. autosummary::
 
-    ~FusionApp.__init__
-    ~FusionApp.eval_arg
-    ~FusionApp.register_element
-    ~FusionApp.stop
-    ~FusionApp.workspace
+    
+     
+        ~FusionApp.eval_arg
+    
+     
+        ~FusionApp.register_element
+    
+     
+        ~FusionApp.stop
+    
+     
+        ~FusionApp.workspace
+    
 
 
 

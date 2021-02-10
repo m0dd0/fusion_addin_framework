@@ -11,7 +11,7 @@
 
 .. autosummary::
 
-    ~Command.__init__
+    
 
 
 

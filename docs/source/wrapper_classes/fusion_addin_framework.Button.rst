@@ -11,8 +11,10 @@
 
 .. autosummary::
 
-    ~Button.__init__
-    ~Button.command
+    
+     
+        ~Button.command
+    
 
 
 
