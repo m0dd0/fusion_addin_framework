@@ -66,6 +66,8 @@ class _FusionWrapper(ABC):
             if v is not None and k not in ["self", "__class__"]
         }
 
+    # simply override the properties to use individual docstrings
+
     @property
     def id(self):
         """Id of the wrapped instance."""
@@ -173,21 +175,40 @@ class FusionApp:
 
         Calling this method is the same as initialsing a :class:`.Workspace`
         with this addin instance as parent parameters. Therfore the same parameters
-        are passed.
+        are passed. See :class:`.Workspace` for details.
 
         Args:
             id (str, optional): The id of the :class:`.Workspace`. If 'random' is passed a
                 random uuid will be used. If you provide an id of a native workspace
                 the other arguments will be ignored. Defaults to 'FusionSolidEnvironment'.
-                (`unwrapped <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-33f9ed37-e5c7-4153-ba85-c3254a199dd1>`_)
+                `unwrapped <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-33f9ed37-e5c7-4153-ba85-c3254a199dd1>`_
             name (str, optional): The name of the Workspace as seen in the user
                 interface. If 'random' is passed a random name will be choosen.
                 Defaults to 'random'.
-            product_type (str, optional): [description]. Defaults to None.
-            image (Union[str, Path], optional): [description]. Defaults to None.
-            tooltip_image (Union[str, Path], optional): [description]. Defaults to None.
-            tooltip_head (str, optional): [description]. Defaults to None.
-            tooltip_text (str, optional): [description]. Defaults to None.
+                `unwrapped <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-144afd36-e125-4e28-8821-79a0134f207e>`_
+            product_type (str, optional): The name of the product the workspace
+                is associated with. Defaults to 'DesignProductType'.
+                `unwrapped <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-974691b7-5ff6-4bec-8fbc-1683f7b33fe5>_`
+            image (Union[str, Path], optional): Either the path to a directory
+                containing images named 49X31.png and 98x62.png or one of the
+                default picture names (currently only 'lightbulb'). Defaults to 'lightbulb.
+                `unwrapped <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-19c3a0e8-7a55-4a03-8aa3-c8ca9b845e84>_`
+            tooltip_image (Union[str, Path], optional): Either full filename of
+                the image file (png) used for the tool clip or one of the
+                default picture names (currently only 'lightbulb'). The tooltip image
+                is the image shown when the user hovers the mouse over the workspace
+                name in the workspace drop-down. If None no image will be set.
+                `unwrapped <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-5C744005-AF96-4EEB-B060-FC246373B159>_`
+            tooltip_head (str, optional):  The tooltip text displayed for the workspace.
+                This is the first line of text shown when the user hovers over the
+                workspace name in the Fusion 360 toolbar drop-down.
+                Defaults to "" (empty string).
+                `unwrapped <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-6AD46B6E-269C-4FC9-96BB-C6180BAA35ED>_`
+            tooltip_text (str, optional): The tooltip description displayed for
+                the workspace. The tooltip description is a longer description of
+                the workspace and is only displayed when the user hovers over the
+                workspace name in the Fusion 360 toolbar drop-down.
+                Defaults to None. `unwrapped <>_`
 
         Returns:
             [type]: [description]
