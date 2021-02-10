@@ -28,7 +28,7 @@ class _FusionWrapper(ABC):
     _parent = None
     _in_fusion = None
 
-    def __init__(self, parent: Union[_FusionWrapper, FusionApp]):
+    def __init__(self, parent):  # do NOT use tylehint --> docs generation will crash
         """
         Sets the attributes app attribute of the wrapped instance by getting its
         parents app attribute.
@@ -353,42 +353,42 @@ class Workspace(_FusionWrapper):
     @property
     def is_active(self):
         """ "Gets if the workspace is currently active - i.e. displayed"
-        (Read only, `source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-fed83f5e-f240-4fa6-9149-d4ffb25cdf41>_`)
+        (Read only, `source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-fed83f5e-f240-4fa6-9149-d4ffb25cdf41>`_)
         """
         return self._in_fusion.isActive
 
     @property
     def is_native(self):
         """ "Gets if this workspace is native to Fusion 360 or was created via the API."
-        (Read only, ``source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-6463695c-156a-49dd-ae4e-7ba0bdc3a86e>`_)
+        (Read only, `source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-6463695c-156a-49dd-ae4e-7ba0bdc3a86e>`_)
         """
         return self._in_fusion.isNative
 
     @property
     def is_valid(self):
         """ "Indicates if this object is still valid, i.e. hasn't been deleted or some other action done to invalidate the reference."
-        (Read only, ´source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-3bd18973-0b8a-40a3-9fc8-b40658b730a9>_`
+        (Read only, `source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-3bd18973-0b8a-40a3-9fc8-b40658b730a9>`_)
         """
         return self._in_fusion.isValid
 
     @property
     def name(self):
         """ "Gets the visible name of the workspace as seen in the user interface. This is the localized name."
-        (Read only `source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-144afd36-e125-4e28-8821-79a0134f207e>_`)
+        (Read only `source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-144afd36-e125-4e28-8821-79a0134f207e>`_)
         """
         return self._in_fusion.name
 
     @property
     def product_type(self):
         """ "Returns the name of the product this workspace is associated with."
-        (Read only, `source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-974691b7-5ff6-4bec-8fbc-1683f7b33fe5>_`)
+        (Read only, `source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-974691b7-5ff6-4bec-8fbc-1683f7b33fe5>`_)
         """
         return self._in_fusion.productType
 
     @property
     def image(self):
         """The directory path with the images used by the workspace.
-        (`source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-19c3a0e8-7a55-4a03-8aa3-c8ca9b845e84>_)
+        (`source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-19c3a0e8-7a55-4a03-8aa3-c8ca9b845e84>`_)
         Can be set with the same values you can pass to the construcor (image name or path)
         """
         return self._in_fusion.resourceFolder
@@ -406,7 +406,7 @@ class Workspace(_FusionWrapper):
     @property
     def child_tabs(self):
         """ "Gets the collection containing the tabs associated with this workspace."
-        (Read only, `source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-99D28385-358B-4A86-9E25-24454EEF5671>_`)
+        (Read only, `source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-99D28385-358B-4A86-9E25-24454EEF5671>`_)
         """
         return self._in_fusion.toolbarTabs
 
@@ -415,7 +415,7 @@ class Workspace(_FusionWrapper):
         """ "Gets or sets the full filename of the image file (png) used for the tool clip.
         The tool clip is the image shown when the user hovers the mouse over the workspace name in the workspace drop-down."
         Can be set with the same values you can pass to the construcor (image name or path)
-        (`source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-5C744005-AF96-4EEB-B060-FC246373B159>_`)
+        (`source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-5C744005-AF96-4EEB-B060-FC246373B159>`_)
         """
         return self._in_fusion.toolClipFilename
 
@@ -441,7 +441,7 @@ class Workspace(_FusionWrapper):
         hovers over the name and box appears providing more information about the
         workspace. For example, the name of the model workspace is "Model" and the
         tooltip is "Model Workspace"."
-        (source `<http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-6AD46B6E-269C-4FC9-96BB-C6180BAA35ED>_`)
+        (source `<http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-6AD46B6E-269C-4FC9-96BB-C6180BAA35ED>`_)
         """
         return self._in_fusion.tooltip
 
