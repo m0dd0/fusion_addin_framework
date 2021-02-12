@@ -44,27 +44,27 @@ class _FusionWrapper(ABC):
         self._app = self.parent.app
         self._ui_level = self.parent.ui_level + 1
 
-    def _given_args(self, locals: Dict):  # pylint:disable=redefined-builtin
-        """Removes None and unwanted entries from the locals dict.
+    # def _given_args(self, locals: Dict):  # pylint:disable=redefined-builtin
+    #     """Removes None and unwanted entries from the locals dict.
 
-        To get a dictionairy containing only the values passed to a method, the
-        dictionairy returned by locals() called in a method needs to be cleaned.
-        When calling locals() inside a method, 'self' and '__class__' will always be
-        included in the locals()-dict. They are dropped.
-        Also all pairs having a None value are dropped.
+    #     To get a dictionairy containing only the values passed to a method, the
+    #     dictionairy returned by locals() called in a method needs to be cleaned.
+    #     When calling locals() inside a method, 'self' and '__class__' will always be
+    #     included in the locals()-dict. They are dropped.
+    #     Also all pairs having a None value are dropped.
 
-        Args:
-            locals (Dict): The dictionairy returned by a locals() call at the beginning
-                of a method
+    #     Args:
+    #         locals (Dict): The dictionairy returned by a locals() call at the beginning
+    #             of a method
 
-        Returns:
-            Dict: The cleaned dict, containing only the passed values.
-        """
-        return {
-            k: v
-            for k, v in locals.items()
-            if v is not None and k not in ["self", "__class__"]
-        }
+    #     Returns:
+    #         Dict: The cleaned dict, containing only the passed values.
+    #     """
+    #     return {
+    #         k: v
+    #         for k, v in locals.items()
+    #         if v is not None and k not in ["self", "__class__"]
+    #     }
 
     # simply override the properties to use individual docstrings
 
@@ -103,9 +103,6 @@ class FusionApp:
     appear in the user interface. It handles their creation and deletes them
     if the addin is deactivated (by closing Fusion or stopping the Addin
     manually).
-    It also manages the creation of logfiles, creating directories for user
-    data, setting some logging configurations and other utilities you might
-    find useful.
     """
 
     _ui_level = 0
@@ -113,16 +110,13 @@ class FusionApp:
 
     def __init__(
         self,
-        logger: logging.Logger = None,
+        # logger: logging.Logger = None,
         name: str = None,
         author: str = None,
         debug_to_ui: bool = None,
     ):
         """
         Args:
-            logger (logging.Logger, optional): The logger that is used by the
-                framework for logging messages about building your UI elements etc.
-                Defaults to a basic logger.
             name (str, optional): The name of the addin. Used to create app
                 directories with meaningful names. Defaults to None.
             author (str, optional): The name of the addins author. Used to create
@@ -132,19 +126,6 @@ class FusionApp:
                 <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-1692a9a4-3be0-4474-9e15-02fac696b2b2>`_
                 or not. If not they will get logged anyways. Defaults to True.
         """
-        if logger is None:
-            logger = create_default_logger(
-                name="faf_logger",
-                handlers=[
-                    logging.StreamHandler(),
-                ],
-                message_format="{asctime} {levelname} {module}/{funcName}: {message}",
-            )
-        # no need to make logger a property since its ok to set them
-        self.logger = logger
-
-        self._effective_defaults = dflts.get_effective_defaults(self.logger)
-        self._default_parsers = dflts.get_default_parsers(self.logger)
 
         # no need ot use properties since its ok to set them
         self.name = self.eval_arg(name, [self._ident, "name"])
@@ -156,8 +137,6 @@ class FusionApp:
         self.user_config_dir = appdirs.user_config_dir(self.name, self.author)
         self.user_data_dir = appdirs.user_data_dir(self.name, self.author)
         self.user_log_dir = appdirs.user_log_dir(self.name, self.author)
-
-        self.logger.handlers.append(logging.FileHandler(self.user_log_dir))
 
         self._created_elements = defaultdict(list)
 
