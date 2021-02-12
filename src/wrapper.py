@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 from abc import ABC
-from typing import Union, Callable, Any, List
+from typing import Union, Callable, Any, List, Dict
 from collections import defaultdict
 from uuid import uuid4
 
@@ -28,26 +28,37 @@ class _FusionWrapper(ABC):
     _parent = None
     _in_fusion = None
 
-    def __init__(self, parent):
-        """Initialises FusionWrapper instance.
-
-        Sets the attributes an
+    def __init__(
+        self, parent
+    ):  # do NOT use for parent typehint --> docs generation will crash
+        """
+        Sets the attributes app attribute of the wrapped instance by getting its
+        parents app attribute.
+        Sets the ui_level attribute by incrementing the parents ui_level attribute.
 
         Args:
-            parent ([type]): [description]
+            parent (Union[_FusionWrapper, FusionApp]): the parent ui object instance
+                e.g.: the parent of a panel is always a tab.
         """
         self._parent = parent
         self._app = self.parent.app
         self._ui_level = self.parent.ui_level + 1
 
-    def _given_args(self, locals):  # pylint:disable=redefined-builtin
-        """[summary]
+    def _given_args(self, locals: Dict):  # pylint:disable=redefined-builtin
+        """Removes None and unwanted entries from the locals dict.
+
+        To get a dictionairy containing only the values passed to a method, the
+        dictionairy returned by locals() called in a method needs to be cleaned.
+        When calling locals() inside a method, 'self' and '__class__' will always be
+        included in the locals()-dict. They are dropped.
+        Also all pairs having a None value are dropped.
 
         Args:
-            locals ([type]): [description]
+            locals (Dict): The dictionairy returned by a locals() call at the beginning
+                of a method
 
         Returns:
-            [type]: [description]
+            Dict: The cleaned dict, containing only the passed values.
         """
         return {
             k: v
@@ -55,53 +66,48 @@ class _FusionWrapper(ABC):
             if v is not None and k not in ["self", "__class__"]
         }
 
+    # simply override the properties to use individual docstrings
+
     @property
     def id(self):
-        """[summary]
-
-        Returns:
-            [type]: [description]
-        """
+        """Id of the wrapped instance."""
         return self._in_fusion.id
 
     @property
     def in_fusion(self):
-        """[summary]
-
-        Returns:
-            [type]: [description]
-        """
+        """The instance, this object is wrapped around."""
         return self._in_fusion
 
     @property
     def parent(self):
-        """[summary]
-
-        Returns:
-            [type]: [description]
-        """
+        """The wrapped parent instance of this object."""
         return self._parent
 
     @property
     def ui_level(self):
-        """[summary]
+        """The level this instance is in the user interface hierachy.
 
-        Returns:
-            [type]: [description]
+        For Example: Workspace is always level 1, Tab always level 2
         """
         return self._ui_level
 
     @property
     def app(self):
-        """[summary]
-
-        Returns:
-            [type]: [description]
-        """
+        """The app instance which manages this instance."""
         return self._app
 
 
 class FusionApp:
+    """
+    An App object is the entry point to create all your elements that will
+    appear in the user interface. It handles their creation and deletes them
+    if the addin is deactivated (by closing Fusion or stopping the Addin
+    manually).
+    It also manages the creation of logfiles, creating directories for user
+    data, setting some logging configurations and other utilities you might
+    find useful.
+    """
+
     _ui_level = 0
     _ident = "app"
 
@@ -112,28 +118,19 @@ class FusionApp:
         author: str = None,
         debug_to_ui: bool = None,
     ):
-        """A Addin Instance.
-
-        An Addin object is the entry point to create all your elements that will
-        appear in the user interface. It handles their creation and deletes them
-        if the addin is deactivated (by closing Fusion or stopping the Addin
-        manually).
-        It also manages the creation of logfiles, creating directories for user
-        data, setting some logging configurations and other utilities you might
-        find useful.
-
+        """
         Args:
             logger (logging.Logger, optional): The logger that is used by the
                 framework for logging messages about building your UI elements etc.
                 Defaults to a basic logger.
-            name (str, optional): The name of the addin. Used by appdirs to create
-                directories. Defaults to None.
-            author (str, optional): The name of the addins author. Used by appdirs
-                to create directories. Defaults to None.
+            name (str, optional): The name of the addin. Used to create app
+                directories with meaningful names. Defaults to None.
+            author (str, optional): The name of the addins author. Used to create
+                app directories with meaningful names. Defaults to None.
             debug_to_ui (bool, optional): Flag indicating if erorr messages caused
                 by errrors in the callbacks are displayed in a `messageBox
                 <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-1692a9a4-3be0-4474-9e15-02fac696b2b2>`_
-                or not. Defaults to True.
+                or not. If not they will get logged anyways. Defaults to True.
         """
         if logger is None:
             logger = create_default_logger(
@@ -143,6 +140,7 @@ class FusionApp:
                 ],
                 message_format="{asctime} {levelname} {module}/{funcName}: {message}",
             )
+        # no need to make logger a property since its ok to set them
         self.logger = logger
 
         self._effective_defaults = dflts.get_effective_defaults(self.logger)
@@ -175,17 +173,42 @@ class FusionApp:
     ):
         """Creates a workspace as a child of this Adddin.
 
-        Calling this method is the same as calling fusion_addin_framework.Workspace()
-        with this addin instance as parent.
+        Calling this method is the same as initialsing a :class:`.Workspace`
+        with this addin instance as parent parameters. Therfore the same parameters
+        are passed. See :class:`.Workspace` for details.
 
         Args:
-            id (str, optional): The id of the workspace. Defaults to a random uuid.
-            name (str, optional): [description]. Defaults to None.
-            product_type (str, optional): [description]. Defaults to None.
-            image (Union[str, Path], optional): [description]. Defaults to None.
-            tooltip_image (Union[str, Path], optional): [description]. Defaults to None.
-            tooltip_head (str, optional): [description]. Defaults to None.
-            tooltip_text (str, optional): [description]. Defaults to None.
+            id (str, optional): The id of the :class:`.Workspace`. If 'random' is passed a
+                random uuid will be used. If you provide an id of a native workspace
+                the other arguments will be ignored. Defaults to 'FusionSolidEnvironment'.
+                `unwrapped <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-33f9ed37-e5c7-4153-ba85-c3254a199dd1>`_
+            name (str, optional): The name of the Workspace as seen in the user
+                interface. If 'random' is passed a random name will be choosen.
+                Defaults to 'random'.
+                `unwrapped <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-144afd36-e125-4e28-8821-79a0134f207e>`_
+            product_type (str, optional): The name of the product the workspace
+                is associated with. Defaults to 'DesignProductType'.
+                `unwrapped <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-974691b7-5ff6-4bec-8fbc-1683f7b33fe5>_`
+            image (Union[str, Path], optional): Either the path to a directory
+                containing images named 49X31.png and 98x62.png or one of the
+                default picture names (currently only 'lightbulb'). Defaults to 'lightbulb.
+                `unwrapped <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-19c3a0e8-7a55-4a03-8aa3-c8ca9b845e84>_`
+            tooltip_image (Union[str, Path], optional): Either full filename of
+                the image file (png) used for the tool clip or one of the
+                default picture names (currently only 'lightbulb'). The tooltip image
+                is the image shown when the user hovers the mouse over the workspace
+                name in the workspace drop-down. If None no image will be set.
+                `unwrapped <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-5C744005-AF96-4EEB-B060-FC246373B159>_`
+            tooltip_head (str, optional):  The tooltip text displayed for the workspace.
+                This is the first line of text shown when the user hovers over the
+                workspace name in the Fusion 360 toolbar drop-down.
+                Defaults to "" (empty string).
+                `unwrapped <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-6AD46B6E-269C-4FC9-96BB-C6180BAA35ED>_`
+            tooltip_text (str, optional): The tooltip description displayed for
+                the workspace. The tooltip description is a longer description of
+                the workspace and is only displayed when the user hovers over the
+                workspace name in the Fusion 360 toolbar drop-down.
+                Defaults to None. `unwrapped <>_`
 
         Returns:
             [type]: [description]
@@ -349,44 +372,49 @@ class Workspace(_FusionWrapper):
             self.app.logger.info(msgs.created_new(self._ident, id))
 
     @property
+    def id(self):
+        """Id of the workspace."""
+        return self._in_fusion.id
+
+    @property
     def is_active(self):
         """ "Gets if the workspace is currently active - i.e. displayed"
-        (Read only, `source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-fed83f5e-f240-4fa6-9149-d4ffb25cdf41>_`)
+        (Read only, `source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-fed83f5e-f240-4fa6-9149-d4ffb25cdf41>`_)
         """
         return self._in_fusion.isActive
 
     @property
     def is_native(self):
         """ "Gets if this workspace is native to Fusion 360 or was created via the API."
-        (Read only, ``source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-6463695c-156a-49dd-ae4e-7ba0bdc3a86e>`_)
+        (Read only, `source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-6463695c-156a-49dd-ae4e-7ba0bdc3a86e>`_)
         """
         return self._in_fusion.isNative
 
     @property
     def is_valid(self):
         """ "Indicates if this object is still valid, i.e. hasn't been deleted or some other action done to invalidate the reference."
-        (Read only, ´source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-3bd18973-0b8a-40a3-9fc8-b40658b730a9>_`
+        (Read only, `source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-3bd18973-0b8a-40a3-9fc8-b40658b730a9>`_)
         """
         return self._in_fusion.isValid
 
     @property
     def name(self):
         """ "Gets the visible name of the workspace as seen in the user interface. This is the localized name."
-        (Read only `source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-144afd36-e125-4e28-8821-79a0134f207e>_`)
+        (Read only `source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-144afd36-e125-4e28-8821-79a0134f207e>`_)
         """
         return self._in_fusion.name
 
     @property
     def product_type(self):
         """ "Returns the name of the product this workspace is associated with."
-        (Read only, `source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-974691b7-5ff6-4bec-8fbc-1683f7b33fe5>_`)
+        (Read only, `source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-974691b7-5ff6-4bec-8fbc-1683f7b33fe5>`_)
         """
         return self._in_fusion.productType
 
     @property
     def image(self):
         """The directory path with the images used by the workspace.
-        (`source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-19c3a0e8-7a55-4a03-8aa3-c8ca9b845e84>_)
+        (`source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-19c3a0e8-7a55-4a03-8aa3-c8ca9b845e84>`_)
         Can be set with the same values you can pass to the construcor (image name or path)
         """
         return self._in_fusion.resourceFolder
@@ -404,7 +432,7 @@ class Workspace(_FusionWrapper):
     @property
     def child_tabs(self):
         """ "Gets the collection containing the tabs associated with this workspace."
-        (Read only, `source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-99D28385-358B-4A86-9E25-24454EEF5671>_`)
+        (Read only, `source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-99D28385-358B-4A86-9E25-24454EEF5671>`_)
         """
         return self._in_fusion.toolbarTabs
 
@@ -413,7 +441,7 @@ class Workspace(_FusionWrapper):
         """ "Gets or sets the full filename of the image file (png) used for the tool clip.
         The tool clip is the image shown when the user hovers the mouse over the workspace name in the workspace drop-down."
         Can be set with the same values you can pass to the construcor (image name or path)
-        (`source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-5C744005-AF96-4EEB-B060-FC246373B159>_`)
+        (`source <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-5C744005-AF96-4EEB-B060-FC246373B159>`_)
         """
         return self._in_fusion.toolClipFilename
 
@@ -439,7 +467,7 @@ class Workspace(_FusionWrapper):
         hovers over the name and box appears providing more information about the
         workspace. For example, the name of the model workspace is "Model" and the
         tooltip is "Model Workspace"."
-        (source `<http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-6AD46B6E-269C-4FC9-96BB-C6180BAA35ED>_`)
+        (source `<http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-6AD46B6E-269C-4FC9-96BB-C6180BAA35ED>`_)
         """
         return self._in_fusion.tooltip
 

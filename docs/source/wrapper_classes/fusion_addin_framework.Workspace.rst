@@ -11,8 +11,10 @@
 
 .. autosummary::
 
-    ~Workspace.__init__
-    ~Workspace.tab
+    
+     
+        ~Workspace.tab
+    
 
 
 
