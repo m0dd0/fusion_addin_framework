@@ -338,7 +338,7 @@ class Workspace(_FusionWrapper):
     @image.setter
     def image(self, new_image):
         if self.is_native:
-            self.app.logger.warning(
+            logging.getLogger(__name__).warning(
                 msgs.setting_on_native("workspace", new_image, "image")
             )
         else:
@@ -364,7 +364,7 @@ class Workspace(_FusionWrapper):
     @tooltip_image.setter
     def tooltip_image(self, new_tooltip_image):
         if self.is_native:
-            self.app.logger.warning(
+            logging.getLogger(__name__).warning(
                 msgs.setting_on_native("workspace", new_tooltip_image, "tooltip_image")
             )
         else:
@@ -390,7 +390,7 @@ class Workspace(_FusionWrapper):
     @tooltip_head.setter
     def tooltip_head(self, new_tooltip_head):
         if self.is_native:
-            self.app.logger.warning(
+            logging.getLogger(__name__).warning(
                 msgs.setting_on_native("workspace", new_tooltip_head, "tooltip_head")
             )
         else:
@@ -411,7 +411,7 @@ class Workspace(_FusionWrapper):
     @tooltip_text.setter
     def tooltip_text(self, new_tooltip_text):
         if self.is_native:
-            self.app.logger.warning(
+            logging.getLogger(__name__).warning(
                 msgs.setting_on_native("workspace", new_tooltip_text, "tooltip_text")
             )
         else:
@@ -454,16 +454,16 @@ class Tab(_FusionWrapper):
         if self.in_fusion:
             not_setable = given_args.keys() - {"id", "parent"}
             if not_setable:
-                self.app.logger.warning(
+                logging.getLogger(__name__).warning(
                     msgs.already_existing(self._ident, id, not_setable)
                 )
-            self.app.logger.info(msgs.using_exisitng(self._ident, id))
+            logging.getLogger(__name__).info(msgs.using_exisitng(self._ident, id))
         else:
             self._in_fusion = self.parent.in_fusion.toolbarTabs.add(id, name)
             # nothing else is setable
 
             self.app.register_element(self, self.ui_level)
-            self.app.logger.info(msgs.created_new(self._ident, id))
+            logging.getLogger(__name__).info(msgs.created_new(self._ident, id))
 
     def panel(
         self,
@@ -553,10 +553,10 @@ class Panel(_FusionWrapper):
         if self._in_fusion:
             not_setable = given_args.keys() - {"id", "parent"}
             if not_setable:
-                self.app.logger.warning(
+                logging.getLogger(__name__).warning(
                     msgs.already_existing(self._ident, id, not_setable)
                 )
-            self.app.logger.info(msgs.using_exisitng(self._ident, id))
+            logging.getLogger(__name__).info(msgs.using_exisitng(self._ident, id))
         else:
             panel_order = {p.indexWithinTab(): p.id for p in self.parent.child_panels}
             sorted_indices = sorted(list(panel_order.keys()))
@@ -577,7 +577,7 @@ class Panel(_FusionWrapper):
             # nothing else to set
 
             self.app.register_element(self, self.ui_level)
-            self.app.logger.info(msgs.created_new(self._ident, id))
+            logging.getLogger(__name__).info(msgs.created_new(self._ident, id))
 
     def button(
         self,
@@ -707,7 +707,7 @@ class Button(_FusionWrapper):
 
         self.app.register(dummy_cmd_def, self.ui_level)
         self.app.register_element(self, self.ui_level + 1)
-        self.app.logger.info(msgs.created_new(self._ident, None))
+        logging.getLogger(__name__).info(msgs.created_new(self._ident, None))
 
         self._connected_command = None
 
@@ -779,7 +779,9 @@ class Command(_FusionWrapper):
 
         if cmd_ctrl:
             not_setable = given_args.keys() - {"id", "parent"}
-            self.app.logger.warning(msgs.already_existing(self._ident, id, not_setable))
+            logging.getLogger(__name__).warning(
+                msgs.already_existing(self._ident, id, not_setable)
+            )
         elif cmd_def:
             # TODO parse position
             cmd_ctrl = self.parent.parent.children.addCommand(
@@ -829,6 +831,6 @@ class Command(_FusionWrapper):
             self.app
             self.app.register_element(self, self.ui_level)
             # self.app.register_element() # TODO dregister also cmd_def for deletion somehow
-            self.app.logger.info(msgs.created_new(self._ident, id))
+            logging.getLogger(__name__).info(msgs.created_new(self._ident, id))
 
         # TODO properties

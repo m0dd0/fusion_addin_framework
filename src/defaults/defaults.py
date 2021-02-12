@@ -152,6 +152,7 @@ def evaluate_constructor_locals(param_locals):
     param_locals.pop("self")
     current_class = param_locals.pop("__class__")
 
+    given_args = set()
     parameter_names = list(param_locals.keys())
     for param_name in parameter_names:
         if param_locals[param_name] is None:
@@ -159,7 +160,8 @@ def evaluate_constructor_locals(param_locals):
                 (current_class, param_name), None
             )
         else:
+            given_args.add(param_name)
             # input validation could be done here
             pass
 
-    return SimpleNamespace(**param_locals)
+    return SimpleNamespace(**param_locals), given_args
