@@ -434,9 +434,6 @@ class Workspace(_FusionWrapper):
 
 
 class Tab(_FusionWrapper):
-
-    _ident = "tab"
-
     def __init__(
         self,
         parent: Workspace,
@@ -444,26 +441,24 @@ class Tab(_FusionWrapper):
         name: str = None,
     ):
         super().__init__(parent)
-        given_args = self._given_args(locals())
+        # given_args = self._given_args(locals())
+        args, given_args = dflts.evaluate_constructor_locals(locals())
 
-        name = self.app.eval_arg(name, self._ident, "name")
-        id = self.app.eval_arg(id, self._ident, "id")
-
-        self._in_fusion = self.parent.child_tabs.itemById(id)
+        self._in_fusion = self.parent.child_tabs.itemById(args.id)
 
         if self.in_fusion:
-            not_setable = given_args.keys() - {"id", "parent"}
+            not_setable = given_args - {"id", "parent"}
             if not_setable:
                 logging.getLogger(__name__).warning(
-                    msgs.already_existing(self._ident, id, not_setable)
+                    msgs.already_existing(__class__, args.id, not_setable)
                 )
-            logging.getLogger(__name__).info(msgs.using_exisitng(self._ident, id))
+            logging.getLogger(__name__).info(msgs.using_exisitng(__class__, args.id))
         else:
-            self._in_fusion = self.parent.in_fusion.toolbarTabs.add(id, name)
+            self._in_fusion = self.parent.in_fusion.toolbarTabs.add(args.id, args.name)
             # nothing else is setable
 
             self.app.register_element(self, self.ui_level)
-            logging.getLogger(__name__).info(msgs.created_new(self._ident, id))
+            logging.getLogger(__name__).info(msgs.created_new(__class__, args.id))
 
     def panel(
         self,
@@ -529,9 +524,6 @@ class Tab(_FusionWrapper):
 
 
 class Panel(_FusionWrapper):
-
-    _ident = "panel"
-
     def __init__(
         self,
         parent: Tab,
@@ -540,29 +532,24 @@ class Panel(_FusionWrapper):
         position_index: int = None,
     ):
         super().__init__(parent)
-        given_args = self._given_args(locals())
 
-        name = self.app.eval_arg(name, self._ident, "name")
-        id = self.app.eval_arg(id, self._ident, "id")
-        position_index = self.app.eval_arg(
-            position_index, self._ident, "position_index"
-        )
+        args, given_args = dflts.evaluate_constructor_locals(locals())
 
-        self._in_fusion = self.parent.child_panels.itemById(id)
+        self._in_fusion = self.parent.child_panels.itemById(args.id)
 
         if self._in_fusion:
-            not_setable = given_args.keys() - {"id", "parent"}
+            not_setable = given_args - {"id", "parent"}
             if not_setable:
                 logging.getLogger(__name__).warning(
-                    msgs.already_existing(self._ident, id, not_setable)
+                    msgs.already_existing(__class__, args.id, not_setable)
                 )
-            logging.getLogger(__name__).info(msgs.using_exisitng(self._ident, id))
+            logging.getLogger(__name__).info(msgs.using_exisitng(self._ident, args.id))
         else:
             panel_order = {p.indexWithinTab(): p.id for p in self.parent.child_panels}
             sorted_indices = sorted(list(panel_order.keys()))
             comes_before_id = None
             for i in sorted_indices:
-                if i > position:
+                if i > args.position_index:
                     comes_before_id = panel_order[i]
                     break
             # check if index is greater than highest existing index
@@ -572,12 +559,12 @@ class Panel(_FusionWrapper):
                 comes_before_flag = False
 
             self._in_fusion = self.parent.child_panels.add(
-                id, name, comes_before_id, comes_before_flag
+                args.id, args.name, comes_before_id, comes_before_flag
             )
             # nothing else to set
 
             self.app.register_element(self, self.ui_level)
-            logging.getLogger(__name__).info(msgs.created_new(self._ident, id))
+            logging.getLogger(__name__).info(msgs.created_new(__class__, args.id))
 
     def button(
         self,
@@ -657,9 +644,6 @@ class Panel(_FusionWrapper):
 
 
 class Button(_FusionWrapper):
-
-    _ident = "button"
-
     def __init__(
         self,
         parent: Panel,
@@ -670,17 +654,8 @@ class Button(_FusionWrapper):
         is_promoted_by_default: bool = True,
     ):
         super().__init__(parent)
-        given_args = self._given_args(locals())
 
-        position_index = self.app.eval_arg(
-            position_index, self._ident, "position_index"
-        )
-        is_visible = self.app.eval_arg(is_visible, self._ident, "is_visible")
-        is_enabled = self.app.eval_arg(is_enabled, self._ident, "is_enabled")
-        is_promoted = self.app.eval_arg(is_promoted, self._ident, "is_promoted")
-        is_promoted_by_default = self.app.eval_arg(
-            is_promoted_by_default, self._ident, "is_promoted_by_default"
-        )
+        args, given_args = dflts.evaluate_constructor_locals(locals())
 
         # a button can always be created since it has no id
 
@@ -690,8 +665,8 @@ class Button(_FusionWrapper):
             "",
             dflts.image_parser("transparent"),
         )
-        dummy_cmd_def.controlDefinition.isVisible = is_visible
-        dummy_cmd_def.controlDefinition.isEnabled = is_enabled
+        dummy_cmd_def.controlDefinition.isVisible = args.is_visible
+        dummy_cmd_def.controlDefinition.isEnabled = args.is_enabled
         dummy_cmd_def.controlDefinition.name = "<no command connected>"
         # do not connect a handler since its a dummy cmd_def
 
@@ -699,15 +674,15 @@ class Button(_FusionWrapper):
         cmd_ctrl = self.parent.child_controls.addCommand(
             dummy_cmd_def
         )  # , position, True)
-        cmd_ctrl.isPromoted = is_promoted
-        cmd_ctrl.isPromotedByDefault = is_promoted_by_default
-        cmd_ctrl.isVisible = is_visible
+        cmd_ctrl.isPromoted = args.is_promoted
+        cmd_ctrl.isPromotedByDefault = args.is_promoted_by_default
+        cmd_ctrl.isVisible = args.is_visible
 
         self._in_fusion = cmd_ctrl
 
         self.app.register(dummy_cmd_def, self.ui_level)
         self.app.register_element(self, self.ui_level + 1)
-        logging.getLogger(__name__).info(msgs.created_new(self._ident, None))
+        logging.getLogger(__name__).info(msgs.created_new(__class__, None))
 
         self._connected_command = None
 
@@ -735,9 +710,6 @@ class Button(_FusionWrapper):
 
 
 class Command(_FusionWrapper):
-
-    _ident = "command"
-
     def __init__(
         self,
         parent: Button,
@@ -754,33 +726,21 @@ class Command(_FusionWrapper):
         on_key_down: Callable = None,  # cmd_def
     ):
         super().__init__(parent)
-        given_args = self._given_args(locals())
 
-        id = self.app.eval_arg(id, self._ident, "id")
-        name = self.app.eval_arg(name, self._ident, "name")
-        tooltip = self.app.eval_arg(tooltip, self._ident, "tooltip")
-        tooltip_image = self.app.eval_arg(tooltip_image, self._ident, "image_tooltip")
-        image = self.app.eval_arg(image, self._ident, "image")
-        on_created = self.app.eval_arg(on_created, self._ident, "on_created")
-        on_input_changed = self.app.eval_arg(
-            on_input_changed, self._ident, "on_input_changed"
-        )
-        on_preview = self.app.eval_arg(on_preview, self._ident, "on_preview")
-        on_execute = self.app.eval_arg(on_execute, self._ident, "on_execute")
-        on_destroy = self.app.eval_arg(on_destroy, self._ident, "on_destroy")
+        args, given_args = dflts.evaluate_constructor_locals(locals())
 
-        cmd_ctrl = self.parent.children.itemById(id)
+        cmd_ctrl = self.parent.children.itemById(args.id)
         cmd_def = adsk.core.Application.get().userInterface.commandDefinitions.itemById(
-            id
+            args.id
         )
 
         if not self.parent.is_dummy:
             raise ValueError(msgs.button_not_empty(self.parent.child.id))
 
         if cmd_ctrl:
-            not_setable = given_args.keys() - {"id", "parent"}
+            not_setable = given_args - {"id", "parent"}
             logging.getLogger(__name__).warning(
-                msgs.already_existing(self._ident, id, not_setable)
+                msgs.already_existing(__class__, args.id, not_setable)
             )
         elif cmd_def:
             # TODO parse position
@@ -794,23 +754,23 @@ class Command(_FusionWrapper):
         else:
             # create definition and recreate control
             cmd_def = adsk.core.Application.get().userInterface.commandDefinitions.addButtonDefinition(
-                id, name, tooltip, image
+                args.id, args.name, args.tooltip, args.image
             )
-            cmd_def.toolClipFilename = tooltip_image
+            cmd_def.toolClipFilename = args.tooltip_image
             cmd_def.controlDefinition.isVisible = self.parent.is_visible
             cmd_def.controlDefinition.isEnabled = self.parent.is_enabled
-            cmd_def.controlDefinition.name = name
+            cmd_def.controlDefinition.name = args.name
 
             # TODO all handlers
             cmd_def.commandCreated.add(
                 handlers.create(
                     self.app,
-                    name,
-                    on_created,
-                    on_execute,
-                    on_preview,
-                    on_input_changed,
-                    on_key_down,
+                    args.name,
+                    args.on_created,
+                    args.on_execute,
+                    args.on_preview,
+                    args.on_input_changed,
+                    args.on_key_down,
                 )
             )
 
@@ -828,9 +788,8 @@ class Command(_FusionWrapper):
 
             self._in_fusion = cmd_ctrl
 
-            self.app
             self.app.register_element(self, self.ui_level)
             # self.app.register_element() # TODO dregister also cmd_def for deletion somehow
-            logging.getLogger(__name__).info(msgs.created_new(self._ident, id))
+            logging.getLogger(__name__).info(msgs.created_new(__class__, args.id))
 
         # TODO properties
