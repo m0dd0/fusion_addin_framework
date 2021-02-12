@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 from abc import ABC
-from typing import Union, Callable, Any, List, Dict
+from typing import Union, Callable
 from collections import defaultdict
 from uuid import uuid4
 
@@ -13,6 +13,9 @@ from . import messages as msgs
 from . import handlers
 
 from .util import appdirs
+
+
+# pylint:disable=unused-argument
 
 
 class _FusionWrapper(ABC):
@@ -80,6 +83,7 @@ class FusionApp:
     appear in the user interface. It handles their creation and deletes them
     if the addin is deactivated (by closing Fusion or stopping the Addin
     manually).
+    Additionally it provides directories for log, congig and user data.
     """
 
     _ui_level = 0
@@ -543,7 +547,7 @@ class Panel(_FusionWrapper):
                 logging.getLogger(__name__).warning(
                     msgs.already_existing(__class__, args.id, not_setable)
                 )
-            logging.getLogger(__name__).info(msgs.using_exisitng(self._ident, args.id))
+            logging.getLogger(__name__).info(msgs.using_exisitng(__class__, args.id))
         else:
             panel_order = {p.indexWithinTab(): p.id for p in self.parent.child_panels}
             sorted_indices = sorted(list(panel_order.keys()))
@@ -704,7 +708,20 @@ class Button(_FusionWrapper):
         on_destroy: Callable = None,
         on_key_down: Callable = None,
     ):
-        return Command(self, id, name, image, tooltip, tooltip_image)
+        return Command(
+            self,
+            id,
+            name,
+            image,
+            tooltip,
+            tooltip_image,
+            on_created,
+            on_input_changed,
+            on_preview,
+            on_execute,
+            on_destroy,
+            on_key_down,
+        )
 
     # TODO properties
 
