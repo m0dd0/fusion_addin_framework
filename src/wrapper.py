@@ -12,7 +12,6 @@ from . import defaults as dflts
 from . import messages as msgs
 from . import handlers
 
-from .util.py_utils import create_default_logger
 from .util import appdirs
 
 
@@ -43,28 +42,6 @@ class _FusionWrapper(ABC):
         self._parent = parent
         self._app = self.parent.app
         self._ui_level = self.parent.ui_level + 1
-
-    # def _given_args(self, locals: Dict):  # pylint:disable=redefined-builtin
-    #     """Removes None and unwanted entries from the locals dict.
-
-    #     To get a dictionairy containing only the values passed to a method, the
-    #     dictionairy returned by locals() called in a method needs to be cleaned.
-    #     When calling locals() inside a method, 'self' and '__class__' will always be
-    #     included in the locals()-dict. They are dropped.
-    #     Also all pairs having a None value are dropped.
-
-    #     Args:
-    #         locals (Dict): The dictionairy returned by a locals() call at the beginning
-    #             of a method
-
-    #     Returns:
-    #         Dict: The cleaned dict, containing only the passed values.
-    #     """
-    #     return {
-    #         k: v
-    #         for k, v in locals.items()
-    #         if v is not None and k not in ["self", "__class__"]
-    #     }
 
     # simply override the properties to use individual docstrings
 
@@ -106,11 +83,9 @@ class FusionApp:
     """
 
     _ui_level = 0
-    _ident = "app"
 
     def __init__(
         self,
-        # logger: logging.Logger = None,
         name: str = None,
         author: str = None,
         debug_to_ui: bool = None,
@@ -127,10 +102,12 @@ class FusionApp:
                 or not. If not they will get logged anyways. Defaults to True.
         """
 
+        params = dflts.evaluate_constructor_locals(locals())
+
         # no need ot use properties since its ok to set them
-        self.name = self.eval_arg(name, [self._ident, "name"])
-        self.author = self.eval_arg(author, [self._ident, "author"])
-        self.debug_to_ui = self.eval_arg(debug_to_ui, [self._ident, "debug_to_ui"])
+        self.name = params.name
+        self.author = params.author
+        self.debug_to_ui = params.debug_to_ui
 
         self.user_state_dir = appdirs.user_state_dir(self.name, self.author)
         self.user_cache_dir = appdirs.user_cache_dir(self.name, self.author)
@@ -220,33 +197,6 @@ class FusionApp:
                     # element is probably already deleted
                     pass
 
-    def eval_arg(self, value: Any, keys: List[str]):
-        """Evaluates a given arguments with the parser at keys position.
-
-        The value argument can be any argument that you can pass to one of the
-        initalising methodes of any ui wrapper class.
-        The method returns the result of the input validation of this value with
-        the parser of the position defined by the keys.
-        For example if you provide the value "lightbulb" and ["workspace", "image"]
-        as key, the parser will return a string representing the full path of the
-        source of the lighbulb image.
-        This method is not needed in the regular use. However, you can use it with
-        None as value to quickly check the defualt parameter for a class initialisation
-        or for debugging purpose.
-
-        Args:
-            value (Any): The initialsation argument to evaluate
-            keys (List[str]): The "position" of the parser which is used to evaluate
-                the value
-
-        Returns:
-            Any: The reult of evaluating the given value
-        """
-        key = tuple(keys)
-        if value is None:
-            value = self._effective_defaults[key]
-        return self._default_parsers[key](value)
-
     def register_element(self, elem: _FusionWrapper, level: int = 0):
         """Registers a instance of a ui wrapper object to the addin.
 
@@ -284,8 +234,6 @@ class FusionApp:
 
 
 class Workspace(_FusionWrapper):
-    _ident = "workspace"
-
     def __init__(
         self,
         parent: FusionApp,
@@ -310,45 +258,34 @@ class Workspace(_FusionWrapper):
         """
         super().__init__(parent)
 
-        # get the names of all attributes that were passen to the init
-        given_args = self._given_args(locals())
-
-        # this could be done in only two lines with a loop
-        # but its more clear if all defaults are set explicitly
-        id = self.app.eval_arg(id, self._ident, "id")
-        name = self.app.eval_arg(name, self._ident, "name")
-        product_type = self.app.eval_arg(product_type, self._ident, "product_type")
-        image = self.app.eval_arg(image, self._ident, "image")
-        tooltip_image = self.app.eval_arg(tooltip_image, self._ident, "tooltip_image")
-        tooltip_head = self.app.eval_arg(tooltip_head, self._ident, "tooltip_head")
-        tooltip_text = self.app.eval_arg(tooltip_text, self._ident, "tooltip_text")
+        args, given_args = dflts.evaluate_constructor_locals(locals())
 
         # try to get an existing instance
         self._in_fusion = adsk.core.Application.get().userInterface.workspaces.itemById(
-            id
+            args.id
         )
 
         # if there is an instance, show warning message if there are more arguments
         # than necessary to get the workspace
         if self._in_fusion is not None:
-            not_setable = given_args.keys() - {"id", "parent"}
+            not_setable = given_args - {"id", "parent"}
             if not_setable:
-                self.app.logger.warning(
-                    msgs.already_existing(self._ident, id, not_setable)
+                logging.getLogger(__name__).warning(
+                    msgs.already_existing(__class__, args.id, not_setable)
                 )
-            self.app.logger.info(msgs.using_exisitng(self._ident, id))
+            logging.getLogger(__name__).info(msgs.using_exisitng(__class__, args.id))
 
         # create new workspace if there is no
         else:
             self._in_fusion = adsk.core.Application.get().userInterface.workspaces.add(
-                product_type, id, name, image
+                args.product_type, args.id, args.name, args.image
             )
-            self._in_fusion.toolClipFilename = tooltip_image
-            self._in_fusion.tooltip = tooltip_head
-            self._in_fusion.tooltipDescription = tooltip_head
+            self._in_fusion.toolClipFilename = args.tooltip_image
+            self._in_fusion.tooltip = args.tooltip_head
+            self._in_fusion.tooltipDescription = args.tooltip_head
 
             self.app.register_element(self, self.ui_level)
-            self.app.logger.info(msgs.created_new(self._ident, id))
+            logging.getLogger(__name__).info(msgs.created_new(__class__, args.id))
 
     @property
     def id(self):
