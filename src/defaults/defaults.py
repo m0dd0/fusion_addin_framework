@@ -3,6 +3,8 @@ from functools import partial
 import json
 from uuid import uuid4
 import random
+import logging
+from types import SimpleNamespace
 
 from ..util import py_utils
 from .. import messages as msgs
@@ -13,7 +15,11 @@ _standard_defaults_path = Path(__file__).with_name("standard_defaults.json").abs
 _standard_defaults = py_utils.load_json_file(_standard_defaults_path)
 
 _custom_defaults_path = Path(__file__).parents[2] / "settings" / "custom_defaults.json"
-_custom_defaults = py_utils.load_json_file(_custom_defaults_path)
+try:
+    _custom_defaults = py_utils.load_json_file(_custom_defaults_path)
+except json.JSONDecodeError:
+    logging.warning(msgs.json_error_in_defaults())
+    _custom_defaults = {}
 
 _default_images_path = Path(__file__).with_name("default_images").absolute()
 _default_pictures = {p.stem: p.absolute() for p in _default_images_path.iterdir()}
@@ -45,9 +51,13 @@ def _image_parser(value):
     return str(value)
 
 
-# alias because it is also needed fom outside
+# alias because it is also needed fom outside for dummy creation
 def image_parser(value):
     return _image_parser(value)
+
+
+def _image_file_parser(value, ending):
+    pass
 
 
 def _do_nothing():
@@ -117,33 +127,39 @@ _default_parsers = {
 }
 
 
-def get_effective_defaults(logger):
-    # try to load custom defaults
-    try:
-        custom_defaults = py_utils.load_json_file(_custom_defaults_path)
-    except json.JSONDecodeError:
-        logger.warning(msgs.json_error_in_defaults())
-        custom_defaults = {}
+### synthetisize the effective defaults
 
-    # flatten the dicts to make live easier
-    custom_defaults = py_utils.flatten_dict(custom_defaults)
-    standard_defaults = py_utils.flatten_dict(_standard_defaults)
+# flatten the dicts to make live easier
+_custom_defaults_flat = py_utils.flatten_dict(_custom_defaults)
+_standard_defaults_flat = py_utils.flatten_dict(_standard_defaults)
 
-    # drop all settings whose keys is not in standard defaults
-    unknown_custom_defaults = set(custom_defaults.keys()) - set(
-        standard_defaults.keys()
-    )
-    if unknown_custom_defaults:
-        logger.warning(msgs.unknown_defaults(unknown_custom_defaults))
-    custom_defaults = {
-        k: v for k, v in custom_defaults.items() if k not in unknown_custom_defaults
-    }
+# drop all settings whose keys is not in standard defaults
+_unknown_custom_defaults = set(_custom_defaults_flat.keys()) - set(
+    _standard_defaults_flat.keys()
+)
+if _unknown_custom_defaults:
+    logging.warning(msgs.unknown_defaults(_unknown_custom_defaults))
+_custom_defaults_flat = {
+    k: v for k, v in _custom_defaults_flat.items() if k not in _unknown_custom_defaults
+}
 
-    # create a dict with all settings, where cstm settings replace standards
-    standard_defaults.update(custom_defaults)
-    effective_defaults = standard_defaults
-    return effective_defaults
+# create a dict with all settings, where cstm settings replace standards
+_standard_defaults_flat.update(_custom_defaults_flat)
+_effective_defaults_flat = _standard_defaults_flat
 
 
-def get_default_parsers(logger):
-    return py_utils.flatten_dict(_default_parsers)
+def evaluate_constructor_locals(param_locals):
+    param_locals.pop("self")
+    current_class = param_locals.pop("__class__")
+
+    parameter_names = list(param_locals.keys())
+    for param_name in parameter_names:
+        if param_locals[param_name] is None:
+            param_locals[param_name] = _effective_defaults_flat.get(
+                (current_class, param_name), None
+            )
+        else:
+            # input validation could be done here
+            pass
+
+    return SimpleNamespace(**param_locals)
