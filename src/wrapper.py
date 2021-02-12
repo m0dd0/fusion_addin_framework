@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 from abc import ABC
-from typing import Union, Callable, Any, List, Dict
+from typing import Union, Callable
 from collections import defaultdict
 from uuid import uuid4
 
@@ -12,8 +12,10 @@ from . import defaults as dflts
 from . import messages as msgs
 from . import handlers
 
-from .util.py_utils import create_default_logger
 from .util import appdirs
+
+
+# pylint:disable=unused-argument
 
 
 class _FusionWrapper(ABC):
@@ -43,28 +45,6 @@ class _FusionWrapper(ABC):
         self._parent = parent
         self._app = self.parent.app
         self._ui_level = self.parent.ui_level + 1
-
-    def _given_args(self, locals: Dict):  # pylint:disable=redefined-builtin
-        """Removes None and unwanted entries from the locals dict.
-
-        To get a dictionairy containing only the values passed to a method, the
-        dictionairy returned by locals() called in a method needs to be cleaned.
-        When calling locals() inside a method, 'self' and '__class__' will always be
-        included in the locals()-dict. They are dropped.
-        Also all pairs having a None value are dropped.
-
-        Args:
-            locals (Dict): The dictionairy returned by a locals() call at the beginning
-                of a method
-
-        Returns:
-            Dict: The cleaned dict, containing only the passed values.
-        """
-        return {
-            k: v
-            for k, v in locals.items()
-            if v is not None and k not in ["self", "__class__"]
-        }
 
     # simply override the properties to use individual docstrings
 
@@ -103,26 +83,19 @@ class FusionApp:
     appear in the user interface. It handles their creation and deletes them
     if the addin is deactivated (by closing Fusion or stopping the Addin
     manually).
-    It also manages the creation of logfiles, creating directories for user
-    data, setting some logging configurations and other utilities you might
-    find useful.
+    Additionally it provides directories for log, congig and user data.
     """
 
     _ui_level = 0
-    _ident = "app"
 
     def __init__(
         self,
-        logger: logging.Logger = None,
         name: str = None,
         author: str = None,
         debug_to_ui: bool = None,
     ):
         """
         Args:
-            logger (logging.Logger, optional): The logger that is used by the
-                framework for logging messages about building your UI elements etc.
-                Defaults to a basic logger.
             name (str, optional): The name of the addin. Used to create app
                 directories with meaningful names. Defaults to None.
             author (str, optional): The name of the addins author. Used to create
@@ -132,32 +105,19 @@ class FusionApp:
                 <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-1692a9a4-3be0-4474-9e15-02fac696b2b2>`_
                 or not. If not they will get logged anyways. Defaults to True.
         """
-        if logger is None:
-            logger = create_default_logger(
-                name="faf_logger",
-                handlers=[
-                    logging.StreamHandler(),
-                ],
-                message_format="{asctime} {levelname} {module}/{funcName}: {message}",
-            )
-        # no need to make logger a property since its ok to set them
-        self.logger = logger
 
-        self._effective_defaults = dflts.get_effective_defaults(self.logger)
-        self._default_parsers = dflts.get_default_parsers(self.logger)
+        params = dflts.evaluate_constructor_locals(locals())
 
         # no need ot use properties since its ok to set them
-        self.name = self.eval_arg(name, [self._ident, "name"])
-        self.author = self.eval_arg(author, [self._ident, "author"])
-        self.debug_to_ui = self.eval_arg(debug_to_ui, [self._ident, "debug_to_ui"])
+        self.name = params.name
+        self.author = params.author
+        self.debug_to_ui = params.debug_to_ui
 
         self.user_state_dir = appdirs.user_state_dir(self.name, self.author)
         self.user_cache_dir = appdirs.user_cache_dir(self.name, self.author)
         self.user_config_dir = appdirs.user_config_dir(self.name, self.author)
         self.user_data_dir = appdirs.user_data_dir(self.name, self.author)
         self.user_log_dir = appdirs.user_log_dir(self.name, self.author)
-
-        self.logger.handlers.append(logging.FileHandler(self.user_log_dir))
 
         self._created_elements = defaultdict(list)
 
@@ -241,33 +201,6 @@ class FusionApp:
                     # element is probably already deleted
                     pass
 
-    def eval_arg(self, value: Any, keys: List[str]):
-        """Evaluates a given arguments with the parser at keys position.
-
-        The value argument can be any argument that you can pass to one of the
-        initalising methodes of any ui wrapper class.
-        The method returns the result of the input validation of this value with
-        the parser of the position defined by the keys.
-        For example if you provide the value "lightbulb" and ["workspace", "image"]
-        as key, the parser will return a string representing the full path of the
-        source of the lighbulb image.
-        This method is not needed in the regular use. However, you can use it with
-        None as value to quickly check the defualt parameter for a class initialisation
-        or for debugging purpose.
-
-        Args:
-            value (Any): The initialsation argument to evaluate
-            keys (List[str]): The "position" of the parser which is used to evaluate
-                the value
-
-        Returns:
-            Any: The reult of evaluating the given value
-        """
-        key = tuple(keys)
-        if value is None:
-            value = self._effective_defaults[key]
-        return self._default_parsers[key](value)
-
     def register_element(self, elem: _FusionWrapper, level: int = 0):
         """Registers a instance of a ui wrapper object to the addin.
 
@@ -305,8 +238,6 @@ class FusionApp:
 
 
 class Workspace(_FusionWrapper):
-    _ident = "workspace"
-
     def __init__(
         self,
         parent: FusionApp,
@@ -331,45 +262,34 @@ class Workspace(_FusionWrapper):
         """
         super().__init__(parent)
 
-        # get the names of all attributes that were passen to the init
-        given_args = self._given_args(locals())
-
-        # this could be done in only two lines with a loop
-        # but its more clear if all defaults are set explicitly
-        id = self.app.eval_arg(id, self._ident, "id")
-        name = self.app.eval_arg(name, self._ident, "name")
-        product_type = self.app.eval_arg(product_type, self._ident, "product_type")
-        image = self.app.eval_arg(image, self._ident, "image")
-        tooltip_image = self.app.eval_arg(tooltip_image, self._ident, "tooltip_image")
-        tooltip_head = self.app.eval_arg(tooltip_head, self._ident, "tooltip_head")
-        tooltip_text = self.app.eval_arg(tooltip_text, self._ident, "tooltip_text")
+        args, given_args = dflts.evaluate_constructor_locals(locals())
 
         # try to get an existing instance
         self._in_fusion = adsk.core.Application.get().userInterface.workspaces.itemById(
-            id
+            args.id
         )
 
         # if there is an instance, show warning message if there are more arguments
         # than necessary to get the workspace
         if self._in_fusion is not None:
-            not_setable = given_args.keys() - {"id", "parent"}
+            not_setable = given_args - {"id", "parent"}
             if not_setable:
-                self.app.logger.warning(
-                    msgs.already_existing(self._ident, id, not_setable)
+                logging.getLogger(__name__).warning(
+                    msgs.already_existing(__class__, args.id, not_setable)
                 )
-            self.app.logger.info(msgs.using_exisitng(self._ident, id))
+            logging.getLogger(__name__).info(msgs.using_exisitng(__class__, args.id))
 
         # create new workspace if there is no
         else:
             self._in_fusion = adsk.core.Application.get().userInterface.workspaces.add(
-                product_type, id, name, image
+                args.product_type, args.id, args.name, args.image
             )
-            self._in_fusion.toolClipFilename = tooltip_image
-            self._in_fusion.tooltip = tooltip_head
-            self._in_fusion.tooltipDescription = tooltip_head
+            self._in_fusion.toolClipFilename = args.tooltip_image
+            self._in_fusion.tooltip = args.tooltip_head
+            self._in_fusion.tooltipDescription = args.tooltip_head
 
             self.app.register_element(self, self.ui_level)
-            self.app.logger.info(msgs.created_new(self._ident, id))
+            logging.getLogger(__name__).info(msgs.created_new(__class__, args.id))
 
     @property
     def id(self):
@@ -422,7 +342,7 @@ class Workspace(_FusionWrapper):
     @image.setter
     def image(self, new_image):
         if self.is_native:
-            self.app.logger.warning(
+            logging.getLogger(__name__).warning(
                 msgs.setting_on_native("workspace", new_image, "image")
             )
         else:
@@ -448,7 +368,7 @@ class Workspace(_FusionWrapper):
     @tooltip_image.setter
     def tooltip_image(self, new_tooltip_image):
         if self.is_native:
-            self.app.logger.warning(
+            logging.getLogger(__name__).warning(
                 msgs.setting_on_native("workspace", new_tooltip_image, "tooltip_image")
             )
         else:
@@ -474,7 +394,7 @@ class Workspace(_FusionWrapper):
     @tooltip_head.setter
     def tooltip_head(self, new_tooltip_head):
         if self.is_native:
-            self.app.logger.warning(
+            logging.getLogger(__name__).warning(
                 msgs.setting_on_native("workspace", new_tooltip_head, "tooltip_head")
             )
         else:
@@ -495,7 +415,7 @@ class Workspace(_FusionWrapper):
     @tooltip_text.setter
     def tooltip_text(self, new_tooltip_text):
         if self.is_native:
-            self.app.logger.warning(
+            logging.getLogger(__name__).warning(
                 msgs.setting_on_native("workspace", new_tooltip_text, "tooltip_text")
             )
         else:
@@ -518,9 +438,6 @@ class Workspace(_FusionWrapper):
 
 
 class Tab(_FusionWrapper):
-
-    _ident = "tab"
-
     def __init__(
         self,
         parent: Workspace,
@@ -528,26 +445,24 @@ class Tab(_FusionWrapper):
         name: str = None,
     ):
         super().__init__(parent)
-        given_args = self._given_args(locals())
+        # given_args = self._given_args(locals())
+        args, given_args = dflts.evaluate_constructor_locals(locals())
 
-        name = self.app.eval_arg(name, self._ident, "name")
-        id = self.app.eval_arg(id, self._ident, "id")
-
-        self._in_fusion = self.parent.child_tabs.itemById(id)
+        self._in_fusion = self.parent.child_tabs.itemById(args.id)
 
         if self.in_fusion:
-            not_setable = given_args.keys() - {"id", "parent"}
+            not_setable = given_args - {"id", "parent"}
             if not_setable:
-                self.app.logger.warning(
-                    msgs.already_existing(self._ident, id, not_setable)
+                logging.getLogger(__name__).warning(
+                    msgs.already_existing(__class__, args.id, not_setable)
                 )
-            self.app.logger.info(msgs.using_exisitng(self._ident, id))
+            logging.getLogger(__name__).info(msgs.using_exisitng(__class__, args.id))
         else:
-            self._in_fusion = self.parent.in_fusion.toolbarTabs.add(id, name)
+            self._in_fusion = self.parent.in_fusion.toolbarTabs.add(args.id, args.name)
             # nothing else is setable
 
             self.app.register_element(self, self.ui_level)
-            self.app.logger.info(msgs.created_new(self._ident, id))
+            logging.getLogger(__name__).info(msgs.created_new(__class__, args.id))
 
     def panel(
         self,
@@ -613,9 +528,6 @@ class Tab(_FusionWrapper):
 
 
 class Panel(_FusionWrapper):
-
-    _ident = "panel"
-
     def __init__(
         self,
         parent: Tab,
@@ -624,29 +536,24 @@ class Panel(_FusionWrapper):
         position_index: int = None,
     ):
         super().__init__(parent)
-        given_args = self._given_args(locals())
 
-        name = self.app.eval_arg(name, self._ident, "name")
-        id = self.app.eval_arg(id, self._ident, "id")
-        position_index = self.app.eval_arg(
-            position_index, self._ident, "position_index"
-        )
+        args, given_args = dflts.evaluate_constructor_locals(locals())
 
-        self._in_fusion = self.parent.child_panels.itemById(id)
+        self._in_fusion = self.parent.child_panels.itemById(args.id)
 
         if self._in_fusion:
-            not_setable = given_args.keys() - {"id", "parent"}
+            not_setable = given_args - {"id", "parent"}
             if not_setable:
-                self.app.logger.warning(
-                    msgs.already_existing(self._ident, id, not_setable)
+                logging.getLogger(__name__).warning(
+                    msgs.already_existing(__class__, args.id, not_setable)
                 )
-            self.app.logger.info(msgs.using_exisitng(self._ident, id))
+            logging.getLogger(__name__).info(msgs.using_exisitng(__class__, args.id))
         else:
             panel_order = {p.indexWithinTab(): p.id for p in self.parent.child_panels}
             sorted_indices = sorted(list(panel_order.keys()))
             comes_before_id = None
             for i in sorted_indices:
-                if i > position:
+                if i > args.position_index:
                     comes_before_id = panel_order[i]
                     break
             # check if index is greater than highest existing index
@@ -656,12 +563,12 @@ class Panel(_FusionWrapper):
                 comes_before_flag = False
 
             self._in_fusion = self.parent.child_panels.add(
-                id, name, comes_before_id, comes_before_flag
+                args.id, args.name, comes_before_id, comes_before_flag
             )
             # nothing else to set
 
             self.app.register_element(self, self.ui_level)
-            self.app.logger.info(msgs.created_new(self._ident, id))
+            logging.getLogger(__name__).info(msgs.created_new(__class__, args.id))
 
     def button(
         self,
@@ -741,9 +648,6 @@ class Panel(_FusionWrapper):
 
 
 class Button(_FusionWrapper):
-
-    _ident = "button"
-
     def __init__(
         self,
         parent: Panel,
@@ -754,17 +658,8 @@ class Button(_FusionWrapper):
         is_promoted_by_default: bool = True,
     ):
         super().__init__(parent)
-        given_args = self._given_args(locals())
 
-        position_index = self.app.eval_arg(
-            position_index, self._ident, "position_index"
-        )
-        is_visible = self.app.eval_arg(is_visible, self._ident, "is_visible")
-        is_enabled = self.app.eval_arg(is_enabled, self._ident, "is_enabled")
-        is_promoted = self.app.eval_arg(is_promoted, self._ident, "is_promoted")
-        is_promoted_by_default = self.app.eval_arg(
-            is_promoted_by_default, self._ident, "is_promoted_by_default"
-        )
+        args, given_args = dflts.evaluate_constructor_locals(locals())
 
         # a button can always be created since it has no id
 
@@ -774,8 +669,8 @@ class Button(_FusionWrapper):
             "",
             dflts.image_parser("transparent"),
         )
-        dummy_cmd_def.controlDefinition.isVisible = is_visible
-        dummy_cmd_def.controlDefinition.isEnabled = is_enabled
+        dummy_cmd_def.controlDefinition.isVisible = args.is_visible
+        dummy_cmd_def.controlDefinition.isEnabled = args.is_enabled
         dummy_cmd_def.controlDefinition.name = "<no command connected>"
         # do not connect a handler since its a dummy cmd_def
 
@@ -783,15 +678,15 @@ class Button(_FusionWrapper):
         cmd_ctrl = self.parent.child_controls.addCommand(
             dummy_cmd_def
         )  # , position, True)
-        cmd_ctrl.isPromoted = is_promoted
-        cmd_ctrl.isPromotedByDefault = is_promoted_by_default
-        cmd_ctrl.isVisible = is_visible
+        cmd_ctrl.isPromoted = args.is_promoted
+        cmd_ctrl.isPromotedByDefault = args.is_promoted_by_default
+        cmd_ctrl.isVisible = args.is_visible
 
         self._in_fusion = cmd_ctrl
 
         self.app.register(dummy_cmd_def, self.ui_level)
         self.app.register_element(self, self.ui_level + 1)
-        self.app.logger.info(msgs.created_new(self._ident, None))
+        logging.getLogger(__name__).info(msgs.created_new(__class__, None))
 
         self._connected_command = None
 
@@ -813,15 +708,25 @@ class Button(_FusionWrapper):
         on_destroy: Callable = None,
         on_key_down: Callable = None,
     ):
-        return Command(self, id, name, image, tooltip, tooltip_image)
+        return Command(
+            self,
+            id,
+            name,
+            image,
+            tooltip,
+            tooltip_image,
+            on_created,
+            on_input_changed,
+            on_preview,
+            on_execute,
+            on_destroy,
+            on_key_down,
+        )
 
     # TODO properties
 
 
 class Command(_FusionWrapper):
-
-    _ident = "command"
-
     def __init__(
         self,
         parent: Button,
@@ -838,32 +743,22 @@ class Command(_FusionWrapper):
         on_key_down: Callable = None,  # cmd_def
     ):
         super().__init__(parent)
-        given_args = self._given_args(locals())
 
-        id = self.app.eval_arg(id, self._ident, "id")
-        name = self.app.eval_arg(name, self._ident, "name")
-        tooltip = self.app.eval_arg(tooltip, self._ident, "tooltip")
-        tooltip_image = self.app.eval_arg(tooltip_image, self._ident, "image_tooltip")
-        image = self.app.eval_arg(image, self._ident, "image")
-        on_created = self.app.eval_arg(on_created, self._ident, "on_created")
-        on_input_changed = self.app.eval_arg(
-            on_input_changed, self._ident, "on_input_changed"
-        )
-        on_preview = self.app.eval_arg(on_preview, self._ident, "on_preview")
-        on_execute = self.app.eval_arg(on_execute, self._ident, "on_execute")
-        on_destroy = self.app.eval_arg(on_destroy, self._ident, "on_destroy")
+        args, given_args = dflts.evaluate_constructor_locals(locals())
 
-        cmd_ctrl = self.parent.children.itemById(id)
+        cmd_ctrl = self.parent.children.itemById(args.id)
         cmd_def = adsk.core.Application.get().userInterface.commandDefinitions.itemById(
-            id
+            args.id
         )
 
         if not self.parent.is_dummy:
             raise ValueError(msgs.button_not_empty(self.parent.child.id))
 
         if cmd_ctrl:
-            not_setable = given_args.keys() - {"id", "parent"}
-            self.app.logger.warning(msgs.already_existing(self._ident, id, not_setable))
+            not_setable = given_args - {"id", "parent"}
+            logging.getLogger(__name__).warning(
+                msgs.already_existing(__class__, args.id, not_setable)
+            )
         elif cmd_def:
             # TODO parse position
             cmd_ctrl = self.parent.parent.children.addCommand(
@@ -876,23 +771,23 @@ class Command(_FusionWrapper):
         else:
             # create definition and recreate control
             cmd_def = adsk.core.Application.get().userInterface.commandDefinitions.addButtonDefinition(
-                id, name, tooltip, image
+                args.id, args.name, args.tooltip, args.image
             )
-            cmd_def.toolClipFilename = tooltip_image
+            cmd_def.toolClipFilename = args.tooltip_image
             cmd_def.controlDefinition.isVisible = self.parent.is_visible
             cmd_def.controlDefinition.isEnabled = self.parent.is_enabled
-            cmd_def.controlDefinition.name = name
+            cmd_def.controlDefinition.name = args.name
 
             # TODO all handlers
             cmd_def.commandCreated.add(
                 handlers.create(
                     self.app,
-                    name,
-                    on_created,
-                    on_execute,
-                    on_preview,
-                    on_input_changed,
-                    on_key_down,
+                    args.name,
+                    args.on_created,
+                    args.on_execute,
+                    args.on_preview,
+                    args.on_input_changed,
+                    args.on_key_down,
                 )
             )
 
@@ -910,9 +805,8 @@ class Command(_FusionWrapper):
 
             self._in_fusion = cmd_ctrl
 
-            self.app
             self.app.register_element(self, self.ui_level)
             # self.app.register_element() # TODO dregister also cmd_def for deletion somehow
-            self.app.logger.info(msgs.created_new(self._ident, id))
+            logging.getLogger(__name__).info(msgs.created_new(__class__, args.id))
 
         # TODO properties

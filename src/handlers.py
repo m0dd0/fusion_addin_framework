@@ -1,3 +1,5 @@
+import logging
+
 import adsk.core
 
 from . import messages as msgs
@@ -59,7 +61,9 @@ class _CommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
         self.on_key_down = on_key_down
 
     def notify(self, args: adsk.core.CommandCreatedEventArgs):
-        self.app.logger.info(msgs.starting_handler(self.handler_type, self.cmd_name))
+        logging.getLogger(__name__).info(
+            msgs.starting_handler(self.handler_type, self.cmd_name)
+        )
 
         cmd = args.command
 
@@ -99,7 +103,7 @@ class _CommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
             # no exception gets raised outside the handlers so this try, except
             # block is mandatory to prevent silent errors !!!!!!!
             msg = "Failed:\n{}".format(traceback.format_exc())  # TODO msgs
-            self.app.logger.error(msg)
+            logging.getLogger(__name__).error(msg)
             if self.app.debug_to_ui:
                 adsk.core.Application.get().userInterface.messageBox(msg)
 
@@ -115,7 +119,9 @@ class _CommandEventHandler(adsk.core.CommandEventHandler):
         self.action = action
 
     def notify(self, args: adsk.core.CommandEventArgs):
-        self.app.logger.info(msgs.starting_handler(self.handler_type, self.cmd_name))
+        logging.getLogger(__name__).info(
+            msgs.starting_handler(self.handler_type, self.cmd_name)
+        )
 
         try:
             self.action(args)
@@ -123,7 +129,7 @@ class _CommandEventHandler(adsk.core.CommandEventHandler):
             # no exception gets raised outside the handlers so this try, except
             # block is mandatory to prevent silent errors !!!!!!!
             msg = "Failed:\n{}".format(traceback.format_exc())  # TODO msgs
-            self.app.logger.error(msg)
+            logging.getLogger(__name__).error(msg)
             if self.app.debug_to_ui:
                 adsk.core.Application.get().userInterface.messageBox(msg)
 
@@ -139,7 +145,9 @@ class _InputChangedHandler(adsk.core.InputChangedEventHandler):
         self.action = action
 
     def notify(self, args: adsk.core.InputChangedEventArgs):
-        self.app.logger.info(msgs.starting_handler(self.handler_type, self.cmd_name))
+        logging.getLogger(__name__).info(
+            msgs.starting_handler(self.handler_type, self.cmd_name)
+        )
 
         try:
             self.action(args)
@@ -147,7 +155,7 @@ class _InputChangedHandler(adsk.core.InputChangedEventHandler):
             # no exception gets raised outside the handlers so this try, except
             # block is mandatory to prevent silent errors !!!!!!!
             msg = "Failed:\n{}".format(traceback.format_exc())  # TODO msgs
-            self.app.logger.error(msg)
+            logging.getLogger(__name__).error(msg)
             if self.app.debug_to_ui:
                 adsk.core.Application.get().userInterface.messageBox(msg)
 
@@ -163,7 +171,9 @@ class _KeyboardHandler(adsk.core.KeyboardEventHandler):
         self.action = action
 
     def notify(self, args):
-        self.app.logger.info(msgs.starting_handler(self.handler_type, self.cmd_name))
+        logging.getLogger(__name__).info(
+            msgs.starting_handler(self.handler_type, self.cmd_name)
+        )
 
         try:
             self.action(args)
@@ -171,7 +181,7 @@ class _KeyboardHandler(adsk.core.KeyboardEventHandler):
             # no exception gets raised outside the handlers so this try, except
             # block is mandatory to prevent silent errors !!!!!!!
             msg = "Failed:\n{}".format(traceback.format_exc())  # TODO msgs
-            self.app.logger.error(msg)
+            logging.getLogger(__name__).error(msg)
             if self.app.debug_to_ui:
                 adsk.core.Application.get().userInterface.messageBox(msg)
 
