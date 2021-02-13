@@ -160,8 +160,8 @@ def evaluate_constructor_locals(param_locals):
                 (current_class, param_name), None
             )
         else:
-            given_args.add(param_name)
             # input validation could be done here
-            pass
+            given_args.add(param_name)
+    # TODO parsing
 
     return SimpleNamespace(**param_locals), given_args
