@@ -15,6 +15,8 @@ from . import handlers
 from .util import appdirs
 
 
+# constructor arguments are evaluated by using the locals() function, therefore
+# this error can be ignored
 # pylint:disable=unused-argument
 
 
@@ -33,7 +35,7 @@ class _FusionWrapper(ABC):
     def __init__(
         self, parent
     ):  # do NOT use for parent typehint --> docs generation will crash
-        """
+        """Base class for all Fusion UI wrapper classes.
         Sets the attributes app attribute of the wrapped instance by getting its
         parents app attribute.
         Sets the ui_level attribute by incrementing the parents ui_level attribute.
@@ -47,7 +49,7 @@ class _FusionWrapper(ABC):
         self._ui_level = self.parent.ui_level + 1
 
     # simply override the properties to use individual docstrings
-    # region properties
+    # region
     @property
     def id(self):
         """Id of the wrapped instance."""
@@ -120,81 +122,6 @@ class FusionApp:
         self._debug_to_ui = params.debug_to_ui
 
         self._created_elements = defaultdict(list)
-
-    # region properties
-    @property
-    def name(self) -> str:
-        """str: The name of the addin. Used for user directories only."""
-        return self._name
-
-    @name.setter
-    def name(self, new_name: str):
-        self._name = new_name
-
-    @property
-    def author(self) -> str:
-        """str: The author of the addin. Used for user directories only."""
-        return self._author
-
-    @author.setter
-    def author(self, new_author: str):
-        self._author = new_author
-
-    @property
-    def debug_to_ui(self) -> bool:
-        """bool: Flag indicating if erorr messages are displayed in a `messageBox
-        <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-1692a9a4-3be0-4474-9e15-02fac696b2b2>`_
-        or not.
-        """
-        return self._debug_to_ui
-
-    @debug_to_ui.setter
-    def debug_to_ui(self, new_debug_to_ui: bool):
-        self._debug_to_ui = new_debug_to_ui
-
-    @property
-    def user_state_dir(self) -> str:
-        """str: Directory for saving user state data."""
-        return appdirs.user_state_dir(self.name, self.author)
-
-    @property
-    def user_cache_dir(self) -> str:
-        """str: Directory for saving user cache data."""
-        return appdirs.user_cache_dir(self.name, self.author)
-
-    @property
-    def user_config_dir(self) -> str:
-        """str: Directory for saving user config data."""
-        return appdirs.user_config_dir(self.name, self.author)
-
-    @property
-    def user_data_dir(self) -> str:
-        """str: Directory for saving user data."""
-        return appdirs.user_data_dir(self.name, self.author)
-
-    @property
-    def user_log_dir(self) -> str:
-        """str: Directory for saving user log data."""
-        return appdirs.user_log_dir(self.name, self.author)
-
-    @property
-    def ui_level(self) -> int:
-        """int: The ui level ot the app. (Always 0)"""
-        return self._ui_level
-
-    @property
-    def app(self):  # do not use typehint --> doc generation will craah
-        """FusionApp: Itself. Kept for consistency with the other wrapper classses."""
-        return self
-
-    @property
-    def created_elements(self):  # -> Dict[int, List[FusionApp]]:
-        """Dict[int, List[FusionApp]]: A dictonary with all the created ui elemnts.
-        Mapped by their level.
-        """
-        return self._created_elements
-
-    # endregion
 
     def workspace(
         self,
@@ -294,6 +221,81 @@ class FusionApp:
             elem = elem.in_fusion
         self._created_elements[level].append(elem)
         return self.app
+
+    # region
+    @property
+    def name(self) -> str:
+        """str: The name of the addin. Used for user directories only."""
+        return self._name
+
+    @name.setter
+    def name(self, new_name: str):
+        self._name = new_name
+
+    @property
+    def author(self) -> str:
+        """str: The author of the addin. Used for user directories only."""
+        return self._author
+
+    @author.setter
+    def author(self, new_author: str):
+        self._author = new_author
+
+    @property
+    def debug_to_ui(self) -> bool:
+        """bool: Flag indicating if erorr messages are displayed in a `messageBox
+        <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-1692a9a4-3be0-4474-9e15-02fac696b2b2>`_
+        or not.
+        """
+        return self._debug_to_ui
+
+    @debug_to_ui.setter
+    def debug_to_ui(self, new_debug_to_ui: bool):
+        self._debug_to_ui = new_debug_to_ui
+
+    @property
+    def user_state_dir(self) -> str:
+        """str: Directory for saving user state data."""
+        return appdirs.user_state_dir(self.name, self.author)
+
+    @property
+    def user_cache_dir(self) -> str:
+        """str: Directory for saving user cache data."""
+        return appdirs.user_cache_dir(self.name, self.author)
+
+    @property
+    def user_config_dir(self) -> str:
+        """str: Directory for saving user config data."""
+        return appdirs.user_config_dir(self.name, self.author)
+
+    @property
+    def user_data_dir(self) -> str:
+        """str: Directory for saving user data."""
+        return appdirs.user_data_dir(self.name, self.author)
+
+    @property
+    def user_log_dir(self) -> str:
+        """str: Directory for saving user log data."""
+        return appdirs.user_log_dir(self.name, self.author)
+
+    @property
+    def ui_level(self) -> int:
+        """int: The ui level ot the app. (Always 0)"""
+        return self._ui_level
+
+    @property
+    def app(self):  # do not use typehint --> doc generation will craah
+        """FusionApp: Itself. Kept for consistency with the other wrapper classses."""
+        return self
+
+    @property
+    def created_elements(self):  # -> Dict[int, List[FusionApp]]:
+        """Dict[int, List[FusionApp]]: A dictonary with all the created ui elemnts.
+        Mapped by their level.
+        """
+        return self._created_elements
+
+    # endregion
 
 
 class Workspace(_FusionWrapper):
