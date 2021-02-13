@@ -152,8 +152,6 @@ class FusionApp:
     def debug_to_ui(self, new_debug_to_ui: bool):
         self._debug_to_ui = new_debug_to_ui
 
-    # endregion
-
     # TODO path validation for user directories in setters
     @property
     def user_state_dir(self) -> str:
@@ -203,6 +201,8 @@ class FusionApp:
     @property
     def app(self):  # do not use typehint --> doc generation will craah
         """FusionApp: Itself. Kept for consistency with the other wrapper classses."""
+
+    # endregion
 
     def workspace(
         self,
