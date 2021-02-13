@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 from abc import ABC
-from typing import Union, Callable
+from typing import Union, Callable, Dict, List
 from collections import defaultdict
 from uuid import uuid4
 
@@ -119,17 +119,12 @@ class FusionApp:
         self._author = params.author
         self._debug_to_ui = params.debug_to_ui
 
-        self._user_state_dir = appdirs.user_state_dir(self._name, self._author)
-        self._user_cache_dir = appdirs.user_cache_dir(self._name, self._author)
-        self._user_config_dir = appdirs.user_config_dir(self._name, self._author)
-        self._user_data_dir = appdirs.user_data_dir(self._name, self._author)
-        self._user_log_dir = appdirs.user_log_dir(self._name, self._author)
-
         self._created_elements = defaultdict(list)
 
     # region properties
     @property
     def name(self) -> str:
+        """str: The name of the addin. Used for user directories only."""
         return self._name
 
     @name.setter
@@ -138,6 +133,7 @@ class FusionApp:
 
     @property
     def author(self) -> str:
+        """str: The author of the addin. Used for user directories only."""
         return self._author
 
     @author.setter
@@ -146,52 +142,40 @@ class FusionApp:
 
     @property
     def debug_to_ui(self) -> bool:
+        """bool: Flag indicating if erorr messages are displayed in a `messageBox
+        <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-1692a9a4-3be0-4474-9e15-02fac696b2b2>`_
+        or not.
+        """
         return self._debug_to_ui
 
     @debug_to_ui.setter
     def debug_to_ui(self, new_debug_to_ui: bool):
         self._debug_to_ui = new_debug_to_ui
 
-    # TODO path validation for user directories in setters
     @property
     def user_state_dir(self) -> str:
-        return self._user_state_dir
-
-    @user_state_dir.setter
-    def user_state_dir(self, new_user_state_dir: str):
-        self._user_state_dir = new_user_state_dir
+        """str: Directory for saving user state data."""
+        return appdirs.user_state_dir(self.name, self.author)
 
     @property
     def user_cache_dir(self) -> str:
-        return self._user_cache_dir
-
-    @user_cache_dir.setter
-    def user_cache_dir(self, new_user_cache_dir: str):
-        self._user_cache_dir = new_user_cache_dir
+        """str: Directory for saving user cache data."""
+        return appdirs.user_cache_dir(self.name, self.author)
 
     @property
     def user_config_dir(self) -> str:
-        return self._user_config_dir
-
-    @user_config_dir.setter
-    def user_config_dir(self, new_user_config_dir: str):
-        self._user_config_dir = new_user_config_dir
+        """str: Directory for saving user config data."""
+        return appdirs.user_config_dir(self.name, self.author)
 
     @property
     def user_data_dir(self) -> str:
-        return self._user_data_dir
-
-    @user_data_dir.setter
-    def user_data_dir(self, new_user_data_dir: str):
-        self._data_cache_dir = new_user_data_dir
+        """str: Directory for saving user data."""
+        return appdirs.user_data_dir(self.name, self.author)
 
     @property
     def user_log_dir(self) -> str:
-        return self._user_log_dir
-
-    @user_log_dir.setter
-    def user_log_dir(self, new_user_log_dir: str):
-        self._user_log_dir = new_user_log_dir
+        """str: Directory for saving user log data."""
+        return appdirs.user_log_dir(self.name, self.author)
 
     @property
     def ui_level(self) -> int:
@@ -201,6 +185,14 @@ class FusionApp:
     @property
     def app(self):  # do not use typehint --> doc generation will craah
         """FusionApp: Itself. Kept for consistency with the other wrapper classses."""
+        return self
+
+    @property
+    def created_elements(self):  # -> Dict[int, List[FusionApp]]:
+        """Dict[int, List[FusionApp]]: A dictonary with all the created ui elemnts.
+        Mapped by their level.
+        """
+        return self._created_elements
 
     # endregion
 
