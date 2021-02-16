@@ -22,7 +22,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.7",
     ],
-    packages=["fusion_addin_framework"],  # setuptools.find_packages(),
+    packages=setuptools.find_packages(),
     python_requires=">=3.7",
     install_package_data=True,
     install_requires=[],
