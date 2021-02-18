@@ -5,6 +5,7 @@ from typing import Union, Callable
 from collections import defaultdict
 from uuid import uuid4
 
+import appdirs
 import adsk.core
 import adsk.fusion
 
@@ -12,7 +13,6 @@ from . import defaults as dflts
 from . import messages as msgs
 from . import handlers
 
-from .util import appdirs
 
 
 # pylint:disable=unused-argument
