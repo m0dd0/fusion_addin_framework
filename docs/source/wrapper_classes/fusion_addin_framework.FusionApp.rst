@@ -13,9 +13,6 @@
 
     
      
-        ~FusionApp.eval_arg
-    
-     
         ~FusionApp.register_element
     
      
@@ -33,7 +30,16 @@
 .. autosummary::
 
     ~FusionApp.app
+    ~FusionApp.author
+    ~FusionApp.created_elements
+    ~FusionApp.debug_to_ui
+    ~FusionApp.name
     ~FusionApp.ui_level
+    ~FusionApp.user_cache_dir
+    ~FusionApp.user_config_dir
+    ~FusionApp.user_data_dir
+    ~FusionApp.user_log_dir
+    ~FusionApp.user_state_dir
 
 
 

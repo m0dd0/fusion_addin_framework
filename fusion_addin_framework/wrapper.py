@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 from abc import ABC
-from typing import Union, Callable
+from typing import Union, Callable, Dict, List
 from collections import defaultdict
 from uuid import uuid4
 
@@ -15,6 +15,8 @@ from . import handlers
 
 
 
+# constructor arguments are evaluated by using the locals() function, therefore
+# this error can be ignored
 # pylint:disable=unused-argument
 
 
@@ -33,7 +35,7 @@ class _FusionWrapper(ABC):
     def __init__(
         self, parent
     ):  # do NOT use for parent typehint --> docs generation will crash
-        """
+        """Base class for all Fusion UI wrapper classes.
         Sets the attributes app attribute of the wrapped instance by getting its
         parents app attribute.
         Sets the ui_level attribute by incrementing the parents ui_level attribute.
@@ -47,7 +49,7 @@ class _FusionWrapper(ABC):
         self._ui_level = self.parent.ui_level + 1
 
     # simply override the properties to use individual docstrings
-
+    # region
     @property
     def id(self):
         """Id of the wrapped instance."""
@@ -76,11 +78,13 @@ class _FusionWrapper(ABC):
         """The app instance which manages this instance."""
         return self._app
 
+    # endregion
+
 
 class FusionApp:
-    """
-    An App object is the entry point to create all your elements that will
-    appear in the user interface. It handles their creation and deletes them
+    """Entry point to create all your elements that will appear in the user interface.
+
+    It handles their creation and deletes them
     if the addin is deactivated (by closing Fusion or stopping the Addin
     manually).
     Additionally it provides directories for log, congig and user data.
@@ -108,16 +112,14 @@ class FusionApp:
 
         params = dflts.evaluate_constructor_locals(locals())
 
-        # no need ot use properties since its ok to set them
-        self.name = params.name
-        self.author = params.author
-        self.debug_to_ui = params.debug_to_ui
-
-        self.user_state_dir = appdirs.user_state_dir(self.name, self.author)
-        self.user_cache_dir = appdirs.user_cache_dir(self.name, self.author)
-        self.user_config_dir = appdirs.user_config_dir(self.name, self.author)
-        self.user_data_dir = appdirs.user_data_dir(self.name, self.author)
-        self.user_log_dir = appdirs.user_log_dir(self.name, self.author)
+        # normaly theres no need to use properties since its ok to set these attributes arbitrarily
+        # however, sphinx autosummary module will not recognize attributes (only properties)
+        # https://stackoverflow.com/questions/29902483/how-can-i-get-sphinx-autosummary-to-display-the-docs-for-an-instance-attributes
+        # therfore (and for consisteny) properties are used for all attributes
+        # also the code doenst get messy if you provide long attribute docstrings
+        self._name = params.name
+        self._author = params.author
+        self._debug_to_ui = params.debug_to_ui
 
         self._created_elements = defaultdict(list)
 
@@ -148,30 +150,31 @@ class FusionApp:
                 `unwrapped <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-144afd36-e125-4e28-8821-79a0134f207e>`_
             product_type (str, optional): The name of the product the workspace
                 is associated with. Defaults to 'DesignProductType'.
-                `unwrapped <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-974691b7-5ff6-4bec-8fbc-1683f7b33fe5>_`
+                `unwrapped <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-974691b7-5ff6-4bec-8fbc-1683f7b33fe5>`_
             image (Union[str, Path], optional): Either the path to a directory
                 containing images named 49X31.png and 98x62.png or one of the
                 default picture names (currently only 'lightbulb'). Defaults to 'lightbulb.
-                `unwrapped <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-19c3a0e8-7a55-4a03-8aa3-c8ca9b845e84>_`
+                `unwrapped <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-19c3a0e8-7a55-4a03-8aa3-c8ca9b845e84>`_
             tooltip_image (Union[str, Path], optional): Either full filename of
                 the image file (png) used for the tool clip or one of the
                 default picture names (currently only 'lightbulb'). The tooltip image
                 is the image shown when the user hovers the mouse over the workspace
                 name in the workspace drop-down. If None no image will be set.
-                `unwrapped <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-5C744005-AF96-4EEB-B060-FC246373B159>_`
+                `unwrapped <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-5C744005-AF96-4EEB-B060-FC246373B159>`_
             tooltip_head (str, optional):  The tooltip text displayed for the workspace.
                 This is the first line of text shown when the user hovers over the
                 workspace name in the Fusion 360 toolbar drop-down.
                 Defaults to "" (empty string).
-                `unwrapped <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-6AD46B6E-269C-4FC9-96BB-C6180BAA35ED>_`
+                `unwrapped <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-6AD46B6E-269C-4FC9-96BB-C6180BAA35ED>`_
             tooltip_text (str, optional): The tooltip description displayed for
                 the workspace. The tooltip description is a longer description of
                 the workspace and is only displayed when the user hovers over the
                 workspace name in the Fusion 360 toolbar drop-down.
-                Defaults to None. `unwrapped <>_`
+                Defaults to "" (empty string).
+                `unwrapped <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-4FCC71F8-8087-4F07-AB3D-D9699DBF883C>`_
 
         Returns:
-            [type]: [description]
+            Workspace: The newly created or accessed Workspace instance.
         """
         return Workspace(
             self,
@@ -208,7 +211,7 @@ class FusionApp:
         The order of the deletion is determind by the level. Instances with a
         higher level will get deleted first.
         All elements that are created will be registered by the framework internally,
-        so there is no need to use this method in noraml use og the framework.
+        so there is no need to use this method in noraml use of the framework.
 
         Args:
             elem (_FusionWrapper): The wrapper instance to register.
@@ -217,24 +220,82 @@ class FusionApp:
         if isinstance(elem, _FusionWrapper):
             elem = elem.in_fusion
         self._created_elements[level].append(elem)
+        return self.app
+
+    # region
+    @property
+    def name(self) -> str:
+        """str: The name of the addin. Used for user directories only."""
+        return self._name
+
+    @name.setter
+    def name(self, new_name: str):
+        self._name = new_name
 
     @property
-    def ui_level(self):
-        """[summary]
+    def author(self) -> str:
+        """str: The author of the addin. Used for user directories only."""
+        return self._author
 
-        Returns:
-            [type]: [description]
+    @author.setter
+    def author(self, new_author: str):
+        self._author = new_author
+
+    @property
+    def debug_to_ui(self) -> bool:
+        """bool: Flag indicating if erorr messages are displayed in a `messageBox
+        <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-1692a9a4-3be0-4474-9e15-02fac696b2b2>`_
+        or not.
         """
+        return self._debug_to_ui
+
+    @debug_to_ui.setter
+    def debug_to_ui(self, new_debug_to_ui: bool):
+        self._debug_to_ui = new_debug_to_ui
+
+    @property
+    def user_state_dir(self) -> str:
+        """str: Directory for saving user state data."""
+        return appdirs.user_state_dir(self.name, self.author)
+
+    @property
+    def user_cache_dir(self) -> str:
+        """str: Directory for saving user cache data."""
+        return appdirs.user_cache_dir(self.name, self.author)
+
+    @property
+    def user_config_dir(self) -> str:
+        """str: Directory for saving user config data."""
+        return appdirs.user_config_dir(self.name, self.author)
+
+    @property
+    def user_data_dir(self) -> str:
+        """str: Directory for saving user data."""
+        return appdirs.user_data_dir(self.name, self.author)
+
+    @property
+    def user_log_dir(self) -> str:
+        """str: Directory for saving user log data."""
+        return appdirs.user_log_dir(self.name, self.author)
+
+    @property
+    def ui_level(self) -> int:
+        """int: The ui level ot the app. (Always 0)"""
         return self._ui_level
 
     @property
-    def app(self):
-        """[summary]
-
-        Returns:
-            [type]: [description]
-        """
+    def app(self):  # do not use typehint --> doc generation will craah
+        """FusionApp: Itself. Kept for consistency with the other wrapper classses."""
         return self
+
+    @property
+    def created_elements(self):  # -> Dict[int, List[FusionApp]]:
+        """Dict[int, List[FusionApp]]: A dictonary with all the created ui elemnts.
+        Mapped by their level.
+        """
+        return self._created_elements
+
+    # endregion
 
 
 class Workspace(_FusionWrapper):
