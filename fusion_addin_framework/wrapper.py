@@ -44,6 +44,7 @@ class _FusionWrapper(ABC):
             parent (Union[_FusionWrapper, FusionApp]): the parent ui object instance
                 e.g.: the parent of a panel is always a tab.
         """
+        self._in_fusion = None
         self._parent = parent
         self._addin = self.parent.addin
         self._ui_level = self.parent.ui_level + 1
@@ -51,7 +52,7 @@ class _FusionWrapper(ABC):
     def __getattr__(self, attr):
         # this method will only get called if the attribute is not expicitly manged
         # by the class instance
-        return getattr(self.in_fusion, attr)
+        return getattr(self._in_fusion, attr)
 
     # def __setattr__(self, name, value):
     #     # avoid infinite recursion by using self.__dict__ instead of hasattr
@@ -111,12 +112,6 @@ class FusionAddin:
                 <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-1692a9a4-3be0-4474-9e15-02fac696b2b2>`_
                 or not. If not they will get logged anyways. Defaults to True.
         """
-
-        # normaly theres no need to use properties since its ok to set these attributes arbitrarily
-        # however, sphinx autosummary module will not recognize attributes (only properties)
-        # https://stackoverflow.com/questions/29902483/how-can-i-get-sphinx-autosummary-to-display-the-docs-for-an-instance-attributes
-        # therfore (and for consisteny) properties are used for all attributes
-        # also the code doenst get messy if you provide long attribute docstrings
         self._name = name
         self._author = author
         self._debug_to_ui = debug_to_ui
@@ -129,9 +124,7 @@ class FusionAddin:
         name: str = None,
         productType: str = None,
         resourceFolder: Union[str, Path] = None,
-        toolClipFilename: Union[
-            str, Path
-        ] = None,  # pylint:disable=unsubscriptable-object
+        toolClipFilename: Union[str, Path] = None,
         tooltip: str = None,
         tooltipDescription: str = None,
     ):
@@ -186,7 +179,7 @@ class FusionAddin:
             level (int, optional): The Ui level of the element. Defaults to 0.
         """
         if isinstance(elem, _FusionWrapper):
-            elem = elem.in_fusion
+            elem = elem._in_fusion
         self._registered_elements[level].append(elem)
         return self.addin
 
@@ -341,7 +334,7 @@ class Tab(_FusionWrapper):
 
         self._in_fusion = self.parent.toolbarTabs.itemById(id)
 
-        if self.in_fusion:
+        if self._in_fusion:
             logging.getLogger(__name__).info(msgs.using_exisitng(__class__, id))
         else:
             self._in_fusion = self.parent.toolbarTabs.add(id, name)
@@ -387,7 +380,6 @@ class Button(_FusionWrapper):
         self,
         parent: Panel,
         isVisible: bool = True,
-        isEnabled: bool = True,
         isPromoted: bool = True,
         isPromotedByDefault: bool = True,
     ):
@@ -403,7 +395,7 @@ class Button(_FusionWrapper):
             dflts.eval_image("transparent"),
         )
         dummy_cmd_def.controlDefinition.isVisible = isVisible
-        dummy_cmd_def.controlDefinition.isEnabled = isEnabled
+        dummy_cmd_def.controlDefinition.isEnabled = True
         dummy_cmd_def.controlDefinition.name = "<no command connected>"
         # do not connect a handler since its a dummy cmd_def
 
@@ -430,24 +422,25 @@ class Command(_FusionWrapper):
     def __init__(
         self,
         parent: Button,
-        id: str = "random",  # cmd_def #pylint:disable=redefined-builtin
-        name: str = "random",  # cmd_Def
-        resourceFolder: Union[str, Path] = "lighbulb",  # cmd_def
-        tooltip: str = "",  # cmd_def
-        toolClipFileName: Union[str, Path] = "lighbulb",  # cmd_Def
-        onCreated: Callable = dflts.do_nothing,  # cmd_def
-        onInputChanged: Callable = dflts.do_nothing,  # cmd_def
-        onPreview: Callable = dflts.do_nothing,  # cmd_def
-        onExecute: Callable = dflts.do_nothing,  # cmd_def
-        onDestroy: Callable = dflts.do_nothing,  # cmd_def
-        onKeyDown: Callable = dflts.do_nothing,  # cmd_def
+        id: str = "random",
+        name: str = "random",
+        resourceFolder: Union[str, Path] = "lightbulb",
+        tooltip: str = "",
+        toolClipFileName: Union[str, Path] = "lightbulb",  # TODO no picture option
+        isEnabled: bool = True,
+        onCreated: Callable = dflts.do_nothing,
+        onInputChanged: Callable = dflts.do_nothing,
+        onPreview: Callable = dflts.do_nothing,
+        onExecute: Callable = dflts.do_nothing,
+        onDestroy: Callable = dflts.do_nothing,
+        onKeyDown: Callable = dflts.do_nothing,
     ):
         super().__init__(parent)
 
         id = dflts.eval_id(id)
         name = dflts.eval_name(name, __class__)
-        image = dflts.eval_image(resourceFolder)
-        toolClipFileName = dflts.eval_image(toolClipFileName)  # TODO own eval
+        resourceFolder = dflts.eval_image(resourceFolder)
+        toolClipFileName = dflts.eval_image_path(toolClipFileName)  # TODO own eval
 
         self._in_fusion = (
             adsk.core.Application.get().userInterface.commandDefinitions.itemById(id)
@@ -458,22 +451,21 @@ class Command(_FusionWrapper):
         else:
             # create definition
             self._in_fusion = adsk.core.Application.get().userInterface.commandDefinitions.addButtonDefinition(
-                id, name, tooltip, image
+                id, name, tooltip, resourceFolder
             )
             self._in_fusion.toolClipFilename = toolClipFileName
+            self._in_fusion.controlDefinition.isEnabled = isEnabled
             self._in_fusion.controlDefinition.isVisible = self.parent.isVisible
-            self._in_fusion.controlDefinition.isEnabled = self.parent.isEnabled
             self._in_fusion.controlDefinition.name = name
 
             self._in_fusion.commandCreated.add(
-                handlers.create(
-                    self.app,
+                handlers._CommandCreatedHandler(
+                    self.addin,
                     name,
                     onCreated,
                     onExecute,
                     onPreview,
                     onInputChanged,
-                    onKeyDown,
                 )
             )
 
@@ -483,7 +475,7 @@ class Command(_FusionWrapper):
             cmd_ctrl.isPromotedByDefault = self.parent.isPromotedByDefault
             cmd_ctrl.isVisible = self.parent.isVisible
 
-            self.parent.in_fusion.deleteMe()
+            self.parent._in_fusion.deleteMe()
             self.parent._in_fusion = cmd_ctrl
 
             self.addin.register_element(self, self.ui_level)

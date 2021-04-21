@@ -6,10 +6,14 @@ directory. In normal use this can be ignored and wont be recognized by Fuion360.
 
 import traceback
 from pprint import pprint
+import logging
 
 import adsk.core, adsk.fusion, adsk.cam
 
 from .tests import testcases
+from . import fusion_addin_framework as faf
+
+addins = None
 
 
 def run(context):  # pylint:disable=unused-argument
@@ -18,13 +22,29 @@ def run(context):  # pylint:disable=unused-argument
         app = adsk.core.Application.get()
         ui = app.userInterface
 
-        results = testcases.execute_cases(
+        # print([logging.getLogger(name) for name in logging.root.manager.loggerDict])
+
+        logger = logging.getLogger(faf.__name__)  # .setLevel(logging.DEBUG)
+        logger.setLevel(logging.DEBUG)
+
+        handler = logging.StreamHandler()
+        handler.setLevel(logging.DEBUG)
+        # create formatter and add it to the handler
+        formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+        handler.setFormatter(formatter)
+        # add the handler to the logger
+        logger.addHandler(handler)
+        # logging.basi
+
+        global addins
+
+        results, addins = testcases.execute_cases(
             [
-                testcases.test_default_button,
+                # testcases.test_default_button,
+                testcases.test_hello_world,
             ]
         )
 
-        # ui.messageBox(str(results))
         pprint(dict(results))
 
     except:
@@ -37,6 +57,11 @@ def stop(context):  # pylint:disable=unused-argument
     try:
         app = adsk.core.Application.get()
         ui = app.userInterface
+
+        global addins
+
+        for addin in addins:
+            addin.stop()
 
     except:
         if ui:
