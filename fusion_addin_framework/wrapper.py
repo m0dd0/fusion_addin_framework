@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 from abc import ABC
-from typing import Union, Callable, Dict, List
+from typing import Union, Callable
 from collections import defaultdict
 from uuid import uuid4
 
@@ -14,9 +14,10 @@ from . import messages as msgs
 from . import handlers
 
 
-# constructor arguments are evaluated by using the locals() function, therefore
-# this error can be ignored
-# pylint:disable=unused-argument
+# 'id' attribute of fusion api classes is used frequently in wrapper classes, therefore
+# pylint:disable=redefined-builtin
+# typing Union Object is marked as unsubscriptable, therefore
+# pylint:disable=unsubscriptable-object
 
 
 class _FusionWrapper(ABC):
@@ -48,17 +49,19 @@ class _FusionWrapper(ABC):
         self._ui_level = self.parent.ui_level + 1
 
     def __getattr__(self, attr):
-        # attr_str_coponents = attr.split('_')
-
+        # this method will only get called if the attribute is not expicitly manged
+        # by the class instance
         return getattr(self.in_fusion, attr)
+
+    # def __setattr__(self, name, value):
+    #     # avoid infinite recursion by using self.__dict__ instead of hasattr
+    #     if "in_fusion" in self.__dict__.keys() and hasattr(self._wrapped, name):
+    #         setattr(self._wrapped, name, value)
+    #     else:
+    #         super().__setattr__(name, value)
 
     # simply override the properties to use individual docstrings
     # region
-    @property
-    def in_fusion(self):
-        """The instance, this object is wrapped around."""
-        return self._in_fusion
-
     @property
     def parent(self):
         """The wrapped parent instance of this object."""
@@ -122,53 +125,21 @@ class FusionAddin:
 
     def workspace(
         self,
-        id: str = None,  # pylint:disable=redefined-builtin
+        id: str = None,
         name: str = None,
-        product_type: str = None,
-        image: Union[str, Path] = None,  # pylint:disable=unsubscriptable-object
-        tooltip_image: Union[str, Path] = None,  # pylint:disable=unsubscriptable-object
-        tooltip_head: str = None,
-        tooltip_text: str = None,
+        productType: str = None,
+        resourceFolder: Union[str, Path] = None,
+        toolClipFilename: Union[
+            str, Path
+        ] = None,  # pylint:disable=unsubscriptable-object
+        tooltip: str = None,
+        tooltipDescription: str = None,
     ):
         """Creates a workspace as a child of this Adddin.
 
         Calling this method is the same as initialsing a :class:`.Workspace`
         with this addin instance as parent parameters. Therfore the same parameters
-        are passed. See :class:`.Workspace` for details.
-
-        Args:
-            id (str, optional): The id of the :class:`.Workspace`. If 'random' is passed a
-                random uuid will be used. If you provide an id of a native workspace
-                the other arguments will be ignored. Defaults to 'FusionSolidEnvironment'.
-                `unwrapped <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-33f9ed37-e5c7-4153-ba85-c3254a199dd1>`_
-            name (str, optional): The name of the Workspace as seen in the user
-                interface. If 'random' is passed a random name will be choosen.
-                Defaults to 'random'.
-                `unwrapped <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-144afd36-e125-4e28-8821-79a0134f207e>`_
-            product_type (str, optional): The name of the product the workspace
-                is associated with. Defaults to 'DesignProductType'.
-                `unwrapped <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-974691b7-5ff6-4bec-8fbc-1683f7b33fe5>`_
-            image (Union[str, Path], optional): Either the path to a directory
-                containing images named 49X31.png and 98x62.png or one of the
-                default picture names (currently only 'lightbulb'). Defaults to 'lightbulb.
-                `unwrapped <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-19c3a0e8-7a55-4a03-8aa3-c8ca9b845e84>`_
-            tooltip_image (Union[str, Path], optional): Either full filename of
-                the image file (png) used for the tool clip or one of the
-                default picture names (currently only 'lightbulb'). The tooltip image
-                is the image shown when the user hovers the mouse over the workspace
-                name in the workspace drop-down. If None no image will be set.
-                `unwrapped <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-5C744005-AF96-4EEB-B060-FC246373B159>`_
-            tooltip_head (str, optional):  The tooltip text displayed for the workspace.
-                This is the first line of text shown when the user hovers over the
-                workspace name in the Fusion 360 toolbar drop-down.
-                Defaults to "" (empty string).
-                `unwrapped <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-6AD46B6E-269C-4FC9-96BB-C6180BAA35ED>`_
-            tooltip_text (str, optional): The tooltip description displayed for
-                the workspace. The tooltip description is a longer description of
-                the workspace and is only displayed when the user hovers over the
-                workspace name in the Fusion 360 toolbar drop-down.
-                Defaults to "" (empty string).
-                `unwrapped <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-4FCC71F8-8087-4F07-AB3D-D9699DBF883C>`_
+        are passed. See :class:`.Workspace` for a detailed description of the paramters.
 
         Returns:
             Workspace: The newly created or accessed Workspace instance.
@@ -177,11 +148,11 @@ class FusionAddin:
             self,
             id,
             name,
-            product_type,
-            image,
-            tooltip_image,
-            tooltip_head,
-            tooltip_text,
+            productType,
+            resourceFolder,
+            toolClipFilename,
+            tooltip,
+            tooltipDescription,
         )
 
     def stop(self):
@@ -301,11 +272,11 @@ class Workspace(_FusionWrapper):
         parent: FusionAddin,
         id: str = "FusionSolidEnvironment",  # pylint:disable=redefined-builtin
         name: str = "random",
-        product_type: str = "DesignProductType",
-        image: Union[str, Path] = "lightbulb",
-        tooltip_image: Union[str, Path] = "lightbulb",
-        tooltip_head: str = "",
-        tooltip_text: str = "",
+        productType: str = "DesignProductType",
+        resourceFolder: Union[str, Path] = "lightbulb",
+        toolClipFilename: Union[str, Path] = "lightbulb",
+        tooltip: str = "",
+        tooltipDescription: str = "",
     ):
         """[summary]
 
@@ -322,8 +293,8 @@ class Workspace(_FusionWrapper):
 
         id = dflts.eval_id(id)
         name = dflts.eval_name(name, __class__)
-        image = dflts.eval_image(image)
-        tooltip_image = dflts.eval_image(tooltip_image)
+        resourceFolder = dflts.eval_image(resourceFolder)
+        toolClipFilename = dflts.eval_image(toolClipFilename)  # TODO own evaluation
 
         # try to get an existing instance
         self._in_fusion = adsk.core.Application.get().userInterface.workspaces.itemById(
@@ -338,26 +309,22 @@ class Workspace(_FusionWrapper):
         # create new workspace if there is no
         else:
             self._in_fusion = adsk.core.Application.get().userInterface.workspaces.add(
-                product_type, id, name, image
+                productType, id, name, resourceFolder
             )
-            self._in_fusion.toolClipFilename = tooltip_image
-            self._in_fusion.tooltip = tooltip_head
-            self._in_fusion.tooltipDescription = tooltip_head
+            self._in_fusion.toolClipFilename = toolClipFilename
+            self._in_fusion.tooltip = tooltip
+            self._in_fusion.tooltipDescription = tooltipDescription
 
             self.addin.register_element(self, self.ui_level)
             logging.getLogger(__name__).info(msgs.created_new(__class__, id))
 
-    def tab(self):
+    def tab(self, *args, **kwargs):
         """[summary]
-
-        Args:
-            id (str, optional): [description]. Defaults to None.
-            name (str, optional): [description]. Defaults to None.
 
         Returns:
             [type]: [description]
         """
-        return Tab(self)
+        return Tab(self, *args, **kwargs)
 
 
 class Tab(_FusionWrapper):
@@ -383,8 +350,8 @@ class Tab(_FusionWrapper):
             self.addin.register_element(self, self.ui_level)
             logging.getLogger(__name__).info(msgs.created_new(__class__, id))
 
-    def panel(self):
-        return Panel(self)
+    def panel(self, *args, **kwargs):
+        return Panel(self, *args, **kwargs)
 
 
 class Panel(_FusionWrapper):
@@ -411,18 +378,18 @@ class Panel(_FusionWrapper):
             self.addin.register_element(self, self.ui_level)
             logging.getLogger(__name__).info(msgs.created_new(__class__, id))
 
-    def button(self):
-        return Button(self)
+    def button(self, *args, **kwargs):
+        return Button(self, *args, **kwargs)
 
 
 class Button(_FusionWrapper):
     def __init__(
         self,
         parent: Panel,
-        is_visible: bool = True,
-        is_enabled: bool = True,
-        is_promoted: bool = True,
-        is_promoted_by_default: bool = True,
+        isVisible: bool = True,
+        isEnabled: bool = True,
+        isPromoted: bool = True,
+        isPromotedByDefault: bool = True,
     ):
         super().__init__(parent)
         # TODO account position
@@ -435,15 +402,15 @@ class Button(_FusionWrapper):
             "",
             dflts.eval_image("transparent"),
         )
-        dummy_cmd_def.controlDefinition.isVisible = is_visible
-        dummy_cmd_def.controlDefinition.isEnabled = is_enabled
+        dummy_cmd_def.controlDefinition.isVisible = isVisible
+        dummy_cmd_def.controlDefinition.isEnabled = isEnabled
         dummy_cmd_def.controlDefinition.name = "<no command connected>"
         # do not connect a handler since its a dummy cmd_def
 
         self._in_fusion = self.parent.controls.addCommand(dummy_cmd_def)
-        self._in_fusion.isPromoted = is_promoted
-        self._in_fusion.isPromotedByDefault = is_promoted_by_default
-        self._in_fusion.isVisible = is_visible
+        self._in_fusion.isPromoted = isPromoted
+        self._in_fusion.isPromotedByDefault = isPromotedByDefault
+        self._in_fusion.isVisible = isVisible
 
         self.addin.register_element(dummy_cmd_def, self.ui_level + 1)
         self.addin.register_element(self, self.ui_level)
@@ -465,22 +432,22 @@ class Command(_FusionWrapper):
         parent: Button,
         id: str = "random",  # cmd_def #pylint:disable=redefined-builtin
         name: str = "random",  # cmd_Def
-        image: Union[str, Path] = "lighbulb",  # cmd_def
+        resourceFolder: Union[str, Path] = "lighbulb",  # cmd_def
         tooltip: str = "",  # cmd_def
-        tooltip_image: Union[str, Path] = "lighbulb",  # cmd_Def
-        on_created: Callable = dflts.do_nothing,  # cmd_def
-        on_input_changed: Callable = dflts.do_nothing,  # cmd_def
-        on_preview: Callable = dflts.do_nothing,  # cmd_def
-        on_execute: Callable = dflts.do_nothing,  # cmd_def
-        on_destroy: Callable = dflts.do_nothing,  # cmd_def
-        on_key_down: Callable = dflts.do_nothing,  # cmd_def
+        toolClipFileName: Union[str, Path] = "lighbulb",  # cmd_Def
+        onCreated: Callable = dflts.do_nothing,  # cmd_def
+        onInputChanged: Callable = dflts.do_nothing,  # cmd_def
+        onPreview: Callable = dflts.do_nothing,  # cmd_def
+        onExecute: Callable = dflts.do_nothing,  # cmd_def
+        onDestroy: Callable = dflts.do_nothing,  # cmd_def
+        onKeyDown: Callable = dflts.do_nothing,  # cmd_def
     ):
         super().__init__(parent)
 
         id = dflts.eval_id(id)
         name = dflts.eval_name(name, __class__)
-        image = dflts.eval_image(image)
-        tooltip_image = dflts.eval_image(tooltip_image)
+        image = dflts.eval_image(resourceFolder)
+        toolClipFileName = dflts.eval_image(toolClipFileName)  # TODO own eval
 
         self._in_fusion = (
             adsk.core.Application.get().userInterface.commandDefinitions.itemById(id)
@@ -493,20 +460,20 @@ class Command(_FusionWrapper):
             self._in_fusion = adsk.core.Application.get().userInterface.commandDefinitions.addButtonDefinition(
                 id, name, tooltip, image
             )
-            self._in_fusion.toolClipFilename = tooltip_image
-            self._in_fusion.controlDefinition.isVisible = self.parent.is_visible
-            self._in_fusion.controlDefinition.isEnabled = self.parent.is_enabled
+            self._in_fusion.toolClipFilename = toolClipFileName
+            self._in_fusion.controlDefinition.isVisible = self.parent.isVisible
+            self._in_fusion.controlDefinition.isEnabled = self.parent.isEnabled
             self._in_fusion.controlDefinition.name = name
 
             self._in_fusion.commandCreated.add(
                 handlers.create(
                     self.app,
                     name,
-                    on_created,
-                    on_execute,
-                    on_preview,
-                    on_input_changed,
-                    on_key_down,
+                    onCreated,
+                    onExecute,
+                    onPreview,
+                    onInputChanged,
+                    onKeyDown,
                 )
             )
 
@@ -528,3 +495,5 @@ class Command(_FusionWrapper):
             return getattr(self._cmd_def, attr)
         except:
             return getattr(self._cmd_ctrl, attr)
+        finally:
+            return getattr(self, attr)
