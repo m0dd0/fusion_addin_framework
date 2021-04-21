@@ -4,10 +4,8 @@ import traceback
 
 from .. import fusion_addin_framework as faf
 
-cases = [test_default_button]
 
-
-def execute_all():
+def execute_cases(cases):
     results = defaultdict(dict)
     for case in cases:
         try:
@@ -19,7 +17,9 @@ def execute_all():
         except:
             results[case.__name__]["elapsed_time"] = -1
             results[case.__name__]["passed"] = False
-            results[case.__name__]["traceback"] = traceback.format_exc()
+            print(case.__name__, "#################################")
+            print(traceback.format_exc())
+            # results[case.__name__]["traceback"] = "".join(traceback.format_exc())
 
     return results
 

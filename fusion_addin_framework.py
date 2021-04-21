@@ -5,6 +5,7 @@ directory. In normal use this can be ignored and wont be recognized by Fuion360.
 """
 
 import traceback
+from pprint import pprint
 
 import adsk.core, adsk.fusion, adsk.cam
 
@@ -17,10 +18,14 @@ def run(context):  # pylint:disable=unused-argument
         app = adsk.core.Application.get()
         ui = app.userInterface
 
-        results = testcases.execute_all()
+        results = testcases.execute_cases(
+            [
+                testcases.test_default_button,
+            ]
+        )
 
-        ui.messageBox(str(results))
-        print(results)
+        # ui.messageBox(str(results))
+        pprint(dict(results))
 
     except:
         if ui:
