@@ -12,6 +12,7 @@ import adsk.core, adsk.fusion, adsk.cam
 
 from .tests import testcases
 from . import fusion_addin_framework as faf
+from .fusion_addin_framework.util.py_utils import create_logger
 
 addins = None
 
@@ -22,30 +23,19 @@ def run(context):  # pylint:disable=unused-argument
         app = adsk.core.Application.get()
         ui = app.userInterface
 
-        # print([logging.getLogger(name) for name in logging.root.manager.loggerDict])
-
-        logger = logging.getLogger(faf.__name__)  # .setLevel(logging.DEBUG)
-        logger.setLevel(logging.DEBUG)
-
-        handler = logging.StreamHandler()
-        handler.setLevel(logging.DEBUG)
-        # create formatter and add it to the handler
-        formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-        handler.setFormatter(formatter)
-        # add the handler to the logger
-        logger.addHandler(handler)
-        # logging.basi
+        create_logger(faf.__name__, [logging.StreamHandler()])
+        # TODO text command handler
 
         global addins
 
         results, addins = testcases.execute_cases(
             [
-                # testcases.test_default_button,
+                testcases.test_default_button,
                 testcases.test_hello_world,
             ]
         )
 
-        pprint(dict(results))
+        # pprint(dict(results))
 
     except:
         if ui:
@@ -60,7 +50,7 @@ def stop(context):  # pylint:disable=unused-argument
 
         global addins
 
-        for addin in addins:
+        for addin in reversed(addins):
             addin.stop()
 
     except:

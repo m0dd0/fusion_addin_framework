@@ -31,7 +31,7 @@ def flatten_dict(d):
     return flattened
 
 
-def create_default_logger(
+def create_logger(
     name: str,
     handlers: Iterable[logging.Handler],
     level: int = logging.DEBUG,

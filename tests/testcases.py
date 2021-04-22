@@ -12,6 +12,7 @@ def execute_cases(cases):
     addins = []
     for case in cases:
         try:
+            print(f"{f' {case.__name__} ':{'#'}^{60}}")
             start = perf_counter()
             addin = case()
             addins.append(addin)
@@ -20,7 +21,6 @@ def execute_cases(cases):
         except:
             results[case.__name__]["elapsed_time"] = -1
             results[case.__name__]["passed"] = False
-            print(case.__name__, "#################################")
             print(traceback.format_exc())
 
     return results, addins
@@ -58,3 +58,18 @@ def test_hello_world():
         addin.stop()
         raise test_exception
     return addin
+
+def test_addin_properties():
+    pass
+
+def test_custom_workspace():
+    pass
+
+def test_custom_tab():
+    pass
+
+def test_custom_panel()
+
+def test_connect_multiple_commands():
+    pass
+
