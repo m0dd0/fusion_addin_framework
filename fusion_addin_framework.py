@@ -5,10 +5,16 @@ directory. In normal use this can be ignored and wont be recognized by Fuion360.
 """
 
 import traceback
+from pprint import pprint
+import logging
 
 import adsk.core, adsk.fusion, adsk.cam
 
 from .tests import testcases
+from . import fusion_addin_framework as faf
+from .fusion_addin_framework.util.py_utils import create_logger
+
+addins = None
 
 
 def run(context):  # pylint:disable=unused-argument
@@ -17,10 +23,19 @@ def run(context):  # pylint:disable=unused-argument
         app = adsk.core.Application.get()
         ui = app.userInterface
 
-        results = testcases.execute_all()
+        create_logger(faf.__name__, [logging.StreamHandler()])
+        # TODO text command handler
 
-        ui.messageBox(str(results))
-        print(results)
+        global addins
+
+        results, addins = testcases.execute_cases(
+            [
+                testcases.test_default_button,
+                testcases.test_hello_world,
+            ]
+        )
+
+        # pprint(dict(results))
 
     except:
         if ui:
@@ -32,6 +47,11 @@ def stop(context):  # pylint:disable=unused-argument
     try:
         app = adsk.core.Application.get()
         ui = app.userInterface
+
+        global addins
+
+        for addin in reversed(addins):
+            addin.stop()
 
     except:
         if ui:

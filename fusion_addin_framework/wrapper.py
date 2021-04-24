@@ -1,3 +1,6 @@
+# pylint:disable=redefined-builtin
+# pylint:disable=unsubscriptable-object
+
 import logging
 from pathlib import Path
 from abc import ABC
@@ -5,19 +8,20 @@ from typing import Union, Callable
 from collections import defaultdict
 from uuid import uuid4
 
-import appdirs
+try:
+    import appdirs
+except:
+    logging.getLogger(__name__).warning(  # pylint:disable=logging-not-lazy
+        "The appdirs package is not installed. Using path related attributes "
+        + "(like ...) of the addin object will result in an Error. Consider "
+        + "pip-installing (link) the fusion_addin_framework."
+    )
 import adsk.core
 import adsk.fusion
 
 from . import defaults as dflts
 from . import messages as msgs
 from . import handlers
-
-
-# 'id' attribute of fusion api classes is used frequently in wrapper classes, therefore
-# pylint:disable=redefined-builtin
-# typing Union Object is marked as unsubscriptable, therefore
-# pylint:disable=unsubscriptable-object
 
 
 class _FusionWrapper(ABC):
@@ -44,21 +48,22 @@ class _FusionWrapper(ABC):
             parent (Union[_FusionWrapper, FusionApp]): the parent ui object instance
                 e.g.: the parent of a panel is always a tab.
         """
+        self._in_fusion = None
         self._parent = parent
         self._addin = self.parent.addin
         self._ui_level = self.parent.ui_level + 1
 
     def __getattr__(self, attr):
-        # this method will only get called if the attribute is not expicitly manged
-        # by the class instance
-        return getattr(self.in_fusion, attr)
+        # will only get called if the attribute is not expicitly contained in
+        # the class instance
+        return getattr(self._in_fusion, attr)
 
-    # def __setattr__(self, name, value):
-    #     # avoid infinite recursion by using self.__dict__ instead of hasattr
-    #     if "in_fusion" in self.__dict__.keys() and hasattr(self._wrapped, name):
-    #         setattr(self._wrapped, name, value)
-    #     else:
-    #         super().__setattr__(name, value)
+    def __setattr__(self, name, value):
+        # avoid infinite recursion by using self.__dict__ instead of hasattr
+        if "_in_fusion" in self.__dict__.keys() and hasattr(self._in_fusion, name):
+            setattr(self._wrapped, name, value)
+        else:
+            super().__setattr__(name, value)
 
     # simply override the properties to use individual docstrings
     # region
@@ -86,10 +91,9 @@ class _FusionWrapper(ABC):
 class FusionAddin:
     """Entry point to create all your elements that will appear in the user interface.
 
-    It handles their creation and deletes them
-    if the addin is deactivated (by closing Fusion or stopping the Addin
-    manually).
-    Additionally it provides directories for log, congig and user data.
+    It handles their creation and deletes them if the addin is deactivated
+    (by closing Fusion or stopping the Addin manually).
+    Additionally it provides directories for logging, config and user data.
     """
 
     _ui_level = 0
@@ -98,7 +102,7 @@ class FusionAddin:
         self,
         name: str = None,
         author: str = None,
-        debug_to_ui: bool = False,
+        debug_to_ui: bool = True,
     ):
         """
         Args:
@@ -111,30 +115,13 @@ class FusionAddin:
                 <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-1692a9a4-3be0-4474-9e15-02fac696b2b2>`_
                 or not. If not they will get logged anyways. Defaults to True.
         """
-
-        # normaly theres no need to use properties since its ok to set these attributes arbitrarily
-        # however, sphinx autosummary module will not recognize attributes (only properties)
-        # https://stackoverflow.com/questions/29902483/how-can-i-get-sphinx-autosummary-to-display-the-docs-for-an-instance-attributes
-        # therfore (and for consisteny) properties are used for all attributes
-        # also the code doenst get messy if you provide long attribute docstrings
         self._name = name
         self._author = author
         self._debug_to_ui = debug_to_ui
 
         self._registered_elements = defaultdict(list)
 
-    def workspace(
-        self,
-        id: str = None,
-        name: str = None,
-        productType: str = None,
-        resourceFolder: Union[str, Path] = None,
-        toolClipFilename: Union[
-            str, Path
-        ] = None,  # pylint:disable=unsubscriptable-object
-        tooltip: str = None,
-        tooltipDescription: str = None,
-    ):
+    def workspace(self, *args, **kwargs):
         """Creates a workspace as a child of this Adddin.
 
         Calling this method is the same as initialsing a :class:`.Workspace`
@@ -144,22 +131,13 @@ class FusionAddin:
         Returns:
             Workspace: The newly created or accessed Workspace instance.
         """
-        return Workspace(
-            self,
-            id,
-            name,
-            productType,
-            resourceFolder,
-            toolClipFilename,
-            tooltip,
-            tooltipDescription,
-        )
+        return Workspace(self, *args, **kwargs)
 
     def stop(self):
         """Stops the addin and deletes all created ui elements.
 
         This methods needs to get called from the stop(context) function of the
-        main file of your addin o ensure proper cleanup.
+        main file of your addin to ensure proper cleanup.
         If you dont call it, strange thigs can happen the next time you want to
         run the addin.
         """
@@ -186,7 +164,7 @@ class FusionAddin:
             level (int, optional): The Ui level of the element. Defaults to 0.
         """
         if isinstance(elem, _FusionWrapper):
-            elem = elem.in_fusion
+            elem = elem._in_fusion
         self._registered_elements[level].append(elem)
         return self.addin
 
@@ -213,7 +191,7 @@ class FusionAddin:
     def debug_to_ui(self) -> bool:
         """bool: Flag indicating if erorr messages are displayed in a `messageBox
         <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-1692a9a4-3be0-4474-9e15-02fac696b2b2>`_
-        or not.
+        or only send to the module logger.
         """
         return self._debug_to_ui
 
@@ -282,19 +260,19 @@ class Workspace(_FusionWrapper):
 
         Args:
             parent (FusionAddin): [description]
-            id (str, optional): [description]. Defaults to None.
-            product_type (str, optional): [description]. Defaults to None.
-            image (Union[str, Path], optional): [description]. Defaults to None.
-            tooltip_image (Union[str, Path], optional): [description]. Defaults to None.
-            tooltip_head (str, optional): [description]. Defaults to None.
-            tooltip_text (str, optional): [description]. Defaults to None.
+            id (str, optional): [description]. Defaults to "FusionSolidEnvironment".
+            productType (str, optional): [description]. Defaults to "DesignProductType".
+            resourceFolder (Union[str, Path], optional): [description]. Defaults to "lightbulb".
+            toolClipFilename (Union[str, Path], optional): [description]. Defaults to "lightbulb".
+            tooltip (str, optional): [description]. Defaults to "".
+            tooltipDescription (str, optional): [description]. Defaults to "".
         """
         super().__init__(parent)
 
         id = dflts.eval_id(id)
         name = dflts.eval_name(name, __class__)
         resourceFolder = dflts.eval_image(resourceFolder)
-        toolClipFilename = dflts.eval_image(toolClipFilename)  # TODO own evaluation
+        toolClipFilename = dflts.eval_image_path(toolClipFilename)
 
         # try to get an existing instance
         self._in_fusion = adsk.core.Application.get().userInterface.workspaces.itemById(
@@ -341,7 +319,7 @@ class Tab(_FusionWrapper):
 
         self._in_fusion = self.parent.toolbarTabs.itemById(id)
 
-        if self.in_fusion:
+        if self._in_fusion:
             logging.getLogger(__name__).info(msgs.using_exisitng(__class__, id))
         else:
             self._in_fusion = self.parent.toolbarTabs.add(id, name)
@@ -358,7 +336,7 @@ class Panel(_FusionWrapper):
     def __init__(
         self,
         parent: Tab,
-        id: str = "random",  # pylint:disable=redefined-builtin
+        id: str = "random",
         name: str = "random",
     ):
         # TODO account for position
@@ -368,6 +346,7 @@ class Panel(_FusionWrapper):
         name = dflts.eval_name(name, __class__)
 
         self._in_fusion = self.parent.toolbarPanels.itemById(id)
+        # TODO test what wil happen if ui.allToolbarpanels.itemById() already exists
 
         if self._in_fusion:
             logging.getLogger(__name__).info(msgs.using_exisitng(__class__, id))
@@ -382,72 +361,157 @@ class Panel(_FusionWrapper):
         return Button(self, *args, **kwargs)
 
 
-class Button(_FusionWrapper):
+class _CommandControlWrapper(_FusionWrapper):
+    def __init__(
+        self, parent, isBefore, positionID, isPromoted, isPromotedByDefault, isVisible
+    ):
+        super().__init__(parent)
+
+        self._isBefore = isBefore
+        self._positionID = positionID
+        self._isPomoted = isPromoted
+        self._isPromotedByDefault = isPromotedByDefault
+        self._isVisible = isVisible
+
+    def _create_control(self, cmd_def):
+        if self._in_fusion is not None:
+            self._in_fusion.deleteMe()
+
+        if self._positionID is not None:
+            self._in_fusion = self.parent.controls.addCommand(
+                cmd_def, self._positionID, self._isBefore
+            )
+        else:
+            self._in_fusion = self.parent.controls.addCommand(cmd_def)
+
+        self._in_fusion.isPromoted = self._isPromoted
+        self._in_fusion.isPromotedByDefault = self._isPromotedByDefault
+        self._in_fusion.isVisible = self._isVisible
+
+        self.addin.register_element(self, self.ui_level)
+
+
+class Button(_CommandControlWrapper):
     def __init__(
         self,
         parent: Panel,
         isVisible: bool = True,
-        isEnabled: bool = True,
         isPromoted: bool = True,
         isPromotedByDefault: bool = True,
+        positionID: str = None,
+        isBefore: bool = True,
     ):
-        super().__init__(parent)
-        # TODO account position
+        """Wraps around Fusions CommandControl class <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-bb8d8c7b-3049-40c9-b7a5-76d24a462327>
+        A dummy command definition with a button control definition is used to
+        instantiate the control.
+
+        Args:
+            parent (Panel): [description]
+            isVisible (bool, optional): [description]. Defaults to True.
+            isPromoted (bool, optional): [description]. Defaults to True.
+            isPromotedByDefault (bool, optional): [description]. Defaults to True.
+        """
+        super().__init__(parent, isBefore, positionID, isPromoted, isPromotedByDefault)
 
         # a button can always be created since it has no id
 
+        # create a dummy cmd_def with a button_ctrl_def to instantiate the cmd_ctrl
+        # itself. This will get overridden by the connected command later.
         dummy_cmd_def = adsk.core.Application.get().userInterface.commandDefinitions.addButtonDefinition(
             str(uuid4()),
             "<empty button>",
             "",
             dflts.eval_image("transparent"),
         )
-        dummy_cmd_def.controlDefinition.isVisible = isVisible
-        dummy_cmd_def.controlDefinition.isEnabled = isEnabled
+        dummy_cmd_def.controlDefinition.isVisible = True
+        dummy_cmd_def.controlDefinition.isEnabled = True
         dummy_cmd_def.controlDefinition.name = "<no command connected>"
         # do not connect a handler since its a dummy cmd_def
 
-        self._in_fusion = self.parent.controls.addCommand(dummy_cmd_def)
-        self._in_fusion.isPromoted = isPromoted
-        self._in_fusion.isPromotedByDefault = isPromotedByDefault
-        self._in_fusion.isVisible = isVisible
-
         self.addin.register_element(dummy_cmd_def, self.ui_level + 1)
-        self.addin.register_element(self, self.ui_level)
+        # if positionID is not None:
+        #     self._in_fusion = self.parent.controls.addCommand(
+        #         dummy_cmd_def, positionID, isBefore
+        #     )
+        # else:
+        #     self._in_fusion = self.parent.controls.addCommand(dummy_cmd_def)
+        # self._in_fusion.isPromoted = isPromoted
+        # self._in_fusion.isPromotedByDefault = isPromotedByDefault
+        # self._in_fusion.isVisible = isVisible
+
+        # self.addin.register_element(self, self.ui_level)
+        self._create_control(dummy_cmd_def)
         logging.getLogger(__name__).info(msgs.created_new(__class__, None))
 
+        # self._positionID = positionID
+        # self._isBefore = isBefore
         # self._connected_command = None
 
     # @property
     # def connected_command(self):
     #     return self.connected_command
 
-    def command(self):
-        return Command(self)
+    def command(self, *args, **kwargs):
+        return ButtonCommand(self, *args, **kwargs)
+
+
+class Checkbox(_CommandControlWrapper):
+    def __init__(self, parent):
+        super().__init__(parent)
+
+        dummy_cmd_def = adsk.core.Application.get().userInterface.commandDefinitions.addCheckboxDefinition(
+            str(uuid4()),
+            "<no Command>",
+            "",
+            False,
+        )
+        dummy_cmd_def.controlDefinition.isVisible = True
+        dummy_cmd_def.controlDefinition.isEnabled = True
+        dummy_cmd_def.controlDefinition.name = "<no command connected>"
+        dummy_cmd_def.controlDefinition.isChecked = isChecked
+        # do not connect a handler since its a dummy cmd_def
+
+        # if positionID is not None:
+        #     self._in_fusion = self.parent.controls.addCommand(
+        #         dummy_cmd_def, positionID, isBefore
+        #     )
+        # else:
+        #     self._in_fusion = self.parent.controls.addCommand(dummy_cmd_def)
+        # self._in_fusion.isPromoted = isPromoted
+        # self._in_fusion.isPromotedByDefault = isPromotedByDefault
+        # self._in_fusion.isVisible = isVisible
+
+        self.addin.register_element(dummy_cmd_def, self.ui_level + 1)
+        # self.addin.register_element(self, self.ui_level)
+        logging.getLogger(__name__).info(msgs.created_new(__class__, None))
+
+        # self._positionID = positionID
+        # self._isBefore = isBefore
 
 
 class Command(_FusionWrapper):
     def __init__(
         self,
         parent: Button,
-        id: str = "random",  # cmd_def #pylint:disable=redefined-builtin
-        name: str = "random",  # cmd_Def
-        resourceFolder: Union[str, Path] = "lighbulb",  # cmd_def
-        tooltip: str = "",  # cmd_def
-        toolClipFileName: Union[str, Path] = "lighbulb",  # cmd_Def
-        onCreated: Callable = dflts.do_nothing,  # cmd_def
-        onInputChanged: Callable = dflts.do_nothing,  # cmd_def
-        onPreview: Callable = dflts.do_nothing,  # cmd_def
-        onExecute: Callable = dflts.do_nothing,  # cmd_def
-        onDestroy: Callable = dflts.do_nothing,  # cmd_def
-        onKeyDown: Callable = dflts.do_nothing,  # cmd_def
+        id: str = "random",
+        name: str = "random",
+        resourceFolder: Union[str, Path] = "lightbulb",
+        tooltip: str = "",
+        toolClipFileName: Union[str, Path] = "lightbulb",  # TODO no picture option
+        isEnabled: bool = True,
+        onCreated: Callable = dflts.do_nothing,
+        onInputChanged: Callable = dflts.do_nothing,
+        onPreview: Callable = dflts.do_nothing,
+        onExecute: Callable = dflts.do_nothing,
+        onDestroy: Callable = dflts.do_nothing,
+        onKeyDown: Callable = dflts.do_nothing,
     ):
         super().__init__(parent)
 
         id = dflts.eval_id(id)
         name = dflts.eval_name(name, __class__)
-        image = dflts.eval_image(resourceFolder)
-        toolClipFileName = dflts.eval_image(toolClipFileName)  # TODO own eval
+        resourceFolder = dflts.eval_image(resourceFolder)
+        toolClipFileName = dflts.eval_image_path(toolClipFileName)
 
         self._in_fusion = (
             adsk.core.Application.get().userInterface.commandDefinitions.itemById(id)
@@ -455,45 +519,58 @@ class Command(_FusionWrapper):
 
         if self._in_fusion:
             logging.getLogger(__name__).info(msgs.using_exisitng(__class__, id))
+
+            # if self._in_fusion not isinstance parent:
+            # rasise Error
         else:
             # create definition
             self._in_fusion = adsk.core.Application.get().userInterface.commandDefinitions.addButtonDefinition(
-                id, name, tooltip, image
+                id, name, tooltip, resourceFolder
             )
             self._in_fusion.toolClipFilename = toolClipFileName
-            self._in_fusion.controlDefinition.isVisible = self.parent.isVisible
-            self._in_fusion.controlDefinition.isEnabled = self.parent.isEnabled
+            self._in_fusion.controlDefinition.isEnabled = isEnabled
+            self._in_fusion.controlDefinition.isVisible = (
+                isVisible  # self.parent.isVisible
+            )
             self._in_fusion.controlDefinition.name = name
 
+            # ! if there is some error (typo) etc. fusion will break instantanious !
             self._in_fusion.commandCreated.add(
-                handlers.create(
-                    self.app,
+                handlers._CommandCreatedHandler(
+                    self.addin,
                     name,
                     onCreated,
                     onExecute,
                     onPreview,
                     onInputChanged,
-                    onKeyDown,
                 )
             )
-
-            # create a new button
-            cmd_ctrl = self.parent.parent.controls.addCommand(self._in_fusion)
-            cmd_ctrl.isPromoted = self.parent.isPromoted
-            cmd_ctrl.isPromotedByDefault = self.parent.isPromotedByDefault
-            cmd_ctrl.isVisible = self.parent.isVisible
-
-            self.parent.in_fusion.deleteMe()
-            self.parent._in_fusion = cmd_ctrl
-
             self.addin.register_element(self, self.ui_level)
-            self.addin.register_element(cmd_ctrl, self.ui_level - 1)
-            logging.getLogger(__name__).info(msgs.created_new(__class__, id))
+
+        self.parent._create_control(self._in_fusion)
+        # create a new button
+        # if self.parent._positionID:
+        #     cmd_ctrl = self.parent.parent.controls.addCommand(
+        #         self._in_fusion, self.parent._positionID, self.parent._isBefore
+        #     )
+        # else:
+        #     cmd_ctrl = self.parent.parent.controls.addCommand(self._in_fusion)
+        # cmd_ctrl.isPromoted = self.parent.isPromoted
+        # cmd_ctrl.isPromotedByDefault = self.parent.isPromotedByDefault
+        # cmd_ctrl.isVisible = self.parent.isVisible
+
+        # self.parent._in_fusion.deleteMe()
+        # self.parent._in_fusion = cmd_ctrl
+
+        # self.addin.register_element(cmd_ctrl, self.ui_level - 1)
+
+        logging.getLogger(__name__).info(msgs.created_new(__class__, id))
 
     def __getattr__(self, attr):
         try:
-            return getattr(self._cmd_def, attr)
+            return getattr(self._in_fusion, attr)
         except:
-            return getattr(self._cmd_ctrl, attr)
-        finally:
-            return getattr(self, attr)
+            return getattr(self._in_fusion.controlDefinition, attr)
+        # finally:
+        #     raise
+        # TODO setattr

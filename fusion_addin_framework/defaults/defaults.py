@@ -35,5 +35,11 @@ def eval_image(value):
     return str(value)
 
 
-def do_nothing():
+def eval_image_path(value):
+    if value in default_pictures:
+        return str(default_pictures[value] / "32x32.png")
+    return str(value)
+
+
+def do_nothing(*args, **kwargs):
     pass
