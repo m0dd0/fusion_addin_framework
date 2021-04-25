@@ -28,18 +28,15 @@ def run(context):  # pylint:disable=unused-argument
             faf.__name__,
             [logging.StreamHandler(), fusion_utils.TextPaletteLoggingHandler()],
         )
-        # TODO text command handler
-
-        faf.test_logger()
 
         global addins
 
-        # results, addins = testcases.execute_cases(
-        #     [
-        #         testcases.test_default_button,
-        #         testcases.test_hello_world,
-        #     ]
-        # )
+        results, addins = testcases.execute_cases(
+            [
+                testcases.test_default_button,
+                testcases.test_hello_world,
+            ]
+        )
 
         # pprint(dict(results))
 

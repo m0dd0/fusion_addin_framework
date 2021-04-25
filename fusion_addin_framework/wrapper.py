@@ -29,10 +29,6 @@ _addins = []
 # TODO check what happens if two adins use framework
 
 
-def test_logger():
-    logging.getLogger(__name__).info("test")
-
-
 def stop_all():
     for a in _addins:
         a.stop()

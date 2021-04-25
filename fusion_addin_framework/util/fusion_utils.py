@@ -14,7 +14,7 @@ class TextPaletteLoggingHandler(logging.StreamHandler):
         self.textPalette = adsk.core.Application.get().userInterface.palettes.itemById(
             "TextCommands"
         )
-        self.textPalette.isVisible = True
+        # self.textPalette.isVisible = True
 
     def emit(self, record):
         self.textPalette.writeText(self.format(record))
