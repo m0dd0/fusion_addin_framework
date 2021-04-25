@@ -12,9 +12,10 @@ import adsk.core, adsk.fusion, adsk.cam
 
 from .tests import testcases
 from . import fusion_addin_framework as faf
-from .fusion_addin_framework.util.py_utils import create_logger
+from .fusion_addin_framework import py_utils
+from .fusion_addin_framework import fusion_utils
 
-addins = None
+addins = []
 
 
 def run(context):  # pylint:disable=unused-argument
@@ -23,8 +24,10 @@ def run(context):  # pylint:disable=unused-argument
         app = adsk.core.Application.get()
         ui = app.userInterface
 
-        create_logger(faf.__name__, [logging.StreamHandler()])
-        # TODO text command handler
+        py_utils.create_logger(
+            faf.__name__,
+            [logging.StreamHandler(), fusion_utils.TextPaletteLoggingHandler()],
+        )
 
         global addins
 

@@ -26,6 +26,8 @@ from . import handlers
 
 _addins = []
 
+# TODO check what happens if two adins use framework
+
 
 def stop_all():
     for a in _addins:

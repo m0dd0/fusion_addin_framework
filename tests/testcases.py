@@ -59,17 +59,22 @@ def test_hello_world():
         raise test_exception
     return addin
 
+
 def test_addin_properties():
     pass
+
 
 def test_custom_workspace():
     pass
 
+
 def test_custom_tab():
     pass
 
-def test_custom_panel()
+
+def test_custom_panel():
+    pass
+
 
 def test_connect_multiple_commands():
     pass
-
