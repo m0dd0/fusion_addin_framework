@@ -10,11 +10,12 @@ def get_input_values(event_args):
 
 class TextPaletteLoggingHandler(logging.StreamHandler):
     def __init__(self):
+        super().__init__()
         self.textPalette = adsk.core.Application.get().userInterface.palettes.itemById(
             "TextCommands"
         )
         self.textPalette.isVisible = True
 
     def emit(self, record):
-        self.textPalette.writeText(record)
-        adsk.doEvents()
+        self.textPalette.writeText(self.format(record))
+        # adsk.doEvents() # doesnt seem to be necessary

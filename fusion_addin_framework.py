@@ -15,7 +15,7 @@ from . import fusion_addin_framework as faf
 from .fusion_addin_framework import py_utils
 from .fusion_addin_framework import fusion_utils
 
-addins = None
+addins = []
 
 
 def run(context):  # pylint:disable=unused-argument
