@@ -1,4 +1,5 @@
-from . import wrapper, defaults, util, handlers, messages
-
-from .wrapper import FusionAddin, Workspace, Tab, Panel, Button, Command
-from .util import py_utils
+from .wrapper import *
+from .util import (
+    py_utils,
+    fusion_utils,
+)  # * stars can only be used for classes, function etc., not for files
