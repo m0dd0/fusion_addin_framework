@@ -4,7 +4,7 @@
 import logging
 from pathlib import Path
 from abc import ABC
-from typing import Union, Callable, List
+from typing import Union, Callable, List, Dict
 from collections import defaultdict
 from uuid import uuid4
 from functools import partial
@@ -27,8 +27,6 @@ from . import handlers
 _addins = []
 
 # TODO check what happens if two adins use framework
-
-
 def stop_all():
     for a in _addins:
         a.stop()
@@ -327,7 +325,7 @@ class Tab(_FusionWrapper):
     def __init__(
         self,
         parent: Workspace,
-        id: str = "ToolsTab",  # pylint:disable=redefined-builtin
+        id: str = "ToolsTab",
         name: str = "random",
     ):
         super().__init__(parent)
@@ -341,7 +339,6 @@ class Tab(_FusionWrapper):
             logging.getLogger(__name__).info(msgs.using_exisitng(__class__, id))
         else:
             self._in_fusion = self.parent.toolbarTabs.add(id, name)
-            # nothing else is setable
 
             self.addin.register_element(self, self.ui_level)
             logging.getLogger(__name__).info(msgs.created_new(__class__, id))
@@ -354,7 +351,7 @@ class Panel(_FusionWrapper):
     def __init__(
         self,
         parent: Tab,
-        id: str = "random",
+        id: str = "random",  # TODO use addin panel
         name: str = "random",
     ):
         # TODO account for position
@@ -392,7 +389,7 @@ class _CommandControlWrapper(_FusionWrapper):
         super().__init__(parent)
 
         self._isVisible = isVisible
-        self._isPomoted = isPromoted
+        self._isPromoted = isPromoted
         self._isPromotedByDefault = isPromotedByDefault
         self._positionID = positionID
         self._isBefore = isBefore
@@ -539,18 +536,16 @@ class _CommandWrapper(_FusionWrapper):
 
     def _setup_routine(
         self,
-        parent,
+        id,
+        name,
         toolClipFileName,
         isEnabled,
         isVisible,
-        name,
-        onCreated,
-        onExecute,
-        onPreview,
-        onInputChanged,
+        event_handlers,
         subclass,
         adding_method,
     ):
+
         self._in_fusion = (
             adsk.core.Application.get().userInterface.commandDefinitions.itemById(id)
         )
@@ -568,19 +563,12 @@ class _CommandWrapper(_FusionWrapper):
 
             # ! if there is some error (typo) etc. fusion will break instantanious !
             self._in_fusion.commandCreated.add(
-                handlers._CommandCreatedHandler(
-                    self.addin,
-                    name,
-                    onCreated,
-                    onExecute,
-                    onPreview,
-                    onInputChanged,
-                )
+                handlers._CommandCreatedHandler(self.addin, name, event_handlers)
             )
 
             self.addin.register_element(self, self.ui_level)
 
-        if not isinstance(parent, list):
+        if not isinstance(self.parent, list):
             parent = [parent]
         for p in parent:
             p._create_control(self._in_fusion)
@@ -621,28 +609,7 @@ class ButtonCommand(_CommandWrapper):
         toolClipFileName: Union[str, Path] = "lightbulb",  # TODO no picture option
         isEnabled: bool = True,
         isVisible: bool = True,
-        onCreated: Callable = dflts.do_nothing,
-        # onActivate,
-        # onDeactivate,
-        onExecute: Callable = dflts.do_nothing,
-        # onExecutePreview,
-        onInputChanged: Callable = dflts.do_nothing,
-        # onKeyDown,
-        # onKeyUp,
-        # onMouseClick,
-        # onMouseDoubleClick,
-        # onMouseDown,
-        # onMouseDrag,
-        # onMouseDragBegin,
-        # onMouseDragEnd,
-        # onMouseMove,
-        # onMouseWheel,
-        # onPreSelect,
-        # onPreSelectEnd,
-        # onPreSelectMouseMove,
-        # onSelect,
-        # onUnselect,
-        # onValidateInouts
+        **event_handlers: Callable
     ):
 
         super().__init__(parent)
@@ -660,7 +627,17 @@ class ButtonCommand(_CommandWrapper):
             resourceFolder,
         )
 
-        self._setup_routine(**locals(), subclass=__class__, adding_method=adding_method)
+        self._setup_routine(
+            parent,
+            id,
+            name,
+            resourceFolder,
+            tooltip,
+            toolClipFileName,
+            isEnabled,
+            isVisible,
+            event_handlers,
+        )
 
 
 class CheckboxCommand(_CommandWrapper):

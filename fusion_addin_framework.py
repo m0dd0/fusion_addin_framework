@@ -29,12 +29,16 @@ def run(context):  # pylint:disable=unused-argument
             [logging.StreamHandler(), fusion_utils.TextPaletteLoggingHandler()],
         )
 
+        logging.getLogger(faf.__name__).info(
+            "started fusion_addin_framework testing addin"
+        )
+
         global addins
 
         results, addins = testcases.execute_cases(
             [
                 testcases.test_default_button,
-                testcases.test_hello_world,
+                # testcases.test_hello_world,
             ]
         )
 
@@ -55,6 +59,8 @@ def stop(context):  # pylint:disable=unused-argument
 
         for addin in reversed(addins):
             addin.stop()
+
+        logging.getLogger(faf.__name__).info("stopped all addin instances")
 
     except:
         if ui:
