@@ -8,7 +8,7 @@ from . import defaults as dflts
 
 _handlers = []
 
-
+# TODO use (ttest) parent class
 def _notify_routine(addin, cmd_name, event_name, action, args):
     logging.getLogger(__name__).info(msgs.starting_handler(event_name, cmd_name))
 
@@ -143,6 +143,11 @@ class _CommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
             if event_name.lower().startswith("on"):
                 event_name = event_name[2:]
             event_name = event_name[0].lower() + event_name[1:]
+            if event_name in self.handler_dict:
+                logging.warning(
+                    f"Two or more callback functions for the {event_name} event were provided. "
+                    + "Only the last one will get used."
+                )
             self.handler_dict[event_name] = handler_callable
 
         self.addin = addin
