@@ -536,8 +536,8 @@ class ListControl(_CommandControlWrapper):
 
 
 class _CommandWrapper(_FusionWrapper):
-    # def __init__(self, parent):
-    #     super().__init__(parent)
+    def __init__(self, parent):
+        super().__init__(parent)
 
     def _setup_routine(
         self,

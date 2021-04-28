@@ -10,6 +10,7 @@ import logging
 
 import adsk.core, adsk.fusion, adsk.cam
 
+# using reative imports because editable pip install doesnt work
 from .tests import testcases
 from . import fusion_addin_framework as faf
 from .fusion_addin_framework import py_utils
