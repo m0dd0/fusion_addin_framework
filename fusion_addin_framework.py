@@ -39,11 +39,13 @@ def run(context):  # pylint:disable=unused-argument
         results, addins = testcases.execute_cases(
             [
                 testcases.test_default_button,
-                # testcases.test_hello_world,
+                testcases.test_hello_world,
+                # testcases.test_addin_properties,
+                # testcases.test_custom_workspace,
             ]
         )
 
-        # pprint(dict(results))
+        pprint(dict(results))
 
     except:
         if ui:

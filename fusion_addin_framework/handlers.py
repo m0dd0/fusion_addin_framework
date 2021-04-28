@@ -167,7 +167,7 @@ class _CommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
                 event_name,
                 handler_callable,
             )
-            setattr(cmd, event_name, handler)
+            getattr(cmd, event_name).add(handler)
             _handlers.append(handler)
 
         _notify_routine(self.addin, self.cmd_name, self.event_name, self.action, args)

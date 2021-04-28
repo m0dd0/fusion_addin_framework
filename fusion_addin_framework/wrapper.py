@@ -133,7 +133,9 @@ class FusionAddin:
         self._registered_elements = defaultdict(list)
 
         if len(_addins) > 0:
-            logging.getLogger(__name__).warning()  # TODO message
+            logging.getLogger(__name__).warning(
+                "there are already addins existing. It is recommende to use only one addin instance"
+            )  # TODO message
 
         _addins.append(self)
 
@@ -321,7 +323,7 @@ class Tab(_FusionWrapper):
     def __init__(
         self,
         parent: Workspace,  # TODO mulitple parents
-        id: str = "ToolsTab",
+        id: str = "random",
         name: str = "random",
     ):
         super().__init__(parent)
@@ -347,7 +349,7 @@ class Panel(_FusionWrapper):
     def __init__(
         self,
         parent: Tab,  # TODO ultiple parents
-        id: str = "ToolsPanel",
+        id: str = "random",
         name: str = "random",
         positionID: str = "",
         isBefore: bool = True,
@@ -625,7 +627,7 @@ class ButtonCommand(_CommandWrapper):
         super().__init__(parent)
 
         id = dflts.eval_id(id)
-        name = dflts.eval_name(name, __class__)
+        name = dflts.eval_name(name, __class__.__bases__[0])
         resourceFolder = dflts.eval_image(resourceFolder)
         toolClipFileName = dflts.eval_image_path(toolClipFileName)
 
@@ -668,7 +670,7 @@ class CheckboxCommand(_CommandWrapper):
         super().__init__(parent)
 
         id = dflts.eval_id(id)
-        name = dflts.eval_name(name, __class__)
+        name = dflts.eval_name(name, __class__.__bases__[0])
         toolClipFileName = dflts.eval_image_path(toolClipFileName)
 
         adding_method = partial(
@@ -710,7 +712,7 @@ class ListCommand(_CommandWrapper):
         super().__init__(parent)
 
         id = dflts.eval_id(id)
-        name = dflts.eval_name(name, __class__)
+        name = dflts.eval_name(name, __class__.__bases__[0])
         resourceFolder = dflts.eval_image(resourceFolder)
         toolClipFileName = dflts.eval_image_path(toolClipFileName)
 

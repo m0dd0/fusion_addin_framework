@@ -48,7 +48,7 @@ def test_hello_world():
         button = faf.Button(
             panel,
         )
-        cmd = faf.Command(
+        cmd = faf.ButtonCommand(
             button,
             onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
                 "hello world"
@@ -72,11 +72,12 @@ def access_all_addin_properties(addin):
     print(addin.ui_level)
     print(addin.created_elements)
 
+
 def access_all_workspace_properties(workspace):
     print(workspace.parent)
     print(workspace.addin)
     print(workspace.ui_level)
-        
+
     print(workspace.id)
     print(workspace.isActive)
     print(workspace.isNative)
@@ -91,11 +92,12 @@ def access_all_workspace_properties(workspace):
     print(workspace.tooltip)
     print(workspace.tooltipDescription)
 
+
 def access_all_tab_properties(tab):
     print(tab.parent)
     print(tab.addin)
     print(tab.ui_level)
-    
+
     print(tab.id)
     print(tab.index)
     print(tab.isActive)
@@ -107,6 +109,7 @@ def access_all_tab_properties(tab):
     print(tab.parenUserInterface)
     print(tab.productType)
     print(tab.toolbarPanels)
+
 
 def access_all_panel_properties(panel):
     print(panel.parent)
@@ -126,15 +129,12 @@ def access_all_panel_properties(panel):
     print(panel.relatedWorkspaces)
 
 
-# def 
-
-
 def test_addin_properties():
-    addin = faf.FusionAddin('my_addin','Moritz',True)
+    addin = faf.FusionAddin("my_addin", "Moritz", True)
     try:
         access_all_addin_properties(addin)
-        assert addin.name == 'my_addin'
-        assert addin.author == 'Moritz'
+        assert addin.name == "my_addin"
+        assert addin.author == "Moritz"
         assert addin.debug_to_ui == True
     except Exception as test_exception:
         addin.stop()
@@ -142,11 +142,17 @@ def test_addin_properties():
     return addin
 
 
-
 def test_custom_workspace():
     addin = faf.FusionAddin()
     try:
-
+        ws = faf.Workspace(addin, "MyWorkspaceCustomID")
+        tab = faf.Tab(ws)
+        panel = faf.Panel(tab)
+        button = faf.Button(panel)
+    except Exception as test_exception:
+        addin.stop()
+        raise test_exception
+    return addin
 
 
 def test_custom_tab():
@@ -159,6 +165,7 @@ def test_custom_panel():
 
 def test_connect_multiple_commands():
     pass
+
 
 def test_all_handlers():
     pass
