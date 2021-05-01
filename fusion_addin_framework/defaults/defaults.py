@@ -30,12 +30,16 @@ def eval_name(value, cls):
 
 
 def eval_image(value):
+    if value is None:
+        return None
     if value in default_pictures:
         return str(default_pictures[value])
     return str(value)
 
 
 def eval_image_path(value):
+    if value is None:
+        return None
     if value in default_pictures:
         return str(default_pictures[value] / "32x32.png")
     return str(value)
