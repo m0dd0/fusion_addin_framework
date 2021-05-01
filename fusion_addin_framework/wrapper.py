@@ -41,6 +41,7 @@ class _FusionWrapper(ABC):
     Defining class variables shared by all wrapper classes.
     """
 
+    _parent_class = None
     _parent = None
     _in_fusion = None
 
@@ -57,11 +58,16 @@ class _FusionWrapper(ABC):
                 e.g.: the parent of a panel is always a tab.
         """
         self._in_fusion = None
+
+        if parent is None:
+            parent = self._parent_class()
         self._parent = parent
+
         if isinstance(parent, list):
             self._addin = self.parent[0].addin
         else:
             self._addin = self.parent.addin
+
         self._ui_level = self.parent.ui_level + 1
 
     def __getattr__(self, attr):
@@ -263,9 +269,12 @@ class FusionAddin:
 
 
 class Workspace(_FusionWrapper):
+
+    _parent_class = FusionAddin
+
     def __init__(
         self,
-        parent: FusionAddin,
+        parent: FusionAddin = None,
         id: str = "FusionSolidEnvironment",  # pylint:disable=redefined-builtin
         name: str = "random",
         productType: str = "DesignProductType",
@@ -320,9 +329,12 @@ class Workspace(_FusionWrapper):
 
 
 class Tab(_FusionWrapper):
+
+    _parent_class = Workspace
+
     def __init__(
         self,
-        parent: Workspace,  # TODO mulitple parents
+        parent: Workspace = None,  # TODO mulitple parents
         id: str = "default",
         name: str = "random",
     ):
@@ -346,9 +358,12 @@ class Tab(_FusionWrapper):
 
 
 class Panel(_FusionWrapper):
+
+    _parent_class = Tab
+
     def __init__(
         self,
-        parent: Tab,  # TODO ultiple parents
+        parent: Tab = None,  # TODO ultiple parents
         id: str = "default",
         name: str = "random",
         positionID: str = "",
@@ -384,6 +399,9 @@ class Panel(_FusionWrapper):
 
 
 class _CommandControlWrapper(_FusionWrapper):
+
+    _parent_class = Panel
+
     def __init__(
         self,
         parent: Panel,
@@ -422,7 +440,7 @@ class _CommandControlWrapper(_FusionWrapper):
 class Button(_CommandControlWrapper):
     def __init__(
         self,
-        parent: Panel,
+        parent: Panel = None,
         isVisible: bool = True,
         isPromoted: bool = True,
         isPromotedByDefault: bool = True,
@@ -469,7 +487,7 @@ class Button(_CommandControlWrapper):
 class Checkbox(_CommandControlWrapper):
     def __init__(
         self,
-        parent: Panel,
+        parent: Panel = None,
         isVisible: bool = True,
         isPromoted: bool = True,
         isPromotedByDefault: bool = True,
@@ -505,7 +523,7 @@ class Checkbox(_CommandControlWrapper):
 class ListControl(_CommandControlWrapper):
     def __init__(
         self,
-        parent: Panel,
+        parent: Panel = None,
         isVisible: bool = True,
         isPromoted: bool = True,
         isPromotedByDefault: bool = True,
@@ -611,9 +629,12 @@ class _CommandWrapper(_FusionWrapper):
 
 
 class ButtonCommand(_CommandWrapper):
+
+    _parent_class = Button
+
     def __init__(
         self,
-        parent: Union[List[Button], Button],
+        parent: Union[List[Button], Button] = None,
         id: str = "random",
         name: str = "random",
         resourceFolder: Union[str, Path] = "lightbulb",
@@ -654,9 +675,12 @@ class ButtonCommand(_CommandWrapper):
 
 
 class CheckboxCommand(_CommandWrapper):
+
+    _parent_class = Checkbox
+
     def __init__(
         self,
-        parent: Union[List[Checkbox], Checkbox],
+        parent: Union[List[Checkbox], Checkbox] = None,
         id: str = "random",
         name: str = "random",
         tooltip: str = "",
@@ -696,9 +720,12 @@ class CheckboxCommand(_CommandWrapper):
 
 
 class ListCommand(_CommandWrapper):
+
+    _parent_class = ListControl
+
     def __init__(
         self,
-        parent: Union[List[Button], Button],
+        parent: Union[List[ListControl], ListControl] = None,
         id: str = "random",
         name: str = "random",
         resourceFolder: Union[str, Path] = "lightbulb",
