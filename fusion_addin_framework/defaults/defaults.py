@@ -17,7 +17,12 @@ random_names = py_utils.load_json_file(random_names_path)
 ### PARSING ###
 
 
-def eval_id(value):
+def eval_id(value, parent_collection=None):
+    if parent_collection is not None and value == "default":
+        for index in range(parent_collection.count() - 1, -1, -1):
+            parent = parent_collection.item(index)
+            if parent.isNative:
+                return parent.id
     if value == "random":
         return str(uuid4())
     return value

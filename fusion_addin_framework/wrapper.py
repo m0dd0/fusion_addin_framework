@@ -323,12 +323,12 @@ class Tab(_FusionWrapper):
     def __init__(
         self,
         parent: Workspace,  # TODO mulitple parents
-        id: str = "random",
+        id: str = "default",
         name: str = "random",
     ):
         super().__init__(parent)
 
-        id = dflts.eval_id(id)
+        id = dflts.eval_id(id, self.parent.toolbarTabs)
         name = dflts.eval_name(name, __class__)
 
         self._in_fusion = self.parent.toolbarTabs.itemById(id)
@@ -349,14 +349,14 @@ class Panel(_FusionWrapper):
     def __init__(
         self,
         parent: Tab,  # TODO ultiple parents
-        id: str = "random",
+        id: str = "default",
         name: str = "random",
         positionID: str = "",
         isBefore: bool = True,
     ):
         super().__init__(parent)
 
-        id = dflts.eval_id(id)
+        id = dflts.eval_id(id, self.parent.toolbarPanels)
         name = dflts.eval_name(name, __class__)
 
         self._in_fusion = self.parent.toolbarPanels.itemById(id)
