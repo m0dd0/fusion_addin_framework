@@ -2,19 +2,9 @@ from pathlib import Path
 from uuid import uuid4
 import random
 
-from ..util import py_utils
-
-### LOADING JSONS ###
-
-
 default_images_path = Path(__file__).with_name("default_images").absolute()
 default_pictures = {p.stem: p.absolute() for p in default_images_path.iterdir()}
 
-# random_names_path = Path(__file__).with_name("random_names.json").absolute()
-# random_names = py_utils.load_json_file(random_names_path)
-
-
-### PARSING ###
 random_names = {
     "Workspace": [
         "wobbling workspace",
@@ -47,18 +37,25 @@ random_names = {
 
 default_ids = {
     "Workspace": {
-        "DesignWorkspace": "ToolsTab",
-        "RenderWorkspace": "",
+        "FusionSolidEnvironment": "ToolsTab",
+        "FusionRenderEnvironment": "RenderTab",
+        "CAMEnvironment": "UtilitiesTab",
     },
-    "Tab": {"SolidTab": "Select"},
+    "Tab": {"ToolsTab": "SolidScriptsAddinsPanel"},
 }
 
 
-def eval_id(value, parent=None):
-    if parent is not None and value == "default":
-        value = default_ids.get(parent.__class__.__name__, {}).get(parent.id)
+def eval_id(value, instance=None):
+    if instance is not None and value == "default":
+        value = default_ids.get(instance.parent.__class__.__name__, {}).get(
+            instance.parent.id
+        )
         if value is None:
-            logging.info()
+            # logging.info(
+            #     f"There is no default id defined for a {instance.__class__.__name__} "
+            #     + f"in {instance.parent.id} {instance.parent.__class__.__name__}, "
+            #     + f"so a new {instance.__class__.__name__} will be used."
+            # )
             value = "random"
     if value == "random":
         return str(uuid4())
