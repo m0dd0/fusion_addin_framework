@@ -144,10 +144,7 @@ class _CommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
                 event_name = event_name[2:]
             event_name = event_name[0].lower() + event_name[1:]
             if event_name in self.handler_dict:
-                logging.warning(
-                    f"Two or more callback functions for the {event_name} event were provided. "
-                    + "Only the last one will get used."
-                )
+                logging.warning(msgs.doubled_callbacks(event_name))
             self.handler_dict[event_name] = handler_callable
 
         self.addin = addin

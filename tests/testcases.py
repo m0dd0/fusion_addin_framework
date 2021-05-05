@@ -30,6 +30,58 @@ def test_default_button():
     addin = faf.FusionAddin()
     try:
         ws = faf.Workspace(addin)
+        tab = faf.Tab(ws, id="ToolsTab")
+        panel = faf.Panel(tab)
+        button = faf.Button(panel)
+        cmd = faf.ButtonCommand(button)
+    except Exception as test_exception:
+        addin.stop()
+        raise test_exception
+    return addin
+
+
+def test_default_button_dotted():
+    addin = faf.FusionAddin()
+    try:
+        cmd = addin.workspace().tab().panel().button().buttonCommand()
+    except Exception as test_exception:
+        addin.stop()
+        raise test_exception
+    return addin
+
+
+def test_default_button_without_parents():
+    try:
+        cmd = faf.ButtonCommand()
+    except Exception as test_exception:
+        raise test_exception
+
+
+# def test_hello_world():
+#     addin = faf.FusionAddin()
+#     try:
+#         ws = faf.Workspace(addin)
+#         tab = faf.Tab(ws)
+#         panel = faf.Panel(tab)
+#         button = faf.Button(
+#             panel,
+#         )
+#         cmd = faf.ButtonCommand(
+#             button,
+#             onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+#                 "hello world"
+#             ),
+#         )
+#     except Exception as test_exception:
+#         addin.stop()
+#         raise test_exception
+#     return addin
+
+
+def test_custom_workspace():
+    addin = faf.FusionAddin()
+    try:
+        ws = faf.Workspace(addin, "MyWorkspaceCustomID")
         tab = faf.Tab(ws)
         panel = faf.Panel(tab)
         button = faf.Button(panel)
@@ -39,25 +91,20 @@ def test_default_button():
     return addin
 
 
-def test_hello_world():
-    addin = faf.FusionAddin()
-    try:
-        ws = faf.Workspace(addin)
-        tab = faf.Tab(ws)
-        panel = faf.Panel(tab)
-        button = faf.Button(
-            panel,
-        )
-        cmd = faf.ButtonCommand(
-            button,
-            onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
-                "hello world"
-            ),
-        )
-    except Exception as test_exception:
-        addin.stop()
-        raise test_exception
-    return addin
+def test_custom_tab():
+    pass
+
+
+def test_custom_panel():
+    pass
+
+
+def test_connect_multiple_commands():
+    pass
+
+
+def test_all_handlers():
+    pass
 
 
 def access_all_addin_properties(addin):
@@ -140,32 +187,3 @@ def test_addin_properties():
         addin.stop()
         raise test_exception
     return addin
-
-
-def test_custom_workspace():
-    addin = faf.FusionAddin()
-    try:
-        ws = faf.Workspace(addin, "MyWorkspaceCustomID")
-        tab = faf.Tab(ws)
-        panel = faf.Panel(tab)
-        button = faf.Button(panel)
-    except Exception as test_exception:
-        addin.stop()
-        raise test_exception
-    return addin
-
-
-def test_custom_tab():
-    pass
-
-
-def test_custom_panel():
-    pass
-
-
-def test_connect_multiple_commands():
-    pass
-
-
-def test_all_handlers():
-    pass

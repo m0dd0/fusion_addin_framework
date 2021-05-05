@@ -2,22 +2,61 @@ from pathlib import Path
 from uuid import uuid4
 import random
 
-from ..util import py_utils
-
-### LOADING JSONS ###
-
-
 default_images_path = Path(__file__).with_name("default_images").absolute()
 default_pictures = {p.stem: p.absolute() for p in default_images_path.iterdir()}
 
-random_names_path = Path(__file__).with_name("random_names.json").absolute()
-random_names = py_utils.load_json_file(random_names_path)
+random_names = {
+    "Workspace": [
+        "wobbling workspace",
+        "wonderful workspace",
+        "wolfish workspace",
+        "wounded workspace",
+        "woozy workspace",
+    ],
+    "Tab": [
+        "talky tab",
+        "taxpaying tab",
+        "tapered tab",
+        "tasty tab",
+        "tai tab",
+    ],
+    "Panel": [
+        "pale panel",
+        "painful panel",
+        "pacifisitc panel",
+        "pacific panel",
+    ],
+    "_CommandWrapper": [
+        "comic command",
+        "cometic command",
+        "comfy command",
+        "cozy command",
+        "corned command",
+    ],
+}
+
+default_ids = {
+    "Workspace": {
+        "FusionSolidEnvironment": "ToolsTab",
+        "FusionRenderEnvironment": "RenderTab",
+        "CAMEnvironment": "UtilitiesTab",
+    },
+    "Tab": {"ToolsTab": "SolidScriptsAddinsPanel"},
+}
 
 
-### PARSING ###
-
-
-def eval_id(value):
+def eval_id(value, instance=None):
+    if instance is not None and value == "default":
+        value = default_ids.get(instance.parent.__class__.__name__, {}).get(
+            instance.parent.id
+        )
+        if value is None:
+            value = "random"
+            # logging.info(
+            #     f"There is no default id defined for a {instance.__class__.__name__} "
+            #     + f"in {instance.parent.id} {instance.parent.__class__.__name__}, "
+            #     + f"so a new {instance.__class__.__name__} will be used."
+            # )
     if value == "random":
         return str(uuid4())
     return value
@@ -34,7 +73,7 @@ def eval_image(value):
         return None
     if value in default_pictures:
         return str(default_pictures[value])
-    return str(value)
+    return value
 
 
 def eval_image_path(value):
@@ -42,7 +81,7 @@ def eval_image_path(value):
         return None
     if value in default_pictures:
         return str(default_pictures[value] / "32x32.png")
-    return str(value)
+    return value
 
 
 def do_nothing(*args, **kwargs):

@@ -27,3 +27,33 @@ def starting_handler(handler_type, cmd_name):
 def handler_error(handler_type, command_name, traceback):
     msg = f"Error in {handler_type} of {command_name} command:\n{traceback}"
     return msg
+
+
+def doubled_callbacks(event_name):
+    msg = (
+        f"Two or more callback functions for the {event_name} event were provided. "
+        + "Only the last one will get used."
+    )
+    return msg
+
+
+### MISCELLANEOUS ###
+
+
+def no_appdirs():
+    msg = (
+        "The appdirs package is not installed. Using path related attributes "
+        + "(like addin.user_cache_dir) of the addin object will result in an Error. "
+        + "Consider pip-installing the fusion_addin_framework."
+    )
+    return msg
+
+
+def addin_exists():
+    msg = "There have been already addin instances created. It is recommende to use only one addin instance"
+    return msg
+
+
+def error_while_deleting(to_delete, error_msg):
+    msg = f"Couldnt delete {to_delete.id} {to_delete.__class__.__name__}: {error_msg}"
+    return msg
