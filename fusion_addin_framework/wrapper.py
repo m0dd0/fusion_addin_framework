@@ -340,7 +340,7 @@ class Tab(_FusionWrapper):
     ):
         super().__init__(parent)
 
-        id = dflts.eval_id(id, self.parent.toolbarTabs)
+        id = dflts.eval_id(id, self.parent)
         name = dflts.eval_name(name, __class__)
 
         self._in_fusion = self.parent.toolbarTabs.itemById(id)
@@ -371,7 +371,7 @@ class Panel(_FusionWrapper):
     ):
         super().__init__(parent)
 
-        id = dflts.eval_id(id, self.parent.toolbarPanels)
+        id = dflts.eval_id(id, self.parent)
         name = dflts.eval_name(name, __class__)
 
         self._in_fusion = self.parent.toolbarPanels.itemById(id)
