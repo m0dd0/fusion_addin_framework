@@ -9,19 +9,16 @@ from collections import defaultdict
 from uuid import uuid4
 from functools import partial
 
+from . import messages as msgs
+
 try:
     import appdirs
 except:
-    logging.getLogger(__name__).warning(  # pylint:disable=logging-not-lazy
-        "The appdirs package is not installed. Using path related attributes "
-        + "(like ...) of the addin object will result in an Error. Consider "
-        + "pip-installing (link) the fusion_addin_framework."
-    )  # TODO message
+    logging.getLogger(__name__).warning(msgs.no_appdirs())
 import adsk.core
 import adsk.fusion
 
 from . import defaults as dflts
-from . import messages as msgs
 from . import handlers
 
 _addins = []
@@ -139,9 +136,7 @@ class FusionAddin:
         self._registered_elements = defaultdict(list)
 
         if len(_addins) > 0:
-            logging.getLogger(__name__).warning(
-                "there are already addins existing. It is recommende to use only one addin instance"
-            )  # TODO message
+            logging.getLogger(__name__).warning(msgs.addin_exists())
 
         _addins.append(self)
 
@@ -170,9 +165,9 @@ class FusionAddin:
             for elem in elems:
                 try:
                     elem.deleteMe()
-                except:  # TODO catch only relevant error
+                except Exception as e:
                     # element is probably already deleted
-                    pass
+                    logging.debug(msgs.error_while_deleting(elem, e))
 
     def register_element(self, elem: _FusionWrapper, level: int = 0):
         """Registers a instance of a ui wrapper object to the addin.

@@ -51,12 +51,12 @@ def eval_id(value, instance=None):
             instance.parent.id
         )
         if value is None:
+            value = "random"
             # logging.info(
             #     f"There is no default id defined for a {instance.__class__.__name__} "
             #     + f"in {instance.parent.id} {instance.parent.__class__.__name__}, "
             #     + f"so a new {instance.__class__.__name__} will be used."
             # )
-            value = "random"
     if value == "random":
         return str(uuid4())
     return value
