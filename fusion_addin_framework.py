@@ -62,9 +62,10 @@ def stop(context):  # pylint:disable=unused-argument
 
         global addins
 
-        for addin in reversed(addins):
-            if addin is not None:
-                addin.stop()
+        faf.stop_all()
+        # for addin in reversed(addins):
+        #     if addin is not None:
+        #         addin.stop()
 
         logging.getLogger(faf.__name__).info("stopped all addin instances")
 

@@ -21,12 +21,12 @@ import adsk.fusion
 from . import defaults as dflts
 from . import handlers
 
-_addins = []
 
-# TODO check what happens if two adins use framework
-def stop_all():
-    for a in _addins:
-        a.stop()
+# will stop also addins instaces from other addins do use only for debugging
+# _addins = []
+# def stop_all():
+#     for a in _addins:
+#         a.stop()
 
 
 class _FusionWrapper(ABC):
@@ -134,10 +134,10 @@ class FusionAddin:
 
         self._registered_elements = defaultdict(list)
 
-        if len(_addins) > 0:
-            logging.getLogger(__name__).warning(msgs.addin_exists())
-
-        _addins.append(self)
+        # addin instances from other addins are also dtected so dont use
+        # if len(_addins) > 0:
+        #     logging.getLogger(__name__).warning(msgs.addin_exists())
+        # _addins.append(self)
 
     def workspace(self, *args, **kwargs):
         """Creates a workspace as a child of this Adddin.

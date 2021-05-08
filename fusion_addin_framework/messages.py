@@ -47,8 +47,3 @@ def no_appdirs():
         + "Consider pip-installing the fusion_addin_framework."
     )
     return msg
-
-
-def addin_exists():
-    msg = "There have been already addin instances created. It is recommende to use only one addin instance"
-    return msg
