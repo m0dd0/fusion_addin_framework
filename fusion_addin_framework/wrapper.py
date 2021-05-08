@@ -79,7 +79,10 @@ class _FusionWrapper(ABC):
     # region
     @property
     def parent(self):
-        """The wrapped parent instance of this object."""
+        """The wrapped parent instance of this object.
+
+        Can be an List of object if multiple parents where provided
+        """
         return self._parent
 
     @property
@@ -667,6 +670,7 @@ class CheckboxCommand(_CommandWrapper):
 
         id = dflts.eval_id(id)
         name = dflts.eval_name(name, __class__.__bases__[0])
+        resourceFolder = dflts.eval_image(resourceFolder)
         toolClipFileName = dflts.eval_image_path(toolClipFileName)
 
         adding_method = partial(

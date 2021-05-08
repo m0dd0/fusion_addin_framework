@@ -38,9 +38,12 @@ def run(context):  # pylint:disable=unused-argument
 
         results, addins = testcases.execute_cases(
             [
-                testcases.test_hello_world,
-                # testcases.test_addin_properties,
-                # testcases.test_custom_workspace,
+                testcases.test_hello_world_button,
+                testcases.test_hello_world_button_dotted,
+                testcases.test_hello_world_button_no_parents,
+                testcases.test_hello_world_checkbox,
+                testcases.test_hello_world_checkbox_dotted,
+                testcases.test_hello_world_checkbox_no_parents,
             ]
         )
 
@@ -60,7 +63,8 @@ def stop(context):  # pylint:disable=unused-argument
         global addins
 
         for addin in reversed(addins):
-            addin.stop()
+            if addin is not None:
+                addin.stop()
 
         logging.getLogger(faf.__name__).info("stopped all addin instances")
 

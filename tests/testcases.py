@@ -26,7 +26,8 @@ def execute_cases(cases):
     return results, addins
 
 
-def test_hello_world():
+# region hello_world_button
+def test_hello_world_button():
     addin = faf.FusionAddin()
     try:
         ws = faf.Workspace(addin)
@@ -47,129 +48,200 @@ def test_hello_world():
     return addin
 
 
-# def test_default_button_dotted():
+def test_hello_world_button_dotted():
+    addin = faf.FusionAddin()
+    try:
+        cmd = (
+            addin.workspace()
+            .tab()
+            .panel()
+            .button()
+            .buttonCommand(
+                onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+                    "hello world"
+                ),
+            )
+        )
+    except Exception as test_exception:
+        addin.stop()
+        raise test_exception
+    return addin
+
+
+def test_hello_world_button_no_parents():
+    try:
+        cmd = faf.ButtonCommand(
+            onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+                "hello world"
+            )
+        )
+    except Exception as test_exception:
+        raise test_exception
+
+
+# endregion
+
+# region hello_world_checkbox
+def test_hello_world_checkbox():
+    addin = faf.FusionAddin()
+    try:
+        ws = faf.Workspace(addin)
+        tab = faf.Tab(ws)
+        panel = faf.Panel(tab)
+        button = faf.Checkbox(
+            panel,
+        )
+        cmd = faf.CheckboxCommand(
+            button,
+            onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+                "hello world"
+            ),
+        )
+    except Exception as test_exception:
+        addin.stop()
+        raise test_exception
+    return addin
+
+
+def test_hello_world_checkbox_dotted():
+    addin = faf.FusionAddin()
+    try:
+        cmd = (
+            addin.workspace()
+            .tab()
+            .panel()
+            .checkbox()
+            .checkboxCommand(
+                onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+                    "hello world"
+                ),
+            )
+        )
+    except Exception as test_exception:
+        addin.stop()
+        raise test_exception
+    return addin
+
+
+def test_hello_world_checkbox_no_parents():
+    try:
+        cmd = faf.CheckboxCommand(
+            onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+                "hello world"
+            )
+        )
+    except Exception as test_exception:
+        raise test_exception
+
+
+# endregion
+
+# def test_custom_workspace():
 #     addin = faf.FusionAddin()
 #     try:
-#         cmd = addin.workspace().tab().panel().button().buttonCommand()
+#         ws = faf.Workspace(addin, "MyWorkspaceCustomID")
+#         tab = faf.Tab(ws)
+#         panel = faf.Panel(tab)
+#         button = faf.Button(panel)
 #     except Exception as test_exception:
 #         addin.stop()
 #         raise test_exception
 #     return addin
 
 
-# def test_default_button_without_parents():
+# def test_custom_tab():
+#     pass
+
+
+# def test_custom_panel():
+#     pass
+
+
+# def test_connect_multiple_commands():
+#     pass
+
+
+# def test_all_handlers():
+#     pass
+
+
+# def access_all_addin_properties(addin):
+#     print(addin.name)
+#     print(addin.author)
+#     print(addin.debug_to_ui)
+#     print(addin.user_state_dir)
+#     print(addin.user_cache_dir)
+#     print(addin.user_config_dir)
+#     print(addin.user_data_dir)
+#     print(addin.user_log_dir)
+#     print(addin.ui_level)
+#     print(addin.created_elements)
+
+
+# def access_all_workspace_properties(workspace):
+#     print(workspace.parent)
+#     print(workspace.addin)
+#     print(workspace.ui_level)
+
+#     print(workspace.id)
+#     print(workspace.isActive)
+#     print(workspace.isNative)
+#     print(workspace.isValid)
+#     print(workspace.name)
+#     print(workspace.objectType)
+#     print(workspace.productType)
+#     print(workspace.resourceFolder)
+#     print(workspace.toolbarPanels)
+#     print(workspace.toolbarTabs)
+#     print(workspace.toolClipFileName)
+#     print(workspace.tooltip)
+#     print(workspace.tooltipDescription)
+
+
+# def access_all_tab_properties(tab):
+#     print(tab.parent)
+#     print(tab.addin)
+#     print(tab.ui_level)
+
+#     print(tab.id)
+#     print(tab.index)
+#     print(tab.isActive)
+#     print(tab.isNative)
+#     print(tab.isValid)
+#     print(tab.isVisible)
+#     print(tab.name)
+#     print(tab.objectType)
+#     print(tab.parenUserInterface)
+#     print(tab.productType)
+#     print(tab.toolbarPanels)
+
+
+# def access_all_panel_properties(panel):
+#     print(panel.parent)
+#     print(panel.addin)
+#     print(panel.ui_level)
+
+#     print(panel.controls)
+#     print(panel.id)
+#     print(panel.index)
+#     print(panel.isValid)
+#     print(panel.isVisible)
+#     print(panel.name)
+#     print(panel.objectType)
+#     print(panel.parenUserInterface)
+#     print(panel.productType)
+#     print(panel.promotedControls)
+#     print(panel.relatedWorkspaces)
+
+
+# def test_addin_properties():
+#     addin = faf.FusionAddin("my_addin", "Moritz", True)
 #     try:
-#         cmd = faf.ButtonCommand()
+#         access_all_addin_properties(addin)
+#         assert addin.name == "my_addin"
+#         assert addin.author == "Moritz"
+#         assert addin.debug_to_ui == True
 #     except Exception as test_exception:
+#         addin.stop()
 #         raise test_exception
-
-
-def test_custom_workspace():
-    addin = faf.FusionAddin()
-    try:
-        ws = faf.Workspace(addin, "MyWorkspaceCustomID")
-        tab = faf.Tab(ws)
-        panel = faf.Panel(tab)
-        button = faf.Button(panel)
-    except Exception as test_exception:
-        addin.stop()
-        raise test_exception
-    return addin
-
-
-def test_custom_tab():
-    pass
-
-
-def test_custom_panel():
-    pass
-
-
-def test_connect_multiple_commands():
-    pass
-
-
-def test_all_handlers():
-    pass
-
-
-def access_all_addin_properties(addin):
-    print(addin.name)
-    print(addin.author)
-    print(addin.debug_to_ui)
-    print(addin.user_state_dir)
-    print(addin.user_cache_dir)
-    print(addin.user_config_dir)
-    print(addin.user_data_dir)
-    print(addin.user_log_dir)
-    print(addin.ui_level)
-    print(addin.created_elements)
-
-
-def access_all_workspace_properties(workspace):
-    print(workspace.parent)
-    print(workspace.addin)
-    print(workspace.ui_level)
-
-    print(workspace.id)
-    print(workspace.isActive)
-    print(workspace.isNative)
-    print(workspace.isValid)
-    print(workspace.name)
-    print(workspace.objectType)
-    print(workspace.productType)
-    print(workspace.resourceFolder)
-    print(workspace.toolbarPanels)
-    print(workspace.toolbarTabs)
-    print(workspace.toolClipFileName)
-    print(workspace.tooltip)
-    print(workspace.tooltipDescription)
-
-
-def access_all_tab_properties(tab):
-    print(tab.parent)
-    print(tab.addin)
-    print(tab.ui_level)
-
-    print(tab.id)
-    print(tab.index)
-    print(tab.isActive)
-    print(tab.isNative)
-    print(tab.isValid)
-    print(tab.isVisible)
-    print(tab.name)
-    print(tab.objectType)
-    print(tab.parenUserInterface)
-    print(tab.productType)
-    print(tab.toolbarPanels)
-
-
-def access_all_panel_properties(panel):
-    print(panel.parent)
-    print(panel.addin)
-    print(panel.ui_level)
-
-    print(panel.controls)
-    print(panel.id)
-    print(panel.index)
-    print(panel.isValid)
-    print(panel.isVisible)
-    print(panel.name)
-    print(panel.objectType)
-    print(panel.parenUserInterface)
-    print(panel.productType)
-    print(panel.promotedControls)
-    print(panel.relatedWorkspaces)
-
-
-def test_addin_properties():
-    addin = faf.FusionAddin("my_addin", "Moritz", True)
-    try:
-        access_all_addin_properties(addin)
-        assert addin.name == "my_addin"
-        assert addin.author == "Moritz"
-        assert addin.debug_to_ui == True
-    except Exception as test_exception:
-        addin.stop()
-        raise test_exception
-    return addin
+#     return addin
