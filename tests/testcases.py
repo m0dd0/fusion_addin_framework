@@ -26,56 +26,42 @@ def execute_cases(cases):
     return results, addins
 
 
-def test_default_button():
+def test_hello_world():
     addin = faf.FusionAddin()
     try:
         ws = faf.Workspace(addin)
-        tab = faf.Tab(ws, id="ToolsTab")
+        tab = faf.Tab(ws)
         panel = faf.Panel(tab)
-        button = faf.Button(panel)
-        cmd = faf.ButtonCommand(button)
+        button = faf.Button(
+            panel,
+        )
+        cmd = faf.ButtonCommand(
+            button,
+            onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+                "hello world"
+            ),
+        )
     except Exception as test_exception:
         addin.stop()
         raise test_exception
     return addin
 
 
-def test_default_button_dotted():
-    addin = faf.FusionAddin()
-    try:
-        cmd = addin.workspace().tab().panel().button().buttonCommand()
-    except Exception as test_exception:
-        addin.stop()
-        raise test_exception
-    return addin
-
-
-def test_default_button_without_parents():
-    try:
-        cmd = faf.ButtonCommand()
-    except Exception as test_exception:
-        raise test_exception
-
-
-# def test_hello_world():
+# def test_default_button_dotted():
 #     addin = faf.FusionAddin()
 #     try:
-#         ws = faf.Workspace(addin)
-#         tab = faf.Tab(ws)
-#         panel = faf.Panel(tab)
-#         button = faf.Button(
-#             panel,
-#         )
-#         cmd = faf.ButtonCommand(
-#             button,
-#             onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
-#                 "hello world"
-#             ),
-#         )
+#         cmd = addin.workspace().tab().panel().button().buttonCommand()
 #     except Exception as test_exception:
 #         addin.stop()
 #         raise test_exception
 #     return addin
+
+
+# def test_default_button_without_parents():
+#     try:
+#         cmd = faf.ButtonCommand()
+#     except Exception as test_exception:
+#         raise test_exception
 
 
 def test_custom_workspace():

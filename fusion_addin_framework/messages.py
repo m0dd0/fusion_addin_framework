@@ -52,8 +52,3 @@ def no_appdirs():
 def addin_exists():
     msg = "There have been already addin instances created. It is recommende to use only one addin instance"
     return msg
-
-
-def error_while_deleting(to_delete, error_msg):
-    msg = f"Couldnt delete {to_delete.id} {to_delete.__class__.__name__}: {error_msg}"
-    return msg

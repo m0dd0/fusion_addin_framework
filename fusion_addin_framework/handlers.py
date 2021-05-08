@@ -8,7 +8,36 @@ from . import defaults as dflts
 
 _handlers = []
 
-# TODO use (ttest) parent class
+
+# doesnt make live much easier so generic class is not used
+# from abc import ABC
+# class _GenericHandler(ABC):
+#     event_name = None
+#     cmd_name = None
+#     action = None
+#     addin = None
+
+#     def notify(self, args):
+#         logging.getLogger(__name__).info(
+#             msgs.starting_handler(self.event_name, self.cmd_name)
+#         )
+
+#         try:
+#             self.action(args)
+#         except:
+#             # no exception gets raised outside the handlers so this try, except
+#             # block is mandatory to prevent silent errors !!!!!!!
+#             msg = msgs.handler_error(
+#                 self.event_name, self.cmd_name, traceback.format_exc()
+#             )
+#             logging.getLogger(__name__).error(msg)
+#             if self.addin.debug_to_ui:
+#                 adsk.core.Application.get().userInterface.messageBox(msg)
+
+
+# pylint:disable=arguments-differ
+
+
 def _notify_routine(addin, cmd_name, event_name, action, args):
     logging.getLogger(__name__).info(msgs.starting_handler(event_name, cmd_name))
 

@@ -38,12 +38,8 @@ class _FusionWrapper(ABC):
     Defining class variables shared by all wrapper classes.
     """
 
-    _parent_class = None
-    _parent = None
-    _in_fusion = None
-
     def __init__(
-        self, parent
+        self, parent, parent_class
     ):  # do NOT use for parent typehint --> docs generation will crash
         """Base class for all Fusion UI wrapper classes.
         Sets the attributes app attribute of the wrapped instance by getting its
@@ -57,10 +53,10 @@ class _FusionWrapper(ABC):
         self._in_fusion = None
 
         if parent is None:
-            parent = self._parent_class()
+            parent = parent_class()
         self._parent = parent
 
-        if isinstance(parent, list):
+        if isinstance(parent, list):  # only CommandWrapper can be in multiple controls
             self._addin = self.parent[0].addin
         else:
             self._addin = self.parent.addin
@@ -165,9 +161,9 @@ class FusionAddin:
             for elem in elems:
                 try:
                     elem.deleteMe()
-                except Exception as e:
+                except:
                     # element is probably already deleted
-                    logging.debug(msgs.error_while_deleting(elem, e))
+                    pass
 
     def register_element(self, elem: _FusionWrapper, level: int = 0):
         """Registers a instance of a ui wrapper object to the addin.
@@ -264,9 +260,6 @@ class FusionAddin:
 
 
 class Workspace(_FusionWrapper):
-
-    _parent_class = FusionAddin
-
     def __init__(
         self,
         parent: FusionAddin = None,
@@ -289,7 +282,7 @@ class Workspace(_FusionWrapper):
             tooltip (str, optional): [description]. Defaults to "".
             tooltipDescription (str, optional): [description]. Defaults to "".
         """
-        super().__init__(parent)
+        super().__init__(parent, FusionAddin)
 
         id = dflts.eval_id(id)
         name = dflts.eval_name(name, __class__)
@@ -324,18 +317,15 @@ class Workspace(_FusionWrapper):
 
 
 class Tab(_FusionWrapper):
-
-    _parent_class = Workspace
-
     def __init__(
         self,
         parent: Workspace = None,  # TODO mulitple parents
         id: str = "default",
         name: str = "random",
     ):
-        super().__init__(parent)
+        super().__init__(parent, Workspace)
 
-        id = dflts.eval_id(id, self.parent)
+        id = dflts.eval_id(id, self)
         name = dflts.eval_name(name, __class__)
 
         self._in_fusion = self.parent.toolbarTabs.itemById(id)
@@ -353,9 +343,6 @@ class Tab(_FusionWrapper):
 
 
 class Panel(_FusionWrapper):
-
-    _parent_class = Tab
-
     def __init__(
         self,
         parent: Tab = None,  # TODO ultiple parents
@@ -364,9 +351,9 @@ class Panel(_FusionWrapper):
         positionID: str = "",
         isBefore: bool = True,
     ):
-        super().__init__(parent)
+        super().__init__(parent, Tab)
 
-        id = dflts.eval_id(id, self.parent)
+        id = dflts.eval_id(id, self)
         name = dflts.eval_name(name, __class__)
 
         self._in_fusion = self.parent.toolbarPanels.itemById(id)
@@ -394,9 +381,6 @@ class Panel(_FusionWrapper):
 
 
 class _CommandControlWrapper(_FusionWrapper):
-
-    _parent_class = Panel
-
     def __init__(
         self,
         parent: Panel,
@@ -406,7 +390,7 @@ class _CommandControlWrapper(_FusionWrapper):
         positionID: int,
         isBefore: bool,
     ):
-        super().__init__(parent)
+        super().__init__(parent, Panel)
 
         self._isVisible = isVisible
         self._isPromoted = isPromoted
@@ -546,13 +530,13 @@ class ListControl(_CommandControlWrapper):
 
         logging.getLogger(__name__).info(msgs.created_new(__class__, None))
 
-    def ListCommand(self, *args, **kwargs):
+    def listCommand(self, *args, **kwargs):
         return ListCommand(self, *args, **kwargs)
 
 
 class _CommandWrapper(_FusionWrapper):
-    def __init__(self, parent):
-        super().__init__(parent)
+    def __init__(self, parent, parent_class):
+        super().__init__(parent, parent_class)
 
     def _setup_routine(
         self,
@@ -624,9 +608,6 @@ class _CommandWrapper(_FusionWrapper):
 
 
 class ButtonCommand(_CommandWrapper):
-
-    _parent_class = Button
-
     def __init__(
         self,
         parent: Union[List[Button], Button] = None,
@@ -637,10 +618,9 @@ class ButtonCommand(_CommandWrapper):
         toolClipFileName: Union[str, Path] = None,
         isEnabled: bool = True,
         isVisible: bool = True,
-        **event_handlers: Callable
+        **event_handlers: Callable,
     ):
-
-        super().__init__(parent)
+        super().__init__(parent, Button)
 
         id = dflts.eval_id(id)
         name = dflts.eval_name(name, __class__.__bases__[0])
@@ -670,9 +650,6 @@ class ButtonCommand(_CommandWrapper):
 
 
 class CheckboxCommand(_CommandWrapper):
-
-    _parent_class = Checkbox
-
     def __init__(
         self,
         parent: Union[List[Checkbox], Checkbox] = None,
@@ -684,9 +661,9 @@ class CheckboxCommand(_CommandWrapper):
         isEnabled: bool = True,
         isVisible: bool = True,
         isChecked: bool = False,
-        **event_handlers: Callable
+        **event_handlers: Callable,
     ):
-        super().__init__(parent)
+        super().__init__(parent, Checkbox)
 
         id = dflts.eval_id(id)
         name = dflts.eval_name(name, __class__.__bases__[0])
@@ -715,9 +692,6 @@ class CheckboxCommand(_CommandWrapper):
 
 
 class ListCommand(_CommandWrapper):
-
-    _parent_class = ListControl
-
     def __init__(
         self,
         parent: Union[List[ListControl], ListControl] = None,
@@ -729,9 +703,9 @@ class ListCommand(_CommandWrapper):
         isEnabled: bool = True,
         isVisible: bool = True,
         listControlDisplayType=adsk.core.ListControlDisplayTypes.RadioButtonlistType,
-        **event_handlers: Callable
+        **event_handlers: Callable,
     ):
-        super().__init__(parent)
+        super().__init__(parent, ListControl)
 
         id = dflts.eval_id(id)
         name = dflts.eval_name(name, __class__.__bases__[0])
