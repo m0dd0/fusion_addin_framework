@@ -1,3 +1,5 @@
+"""This module contains utility functions regarding the Fusion360 API."""
+
 import logging
 
 import adsk, adsk.core
@@ -9,7 +11,12 @@ def get_input_values(event_args):
 
 
 class TextPaletteLoggingHandler(logging.StreamHandler):
+    """Logging Handler for python logging mechanism to use the textCommand Palett
+    in the Fusion GUI to output logging messages.
+    """
+
     def __init__(self):
+        """Initialises the handler. TextCommand Paleete needs to be accessed manually"""
         super().__init__()
         self.textPalette = adsk.core.Application.get().userInterface.palettes.itemById(
             "TextCommands"
@@ -22,8 +29,10 @@ class TextPaletteLoggingHandler(logging.StreamHandler):
 
 
 def ui_ids_dict():
-    """
-    dumping the ui strucure to a file:
+    """Dumps the ids of the fusion user interface element to a hierachical dict.
+
+    To dump the dict to a file use::
+
     with open(Path(__file__).absolute().parent / "ui_ids.json", "w+") as f:
         json.dump(ui_ids_dict(), f, indent=4)
 

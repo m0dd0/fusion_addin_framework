@@ -1,22 +1,17 @@
-"""[summary]
+"""This modules contains general utility function for working with python."""
 
-Returns:
-    [type]: [description]
-"""
-
-from typing import Iterable
+from typing import Iterable, Dict
 import logging
-import json
 
 
-def flatten_dict(d):
-    """[summary]
+def flatten_dict(d: Dict) -> Dict:
+    """Flattens a nested dictonairy. Keys will be tuples of keys from the nested dicts.
 
     Args:
-        d ([type]): [description]
+        d (Dict): The dictionairy to flatten.
 
     Returns:
-        [type]: [description]
+        Dict: The flattened dictionairy.
     """
     flattened = {}
 
@@ -36,17 +31,22 @@ def create_logger(
     handlers: Iterable[logging.Handler],
     level: int = logging.DEBUG,
     message_format: str = "{asctime} {levelname} {module}/{funcName}: {message}",
-):
-    """[summary]
+) -> logging.Logger:
+    """Sets up a logger instance with the provided settings.
+
+    The given level and format will be set to all passed handlers.
+    It will be ensured that all handlers are removed before the handlers are added.
+    This can be useful because they will not always get deleted when restarting
+    your addin.
 
     Args:
-        name (str): [description]
-        handlers (Iterable[logging.Handler]): [description]
-        level (int, optional): [description]. Defaults to logging.DEBUG.
-        message_format (str, optional): [description]. Defaults to "{asctime} {levelname} {module}/{funcName}: {message}".
+        name (str): The name of the logger.
+        handlers (Iterable[logging.Handler]): A list of handlers to connect to the logger.
+        level (int, optional): The logger level. Defaults to logging.DEBUG.
+        message_format (str, optional): The format string for the handlers. Defaults to "{asctime} {levelname} {module}/{funcName}: {message}".
 
     Returns:
-        [type]: [description]
+        logging.Logger: The configured logger instance.
     """
     logger = logging.getLogger(name)
 
@@ -67,17 +67,3 @@ def create_logger(
         logger.addHandler(handler)
 
     return logger
-
-
-def load_json_file(path):
-    """[summary]
-
-    Args:
-        path ([type]): [description]
-
-    Returns:
-        [type]: [description]
-    """
-    with open(path) as json_file:
-        json_data = json.load(json_file)
-    return json_data

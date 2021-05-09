@@ -249,7 +249,7 @@ def test_access_all_properties_default_button():
 
 
 # region setting paramters
-def test_highly_custom_button_checkbox():
+def test_highly_custom_button_and_checkbox():
     pass
     # try:
     #     ws = faf.Workspace(addin)
@@ -274,3 +274,11 @@ def test_all_handlers_checkbox():
 
 
 # enregion
+
+
+def test_multiple_controls():
+    pass
+
+
+def test_empty_control():
+    pass
