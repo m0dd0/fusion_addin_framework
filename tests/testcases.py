@@ -1,13 +1,24 @@
+""" """
+
 from collections import defaultdict
 from time import perf_counter
 import traceback
+from typing import List, Callable
 
 import adsk.fusion, adsk.core
 
 from .. import fusion_addin_framework as faf
 
 
-def execute_cases(cases):
+def execute_cases(cases: List[Callable]):
+    """[summary]
+
+    Args:
+        cases (List[Callable]): [description]
+
+    Returns:
+        [type]: [description]
+    """
     results = defaultdict(dict)
     addins = []
     for case in cases:
@@ -25,6 +36,8 @@ def execute_cases(cases):
 
     return results, addins
 
+
+### Testcases (and their subfunctions) ###
 
 # region hello_world_button
 def test_hello_world_button():

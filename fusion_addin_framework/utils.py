@@ -1,11 +1,60 @@
-"""This module contains utility functions regarding the Fusion360 API."""
+"""This modules contains utility functions."""
 
+from typing import Iterable
 import logging
 
-import adsk, adsk.core
+import adsk.core, adsk.fusion
+
+
+def create_logger(
+    name: str,
+    handlers: Iterable[logging.Handler],
+    level: int = logging.DEBUG,
+    message_format: str = "{asctime} {levelname} {module}/{funcName}: {message}",
+) -> logging.Logger:
+    """Sets up a logger instance with the provided settings.
+
+    The given level and format will be set to all passed handlers.
+    It will be ensured that all handlers are removed before the handlers are added.
+    This can be useful because they will not always get deleted when restarting
+    your addin.
+
+    Args:
+        name (str): The name of the logger.
+        handlers (Iterable[logging.Handler]): A list of handlers to connect to the logger.
+        level (int, optional): The logger level. Defaults to logging.DEBUG.
+        message_format (str, optional): The format string for the handlers. Defaults to "{asctime} {levelname} {module}/{funcName}: {message}".
+
+    Returns:
+        logging.Logger: The configured logger instance.
+    """
+    logger = logging.getLogger(name)
+
+    # logger always at lowest level set only handlers levels are set by level attribute
+    logger.setLevel(logging.DEBUG)
+
+    # delete allexisting handlers, to ensure no duplicated handler is added
+    # when this method is called twice
+    if logger.hasHandlers():
+        logger.handlers.clear()
+
+    # logging format (for all handlers)
+    formatter = logging.Formatter(message_format, style="{")
+
+    for handler in handlers:
+        handler.setFormatter(formatter)
+        handler.setLevel(level)
+        logger.addHandler(handler)
+
+    return logger
 
 
 def get_input_values(event_args):
+    """[summary]
+
+    Args:
+        event_args ([type]): [description]
+    """
     pass
     # TODO implement
 
@@ -31,11 +80,10 @@ class TextPaletteLoggingHandler(logging.StreamHandler):
 def ui_ids_dict():
     """Dumps the ids of the fusion user interface element to a hierachical dict.
 
-    To dump the dict to a file use::
+    To dump the dict to a file use
 
     with open(Path(__file__).absolute().parent / "ui_ids.json", "w+") as f:
         json.dump(ui_ids_dict(), f, indent=4)
-
     """
 
     def get_controls(parent):

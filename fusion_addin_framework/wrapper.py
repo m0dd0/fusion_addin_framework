@@ -1,3 +1,5 @@
+""" """
+
 # pylint:disable=redefined-builtin
 # pylint:disable=unsubscriptable-object
 
@@ -49,6 +51,7 @@ class _FusionWrapper(ABC):
         Args:
             parent (Union[_FusionWrapper, FusionApp]): the parent ui object instance
                 e.g.: the parent of a panel is always a tab.
+            parent_class:
         """
         self._in_fusion = None
 
@@ -56,7 +59,7 @@ class _FusionWrapper(ABC):
             parent = parent_class()
         self._parent = parent
 
-        if isinstance(parent, list):  # only CommandWrapper can be in multiple controls
+        if isinstance(parent, list):
             self._addin = self.parent[0].addin
         else:
             self._addin = self.parent.addin
@@ -326,6 +329,12 @@ class Tab(_FusionWrapper):
         id: str = "default",
         name: str = "random",
     ):
+        """[summary]
+
+        Args:
+            parent (Workspace, optional): [description]. Defaults to None.
+            name (str, optional): [description]. Defaults to "random".
+        """
         super().__init__(parent, Workspace)
 
         id = dflts.eval_id(id, self)
@@ -348,12 +357,20 @@ class Tab(_FusionWrapper):
 class Panel(_FusionWrapper):
     def __init__(
         self,
-        parent: Tab = None,  # TODO ultiple parents
+        parent: Tab = None,  # TODO multiple parents
         id: str = "default",
         name: str = "random",
         positionID: str = "",
         isBefore: bool = True,
     ):
+        """[summary]
+
+        Args:
+            parent (Tab, optional): [description]. Defaults to None.
+            name (str, optional): [description]. Defaults to "random".
+            positionID (str, optional): [description]. Defaults to "".
+            isBefore (bool, optional): [description]. Defaults to True.
+        """
         super().__init__(parent, Tab)
 
         id = dflts.eval_id(id, self)
@@ -393,6 +410,16 @@ class _CommandControlWrapper(_FusionWrapper):
         positionID: int,
         isBefore: bool,
     ):
+        """[summary]
+
+        Args:
+            parent (Panel): [description]
+            isVisible (bool): [description]
+            isPromoted (bool): [description]
+            isPromotedByDefault (bool): [description]
+            positionID (int): [description]
+            isBefore (bool): [description]
+        """
         super().__init__(parent, Panel)
 
         self._isVisible = isVisible
