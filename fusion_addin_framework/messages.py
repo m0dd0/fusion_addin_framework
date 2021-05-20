@@ -1,3 +1,6 @@
+"""This module contains message templates for logging messages the are send from
+multiple plces in the code in some variation."""
+
 ### FUSION WRAPPERS ###
 
 

@@ -49,23 +49,25 @@ def create_logger(
     return logger
 
 
-def get_input_values(event_args):
-    """[summary]
+# TODO implement
+# def get_input_values(event_args: adsk.core.CommandEventArgs):
+#     """Extracts the input values from the commandEventArgs and returns them as a
+#     dict mapping the input id to the value
 
-    Args:
-        event_args ([type]): [description]
-    """
-    pass
-    # TODO implement
+#     Args:
+#         event_args ([type]): [description]
+#     """
+#     pass
 
 
 class TextPaletteLoggingHandler(logging.StreamHandler):
-    """Logging Handler for python logging mechanism to use the textCommand Palett
-    in the Fusion GUI to output logging messages.
-    """
-
     def __init__(self):
-        """Initialises the handler. TextCommand Paleete needs to be accessed manually"""
+        """Logging handler utilizing Fusions text command pallete.
+
+        Using this logging handler logging messages will be displayed in the
+        text command palette in the Fusion GUI.
+        The TextCommand palette needs to be accessed manually.
+        """
         super().__init__()
         self.textPalette = adsk.core.Application.get().userInterface.palettes.itemById(
             "TextCommands"
@@ -81,9 +83,10 @@ def ui_ids_dict():
     """Dumps the ids of the fusion user interface element to a hierachical dict.
 
     To dump the dict to a file use
+    .. code-block:: python
 
-    with open(Path(__file__).absolute().parent / "ui_ids.json", "w+") as f:
-        json.dump(ui_ids_dict(), f, indent=4)
+        with open(Path(__file__).absolute().parent / "ui_ids.json", "w+") as f:
+            json.dump(ui_ids_dict(), f, indent=4)
     """
 
     def get_controls(parent):

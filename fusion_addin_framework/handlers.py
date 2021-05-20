@@ -1,6 +1,6 @@
 """
-This module contains code to create a abstraction layer on the handler concept of the Fusion API
-Thi module will be utilized by the Command Wrappers and doesnt need to be accessed directly.
+This module contains code to create a abstraction layer on the handler concept of 
+the Fusion API. This module is utilized by the Command Wrapper.
 """
 
 import logging
@@ -10,7 +10,7 @@ from typing import Callable, Dict
 import adsk.core
 
 from . import messages as msgs
-from . import defaults as dflts
+from .wrapper import FusionAddin  # for typehints only
 
 # keep all handlers referenced
 _handlers = []
@@ -45,15 +45,17 @@ _handlers = []
 # pylint:disable=arguments-differ
 
 
-def _notify_routine(addin, cmd_name, event_name, action, args):
-    """Executs the handler action and ensures proper logging.
+def _notify_routine(
+    addin: FusionAddin, cmd_name: str, event_name: str, action: Callable, args
+):
+    """Executes the handler action and ensures proper logging.
 
     Args:
-        addin ([type]): [description]
-        cmd_name ([type]): [description]
-        event_name ([type]): [description]
-        action ([type]): [description]
-        args ([type]): [description]
+        addin (FusionAddin): The addin instance of the parent command.
+        cmd_name (str): The command name.
+        event_name (str): The name of the event.
+        action (Callable): The notify function of the event to execute.
+        args ([type]): The arguments passed to the notify function.
     """
     logging.getLogger(__name__).info(msgs.starting_handler(event_name, cmd_name))
 
@@ -69,23 +71,19 @@ def _notify_routine(addin, cmd_name, event_name, action, args):
 
 
 class _InputChangedHandler(adsk.core.InputChangedEventHandler):
-    """[summary]
+    def __init__(
+        self, addin: FusionAddin, cmd_name: str, event_name: str, action: Callable
+    ):
+        """Generic version of a InputChangedHandler class.
 
-    All other handler classes behave the same but due to the mro it is not much
-    easier to use a common base class.
-
-    Args:
-        adsk ([type]): [description]
-    """
-
-    def __init__(self, addin, cmd_name, event_name, action):
-        """[summary]
+        All other handler classes behave the same but due to the mro it is not much
+        easier to use a common base class.
 
         Args:
-            addin ([type]): [description]
-            cmd_name ([type]): [description]
-            event_name ([type]): [description]
-            action ([type]): [description]
+            addin (FusionAddin): The addin instance of the parent command.
+            cmd_name ([type]): The command name.
+            event_name (str): The name of the event.
+            action (Callable): The notify function of the event to execute.
         """
         super().__init__()
 
@@ -191,20 +189,27 @@ handler_type_mapping = {
 }
 
 
+def do_nothing(*args, **kwargs):
+    pass
+
+
 class _CommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
     def __init__(
         self,
-        addin,
+        addin: FusionAddin,
         cmd_name: str,
         handler_dict: Dict[str, Callable],
     ):
-        """Initialiszed the command created and creates and connects all handlers
-        acoording to the handler dict.
+        """Initialiszed the command created event handler and creates and
+        connects all handlers according to the handler dict.
 
         Args:
-            addin (Addin): The parent addin instace to determine if errors will get logged to the ui.
-            cmd_name ([type]): [description]
-            handler_dict ([type]): [description]
+            addin (FusionAddin): The addin instance of the parent command.
+            cmd_name (str):  The command name.
+            handler_dict (Dict[str, Callable]): A dictionairy which maps the
+                event names to callables which are executet if the event id fired.
+                Instead of the blank event name it can also be provided with an
+                "on"-prefix.
         """
         super().__init__()
 
@@ -221,14 +226,15 @@ class _CommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
         self.addin = addin
         self.cmd_name = cmd_name
         self.event_name = "commandCreated"
-        self.action = self.handler_dict.pop(self.event_name, dflts.do_nothing)
+        self.action = self.handler_dict.pop(self.event_name, do_nothing)
 
         _handlers.append(self)
 
     def notify(self, args: adsk.core.CommandCreatedEventArgs):
         cmd = args.command
 
-        #
+        # create handlers for all events in the handler dict and connect them to
+        # the correct event
         for event_name, handler_callable in self.handler_dict.items():
             handler = handler_type_mapping[event_name](
                 self.addin,

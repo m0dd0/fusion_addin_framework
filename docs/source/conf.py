@@ -23,9 +23,7 @@
 # -- Path setup --------------------------------------------------------------
 # import sys, os
 # import fusion_addin_framework
-# from pathlib impotrt Path
-# print(os.path.abspath("../../fusion_addin_framework"))
-# sys.path.insert(0, os.path.abspath("../../fusion_addin_framework"))
+# sys.path.insert(0, os.path.abspath("../../fusion_addin_framework/utils"))
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the

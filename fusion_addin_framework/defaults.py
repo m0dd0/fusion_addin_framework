@@ -1,7 +1,6 @@
 """
-This module contains functions for evaluating the passed arguments to the wrapper
-functions and supplies the evaluated default values. 
-There is no need to use this module directly.
+This module contains functions for evaluating the passed arguments and supplies 
+the random names names and default images.
 """
 
 from pathlib import Path
@@ -56,14 +55,19 @@ default_ids = {
 
 
 def eval_id(value: str, instance=None) -> str:
-    """[summary]
+    """Evaluates the id argument of the wrapper classes.
+
+    If the "random" keyword is passed a random uuid will be returned.
+    If the instance attribute is given and the id is "default" the according
+    default value will be looked up in the default_ids dict.
 
     Args:
-        value (str): [description]
-        instance ([type], optional): [description]. Defaults to None.
+        value (str): The provided id.
+        instance ([type], optional): The wrapper instace from which this function
+            is called. Defaults to None.
 
     Returns:
-        str: [description]
+        str: The ultimately used id.
     """
     if instance is not None and value == "default":
         value = default_ids.get(instance.parent.__class__.__name__, {}).get(
@@ -82,22 +86,35 @@ def eval_id(value: str, instance=None) -> str:
 
 
 def eval_name(value: str, cls) -> str:
+    """Returns a random name if value=="random".
+
+    Args:
+        value (str): The passed name.
+        cls: The class of the instance for which the random name is intended.
+
+    Returns:
+        str: The ultimately used name.
+    """
     if value == "random":
         value = random.choice(random_names[cls.__name__])
     return value
 
 
-def eval_image(value: str) -> str:
+def eval_image(value: str, size=None) -> str:
+    """Gets the path to an image directory or image path if the name is contained
+    in the default image path directory.
+
+    Args:
+        value (str): Path or name of a default image.
+        size ([type], optional): Size of the image. If None the path to the directory
+            will be returned. Defaults to None.
+
+    Returns:
+        str: The path to the image or image directory.
+    """
     if value in default_pictures:
-        value = str(default_pictures[value])
+        if size is not None:
+            value = str(default_pictures[value])
+        else:
+            value = str(default_pictures[value] / size)
     return value
-
-
-def eval_image_path(value: str) -> str:
-    if value in default_pictures:
-        value = str(default_pictures[value] / "32x32.png")
-    return value
-
-
-def do_nothing(*args, **kwargs):
-    pass
