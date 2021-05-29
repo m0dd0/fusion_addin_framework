@@ -13,8 +13,6 @@ import adsk.core, adsk.fusion, adsk.cam
 # using reative imports because editable pip install doesnt work
 from .tests import testcases
 from . import fusion_addin_framework as faf
-from .fusion_addin_framework import py_utils
-from .fusion_addin_framework import fusion_utils
 
 addins = []
 
@@ -25,9 +23,9 @@ def run(context):  # pylint:disable=unused-argument
         app = adsk.core.Application.get()
         ui = app.userInterface
 
-        py_utils.create_logger(
+        faf.utils.create_logger(
             faf.__name__,
-            [logging.StreamHandler(), fusion_utils.TextPaletteLoggingHandler()],
+            [logging.StreamHandler(), faf.utils.TextPaletteLoggingHandler()],
         )
 
         logging.getLogger(faf.__name__).info(
@@ -38,10 +36,12 @@ def run(context):  # pylint:disable=unused-argument
 
         results, addins = testcases.execute_cases(
             [
-                testcases.test_default_button,
-                testcases.test_hello_world,
-                # testcases.test_addin_properties,
-                # testcases.test_custom_workspace,
+                testcases.test_hello_world_button,
+                testcases.test_hello_world_button_dotted,
+                testcases.test_hello_world_button_no_parents,
+                testcases.test_hello_world_checkbox,
+                testcases.test_hello_world_checkbox_dotted,
+                testcases.test_hello_world_checkbox_no_parents,
             ]
         )
 
@@ -60,8 +60,10 @@ def stop(context):  # pylint:disable=unused-argument
 
         global addins
 
-        for addin in reversed(addins):
-            addin.stop()
+        faf.stop_all()
+        # for addin in reversed(addins):
+        #     if addin is not None:
+        #         addin.stop()
 
         logging.getLogger(faf.__name__).info("stopped all addin instances")
 

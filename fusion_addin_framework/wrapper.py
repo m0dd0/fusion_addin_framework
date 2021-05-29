@@ -1,3 +1,7 @@
+""" This module contains the wrapper classes around the user interface elements
+and command realted object. The main functionality of the framework is provided
+by these wrapper classes."""
+
 # pylint:disable=redefined-builtin
 # pylint:disable=unsubscriptable-object
 
@@ -9,45 +13,39 @@ from collections import defaultdict
 from uuid import uuid4
 from functools import partial
 
+from . import messages as msgs
+
 try:
     import appdirs
+
+    # TODO add as submodule
 except:
-    logging.getLogger(__name__).warning(  # pylint:disable=logging-not-lazy
-        "The appdirs package is not installed. Using path related attributes "
-        + "(like ...) of the addin object will result in an Error. Consider "
-        + "pip-installing (link) the fusion_addin_framework."
-    )  # TODO message
+    logging.getLogger(__name__).warning(msgs.no_appdirs())
 import adsk.core
 import adsk.fusion
 
 from . import defaults as dflts
-from . import messages as msgs
 from . import handlers
 
-_addins = []
 
-# TODO check what happens if two adins use framework
-def stop_all():
-    for a in _addins:
-        a.stop()
+# will stop also addins instaces from other addins do use only for debugging
+# _addins = []
+# def stop_all():
+#     for a in _addins:
+#         a.stop()
 
 
 class _FusionWrapper(ABC):
-    """Base class for all Fusion UI wrapper classes.
-
-    Provides basic functionality used by the framework to handle the wrapper instances.
-    Such as having a app attribute, which contains the controlling addin instance.
-    Also sets the ui_level which is a atrtibute used by all wrapper classes.
-    Defining class variables shared by all wrapper classes.
-    """
-
-    _parent = None
-    _in_fusion = None
-
     def __init__(
-        self, parent
+        self, parent, parent_class
     ):  # do NOT use for parent typehint --> docs generation will crash
         """Base class for all Fusion UI wrapper classes.
+
+        Provides basic functionality used by the framework to handle the wrapper
+        instances.
+        Such as having a app attribute, which contains the controlling addin instance.
+        Also sets the ui_level which is a atrtibute used by all wrapper classes.
+        Defining class variables shared by all wrapper classes.
         Sets the attributes app attribute of the wrapped instance by getting its
         parents app attribute.
         Sets the ui_level attribute by incrementing the parents ui_level attribute.
@@ -55,21 +53,41 @@ class _FusionWrapper(ABC):
         Args:
             parent (Union[_FusionWrapper, FusionApp]): the parent ui object instance
                 e.g.: the parent of a panel is always a tab.
+            parent_class: The class whihc is used to generate a default parent.
         """
         self._in_fusion = None
+
+        if parent is None:
+            parent = parent_class()
         self._parent = parent
+
         if isinstance(parent, list):
             self._addin = self.parent[0].addin
         else:
             self._addin = self.parent.addin
+
         self._ui_level = self.parent.ui_level + 1
 
     def __getattr__(self, attr):
+        """[summary]
+
+        Args:
+            attr ([type]): [description]
+
+        Returns:
+            [type]: [description]
+        """
         # will only get called if the attribute is not expicitly contained in
         # the class instance
         return getattr(self._in_fusion, attr)
 
     def __setattr__(self, name, value):
+        """[summary]
+
+        Args:
+            name ([type]): [description]
+            value ([type]): [description]
+        """
         # avoid infinite recursion by using self.__dict__ instead of hasattr
         if "_in_fusion" in self.__dict__.keys() and hasattr(self._in_fusion, name):
             setattr(self._in_fusion, name, value)
@@ -80,7 +98,10 @@ class _FusionWrapper(ABC):
     # region
     @property
     def parent(self):
-        """The wrapped parent instance of this object."""
+        """The wrapped parent instance of this object.
+
+        Can be an List of object if multiple parents where provided
+        """
         return self._parent
 
     @property
@@ -100,12 +121,6 @@ class _FusionWrapper(ABC):
 
 
 class FusionAddin:
-    """Entry point to create all your elements that will appear in the user interface.
-
-    It handles their creation and deletes them if the addin is deactivated
-    (by closing Fusion or stopping the Addin manually).
-    Additionally it provides directories for logging, config and user data.
-    """
 
     _ui_level = 0
 
@@ -115,7 +130,12 @@ class FusionAddin:
         author: str = None,
         debug_to_ui: bool = True,
     ):
-        """
+        """Entry point to create all your elements that will appear in the user interface.
+
+        It handles their creation and deletes them if the addin is deactivated
+        (by closing Fusion or stopping the Addin manually).
+        Additionally it provides directories for logging, config and user data.
+
         Args:
             name (str, optional): The name of the addin. Used to create app
                 directories with meaningful names. Defaults to None.
@@ -132,12 +152,10 @@ class FusionAddin:
 
         self._registered_elements = defaultdict(list)
 
-        if len(_addins) > 0:
-            logging.getLogger(__name__).warning(
-                "there are already addins existing. It is recommende to use only one addin instance"
-            )  # TODO message
-
-        _addins.append(self)
+        # addin instances from other addins are also dtected so dont use
+        # if len(_addins) > 0:
+        #     logging.getLogger(__name__).warning(msgs.addin_exists())
+        # _addins.append(self)
 
     def workspace(self, *args, **kwargs):
         """Creates a workspace as a child of this Adddin.
@@ -164,7 +182,7 @@ class FusionAddin:
             for elem in elems:
                 try:
                     elem.deleteMe()
-                except:  # TODO catch only relevant error
+                except:
                     # element is probably already deleted
                     pass
 
@@ -265,7 +283,7 @@ class FusionAddin:
 class Workspace(_FusionWrapper):
     def __init__(
         self,
-        parent: FusionAddin,
+        parent: FusionAddin = None,
         id: str = "FusionSolidEnvironment",  # pylint:disable=redefined-builtin
         name: str = "random",
         productType: str = "DesignProductType",
@@ -285,12 +303,12 @@ class Workspace(_FusionWrapper):
             tooltip (str, optional): [description]. Defaults to "".
             tooltipDescription (str, optional): [description]. Defaults to "".
         """
-        super().__init__(parent)
+        super().__init__(parent, FusionAddin)
 
         id = dflts.eval_id(id)
         name = dflts.eval_name(name, __class__)
         resourceFolder = dflts.eval_image(resourceFolder)
-        toolClipFilename = dflts.eval_image_path(toolClipFilename)
+        toolClipFilename = dflts.eval_image(toolClipFilename, "32x32.png")
 
         self._in_fusion = adsk.core.Application.get().userInterface.workspaces.itemById(
             id
@@ -322,13 +340,19 @@ class Workspace(_FusionWrapper):
 class Tab(_FusionWrapper):
     def __init__(
         self,
-        parent: Workspace,  # TODO mulitple parents
-        id: str = "random",
+        parent: Workspace = None,  # TODO mulitple parents
+        id: str = "default",
         name: str = "random",
     ):
-        super().__init__(parent)
+        """[summary]
 
-        id = dflts.eval_id(id)
+        Args:
+            parent (Workspace, optional): [description]. Defaults to None.
+            name (str, optional): [description]. Defaults to "random".
+        """
+        super().__init__(parent, Workspace)
+
+        id = dflts.eval_id(id, self)
         name = dflts.eval_name(name, __class__)
 
         self._in_fusion = self.parent.toolbarTabs.itemById(id)
@@ -348,15 +372,23 @@ class Tab(_FusionWrapper):
 class Panel(_FusionWrapper):
     def __init__(
         self,
-        parent: Tab,  # TODO ultiple parents
-        id: str = "random",
+        parent: Tab = None,  # TODO multiple parents
+        id: str = "default",
         name: str = "random",
         positionID: str = "",
         isBefore: bool = True,
     ):
-        super().__init__(parent)
+        """[summary]
 
-        id = dflts.eval_id(id)
+        Args:
+            parent (Tab, optional): [description]. Defaults to None.
+            name (str, optional): [description]. Defaults to "random".
+            positionID (str, optional): [description]. Defaults to "".
+            isBefore (bool, optional): [description]. Defaults to True.
+        """
+        super().__init__(parent, Tab)
+
+        id = dflts.eval_id(id, self)
         name = dflts.eval_name(name, __class__)
 
         self._in_fusion = self.parent.toolbarPanels.itemById(id)
@@ -374,12 +406,27 @@ class Panel(_FusionWrapper):
             logging.getLogger(__name__).info(msgs.created_new(__class__, id))
 
     def button(self, *args, **kwargs):
+        """[summary]
+
+        Returns:
+            [type]: [description]
+        """
         return Button(self, *args, **kwargs)
 
     def checkbox(self, *args, **kwargs):
+        """[summary]
+
+        Returns:
+            [type]: [description]
+        """
         return Checkbox(self, *args, **kwargs)
 
     def list_control(self, *args, **kwargs):
+        """[summary]
+
+        Returns:
+            [type]: [description]
+        """
         return ListControl(self, *args, **kwargs)
 
 
@@ -393,7 +440,17 @@ class _CommandControlWrapper(_FusionWrapper):
         positionID: int,
         isBefore: bool,
     ):
-        super().__init__(parent)
+        """[summary]
+
+        Args:
+            parent (Panel): [description]
+            isVisible (bool): [description]
+            isPromoted (bool): [description]
+            isPromotedByDefault (bool): [description]
+            positionID (int): [description]
+            isBefore (bool): [description]
+        """
+        super().__init__(parent, Panel)
 
         self._isVisible = isVisible
         self._isPromoted = isPromoted
@@ -402,6 +459,11 @@ class _CommandControlWrapper(_FusionWrapper):
         self._isBefore = isBefore
 
     def _create_control(self, cmd_def):
+        """[summary]
+
+        Args:
+            cmd_def ([type]): [description]
+        """
         if self._in_fusion is not None:
             self._in_fusion.deleteMe()
 
@@ -422,7 +484,7 @@ class _CommandControlWrapper(_FusionWrapper):
 class Button(_CommandControlWrapper):
     def __init__(
         self,
-        parent: Panel,
+        parent: Panel = None,
         isVisible: bool = True,
         isPromoted: bool = True,
         isPromotedByDefault: bool = True,
@@ -451,6 +513,7 @@ class Button(_CommandControlWrapper):
             "",
             dflts.eval_image("transparent"),
         )
+        # TODO put in super class
         dummy_cmd_def.controlDefinition.isVisible = True
         dummy_cmd_def.controlDefinition.isEnabled = True
         dummy_cmd_def.controlDefinition.name = "<no command connected>"
@@ -463,19 +526,34 @@ class Button(_CommandControlWrapper):
         logging.getLogger(__name__).info(msgs.created_new(__class__, None))
 
     def buttonCommand(self, *args, **kwargs):
+        """[summary]
+
+        Returns:
+            [type]: [description]
+        """
         return ButtonCommand(self, *args, **kwargs)
 
 
 class Checkbox(_CommandControlWrapper):
     def __init__(
         self,
-        parent: Panel,
+        parent: Panel = None,
         isVisible: bool = True,
         isPromoted: bool = True,
         isPromotedByDefault: bool = True,
         positionID: str = None,
         isBefore: bool = True,
     ):
+        """[summary]
+
+        Args:
+            parent (Panel, optional): [description]. Defaults to None.
+            isVisible (bool, optional): [description]. Defaults to True.
+            isPromoted (bool, optional): [description]. Defaults to True.
+            isPromotedByDefault (bool, optional): [description]. Defaults to True.
+            positionID (str, optional): [description]. Defaults to None.
+            isBefore (bool, optional): [description]. Defaults to True.
+        """
         super().__init__(
             parent, isVisible, isPromoted, isPromotedByDefault, positionID, isBefore
         )
@@ -486,9 +564,11 @@ class Checkbox(_CommandControlWrapper):
             "",
             False,
         )
+        # TODO put in super class
         dummy_cmd_def.controlDefinition.isVisible = True
         dummy_cmd_def.controlDefinition.isEnabled = True
         dummy_cmd_def.controlDefinition.name = "<no command connected>"
+
         dummy_cmd_def.controlDefinition.isChecked = False
         # do not connect a handler since its a dummy cmd_def
 
@@ -505,13 +585,23 @@ class Checkbox(_CommandControlWrapper):
 class ListControl(_CommandControlWrapper):
     def __init__(
         self,
-        parent: Panel,
+        parent: Panel = None,
         isVisible: bool = True,
         isPromoted: bool = True,
         isPromotedByDefault: bool = True,
         positionID: str = None,
         isBefore: bool = True,
     ):
+        """[summary]
+
+        Args:
+            parent (Panel, optional): [description]. Defaults to None.
+            isVisible (bool, optional): [description]. Defaults to True.
+            isPromoted (bool, optional): [description]. Defaults to True.
+            isPromotedByDefault (bool, optional): [description]. Defaults to True.
+            positionID (str, optional): [description]. Defaults to None.
+            isBefore (bool, optional): [description]. Defaults to True.
+        """
         super().__init__(
             parent, isVisible, isPromoted, isPromotedByDefault, positionID, isBefore
         )
@@ -521,6 +611,7 @@ class ListControl(_CommandControlWrapper):
             "<no command connected>",
             adsk.core.ListControlDisplayTypes.RadioButtonlistType,
         )
+        # TODO put in super class
         dummy_cmd_def.controlDefinition.isVisible = True
         dummy_cmd_def.controlDefinition.isEnabled = True
         dummy_cmd_def.controlDefinition.name = "<no command connected>"
@@ -533,13 +624,25 @@ class ListControl(_CommandControlWrapper):
 
         logging.getLogger(__name__).info(msgs.created_new(__class__, None))
 
-    def ListCommand(self, *args, **kwargs):
+    def listCommand(self, *args, **kwargs):
+        """[summary]
+
+        Returns:
+            [type]: [description]
+        """
         return ListCommand(self, *args, **kwargs)
 
 
+# TODO unify commands
 class _CommandWrapper(_FusionWrapper):
-    def __init__(self, parent):
-        super().__init__(parent)
+    def __init__(self, parent, parent_class):
+        """[summary]
+
+        Args:
+            parent ([type]): [description]
+            parent_class ([type]): [description]
+        """
+        super().__init__(parent, parent_class)
 
     def _setup_routine(
         self,
@@ -554,7 +657,20 @@ class _CommandWrapper(_FusionWrapper):
         subclass,
         adding_method,
     ):
+        """[summary]
 
+        Args:
+            id ([type]): [description]
+            name ([type]): [description]
+            toolClipFileName ([type]): [description]
+            tooltip ([type]): [description]
+            resourceFolder ([type]): [description]
+            isEnabled (bool): [description]
+            isVisible (bool): [description]
+            event_handlers ([type]): [description]
+            subclass ([type]): [description]
+            adding_method ([type]): [description]
+        """
         self._in_fusion = (
             adsk.core.Application.get().userInterface.commandDefinitions.itemById(id)
         )
@@ -590,6 +706,11 @@ class _CommandWrapper(_FusionWrapper):
         logging.getLogger(__name__).info(msgs.created_new(subclass, id))
 
     def add_parent_control(self, parent):
+        """[summary]
+
+        Args:
+            parent ([type]): [description]
+        """
         parent._create_control(self._in_fusion)  # pylint:disable=protected-access
         self.parent.append(parent)
 
@@ -613,7 +734,7 @@ class _CommandWrapper(_FusionWrapper):
 class ButtonCommand(_CommandWrapper):
     def __init__(
         self,
-        parent: Union[List[Button], Button],
+        parent: Union[List[Button], Button] = None,
         id: str = "random",
         name: str = "random",
         resourceFolder: Union[str, Path] = "lightbulb",
@@ -621,15 +742,26 @@ class ButtonCommand(_CommandWrapper):
         toolClipFileName: Union[str, Path] = None,
         isEnabled: bool = True,
         isVisible: bool = True,
-        **event_handlers: Callable
+        **event_handlers: Callable,
     ):
+        """[summary]
 
-        super().__init__(parent)
+        Args:
+            parent (Union[List[Button], Button], optional): [description]. Defaults to None.
+            id (str, optional): [description]. Defaults to "random".
+            name (str, optional): [description]. Defaults to "random".
+            resourceFolder (Union[str, Path], optional): [description]. Defaults to "lightbulb".
+            tooltip (str, optional): [description]. Defaults to "".
+            toolClipFileName (Union[str, Path], optional): [description]. Defaults to None.
+            isEnabled (bool, optional): [description]. Defaults to True.
+            isVisible (bool, optional): [description]. Defaults to True.
+        """
+        super().__init__(parent, Button)
 
         id = dflts.eval_id(id)
         name = dflts.eval_name(name, __class__.__bases__[0])
         resourceFolder = dflts.eval_image(resourceFolder)
-        toolClipFileName = dflts.eval_image_path(toolClipFileName)
+        toolClipFileName = dflts.eval_image(toolClipFileName, "32x32.png")
 
         adding_method = partial(
             adsk.core.Application.get().userInterface.commandDefinitions.addButtonDefinition,
@@ -656,7 +788,7 @@ class ButtonCommand(_CommandWrapper):
 class CheckboxCommand(_CommandWrapper):
     def __init__(
         self,
-        parent: Union[List[Checkbox], Checkbox],
+        parent: Union[List[Checkbox], Checkbox] = None,
         id: str = "random",
         name: str = "random",
         tooltip: str = "",
@@ -665,13 +797,27 @@ class CheckboxCommand(_CommandWrapper):
         isEnabled: bool = True,
         isVisible: bool = True,
         isChecked: bool = False,
-        **event_handlers: Callable
+        **event_handlers: Callable,
     ):
-        super().__init__(parent)
+        """[summary]
+
+        Args:
+            parent (Union[List[Checkbox], Checkbox], optional): [description]. Defaults to None.
+            id (str, optional): [description]. Defaults to "random".
+            name (str, optional): [description]. Defaults to "random".
+            tooltip (str, optional): [description]. Defaults to "".
+            toolClipFileName (Union[str, Path], optional): [description]. Defaults to None.
+            resourceFolder (str, optional): [description]. Defaults to "lightbulb".
+            isEnabled (bool, optional): [description]. Defaults to True.
+            isVisible (bool, optional): [description]. Defaults to True.
+            isChecked (bool, optional): [description]. Defaults to False.
+        """
+        super().__init__(parent, Checkbox)
 
         id = dflts.eval_id(id)
         name = dflts.eval_name(name, __class__.__bases__[0])
-        toolClipFileName = dflts.eval_image_path(toolClipFileName)
+        resourceFolder = dflts.eval_image(resourceFolder)
+        toolClipFileName = dflts.eval_image(toolClipFileName, "32x32.png")
 
         adding_method = partial(
             adsk.core.Application.get().userInterface.commandDefinitions.addCheckBoxDefinition,
@@ -698,7 +844,7 @@ class CheckboxCommand(_CommandWrapper):
 class ListCommand(_CommandWrapper):
     def __init__(
         self,
-        parent: Union[List[Button], Button],
+        parent: Union[List[ListControl], ListControl] = None,
         id: str = "random",
         name: str = "random",
         resourceFolder: Union[str, Path] = "lightbulb",
@@ -707,14 +853,27 @@ class ListCommand(_CommandWrapper):
         isEnabled: bool = True,
         isVisible: bool = True,
         listControlDisplayType=adsk.core.ListControlDisplayTypes.RadioButtonlistType,
-        **event_handlers: Callable
+        **event_handlers: Callable,
     ):
-        super().__init__(parent)
+        """[summary]
+
+        Args:
+            parent (Union[List[ListControl], ListControl], optional): [description]. Defaults to None.
+            id (str, optional): [description]. Defaults to "random".
+            name (str, optional): [description]. Defaults to "random".
+            resourceFolder (Union[str, Path], optional): [description]. Defaults to "lightbulb".
+            tooltip (str, optional): [description]. Defaults to "".
+            toolClipFileName (Union[str, Path], optional): [description]. Defaults to None.
+            isEnabled (bool, optional): [description]. Defaults to True.
+            isVisible (bool, optional): [description]. Defaults to True.
+            listControlDisplayType ([type], optional): [description]. Defaults to adsk.core.ListControlDisplayTypes.RadioButtonlistType.
+        """
+        super().__init__(parent, ListControl)
 
         id = dflts.eval_id(id)
         name = dflts.eval_name(name, __class__.__bases__[0])
         resourceFolder = dflts.eval_image(resourceFolder)
-        toolClipFileName = dflts.eval_image_path(toolClipFileName)
+        toolClipFileName = dflts.eval_image(toolClipFileName, "32x32.png")
 
         adding_method = partial(
             adsk.core.Application.get().userInterface.commandDefinitions.addCListDefinition,

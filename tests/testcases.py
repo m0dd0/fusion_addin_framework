@@ -1,13 +1,24 @@
+""" """
+
 from collections import defaultdict
 from time import perf_counter
 import traceback
+from typing import List, Callable
 
 import adsk.fusion, adsk.core
 
 from .. import fusion_addin_framework as faf
 
 
-def execute_cases(cases):
+def execute_cases(cases: List[Callable]):
+    """[summary]
+
+    Args:
+        cases (List[Callable]): [description]
+
+    Returns:
+        [type]: [description]
+    """
     results = defaultdict(dict)
     addins = []
     for case in cases:
@@ -26,20 +37,10 @@ def execute_cases(cases):
     return results, addins
 
 
-def test_default_button():
-    addin = faf.FusionAddin()
-    try:
-        ws = faf.Workspace(addin)
-        tab = faf.Tab(ws)
-        panel = faf.Panel(tab)
-        button = faf.Button(panel)
-    except Exception as test_exception:
-        addin.stop()
-        raise test_exception
-    return addin
+### Testcases (and their subfunctions) ###
 
-
-def test_hello_world():
+# region hello_world_button
+def test_hello_world_button():
     addin = faf.FusionAddin()
     try:
         ws = faf.Workspace(addin)
@@ -60,6 +61,96 @@ def test_hello_world():
     return addin
 
 
+def test_hello_world_button_dotted():
+    addin = faf.FusionAddin()
+    try:
+        cmd = (
+            addin.workspace()
+            .tab()
+            .panel()
+            .button()
+            .buttonCommand(
+                onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+                    "hello world"
+                ),
+            )
+        )
+    except Exception as test_exception:
+        addin.stop()
+        raise test_exception
+    return addin
+
+
+def test_hello_world_button_no_parents():
+    try:
+        cmd = faf.ButtonCommand(
+            onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+                "hello world"
+            )
+        )
+    except Exception as test_exception:
+        raise test_exception
+
+
+# endregion
+
+# region hello_world_checkbox
+def test_hello_world_checkbox():
+    addin = faf.FusionAddin()
+    try:
+        ws = faf.Workspace(addin)
+        tab = faf.Tab(ws)
+        panel = faf.Panel(tab)
+        button = faf.Checkbox(
+            panel,
+        )
+        cmd = faf.CheckboxCommand(
+            button,
+            onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+                "hello world"
+            ),
+        )
+    except Exception as test_exception:
+        addin.stop()
+        raise test_exception
+    return addin
+
+
+def test_hello_world_checkbox_dotted():
+    addin = faf.FusionAddin()
+    try:
+        cmd = (
+            addin.workspace()
+            .tab()
+            .panel()
+            .checkbox()
+            .checkboxCommand(
+                onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+                    "hello world"
+                ),
+            )
+        )
+    except Exception as test_exception:
+        addin.stop()
+        raise test_exception
+    return addin
+
+
+def test_hello_world_checkbox_no_parents():
+    try:
+        cmd = faf.CheckboxCommand(
+            onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+                "hello world"
+            )
+        )
+    except Exception as test_exception:
+        raise test_exception
+
+
+# endregion
+
+
+# region access attributes
 def access_all_addin_properties(addin):
     print(addin.name)
     print(addin.author)
@@ -129,43 +220,78 @@ def access_all_panel_properties(panel):
     print(panel.relatedWorkspaces)
 
 
-def test_addin_properties():
+def access_all_button_properties(button):
+    pass
+
+
+def access_all_button_command_properteis(command):
+    pass
+
+
+def test_access_all_properties_default_button():
     addin = faf.FusionAddin("my_addin", "Moritz", True)
     try:
         access_all_addin_properties(addin)
         assert addin.name == "my_addin"
         assert addin.author == "Moritz"
         assert addin.debug_to_ui == True
-    except Exception as test_exception:
-        addin.stop()
-        raise test_exception
-    return addin
-
-
-def test_custom_workspace():
-    addin = faf.FusionAddin()
-    try:
-        ws = faf.Workspace(addin, "MyWorkspaceCustomID")
+        ws = faf.Workspace(addin)
+        access_all_workspace_properties(ws)
         tab = faf.Tab(ws)
+        access_all_tab_properties(tab)
         panel = faf.Panel(tab)
-        button = faf.Button(panel)
+        access_all_panel_properties(panel)
+        button = faf.Button(
+            panel,
+        )
+        access_all_button_properties(button)
+        cmd = faf.ButtonCommand(
+            button,
+            onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+                "hello world"
+            ),
+        )
+        access_all_button_command_properteis(cmd)
     except Exception as test_exception:
         addin.stop()
         raise test_exception
     return addin
 
 
-def test_custom_tab():
+# endregion
+
+
+# region setting paramters
+def test_highly_custom_button_and_checkbox():
+    pass
+    # try:
+    #     ws = faf.Workspace(addin)
+    #     tab = faf.Tab(ws)
+    #     panel = faf.Panel(tab)
+    #     button = faf.Button(panel)
+    # except Exception as test_exception:
+    #     addin.stop()
+    #     raise test_exception
+    # return addin
+
+
+# endregion
+
+# region handlers
+def test_all_handlers_buttton():
     pass
 
 
-def test_custom_panel():
+def test_all_handlers_checkbox():
     pass
 
 
-def test_connect_multiple_commands():
+# enregion
+
+
+def test_multiple_controls():
     pass
 
 
-def test_all_handlers():
+def test_empty_control():
     pass
