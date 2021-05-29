@@ -118,4 +118,4 @@ def eval_image(value: str, size=None) -> str:
             value = str(default_images[value])
         else:
             value = str(default_images[value] / size)
-    return str(value)
+    return str(value)  # in case pathlib.Path object was passed

@@ -12,17 +12,10 @@ from typing import Union, Callable, List
 from collections import defaultdict
 from uuid import uuid4
 
-from . import messages as msgs
-
-try:
-    import appdirs
-
-    # TODO remove appdirs functionalitites for cleaner usage
-except:
-    logging.getLogger(__name__).warning(msgs.no_appdirs())
 import adsk.core
 import adsk.fusion
 
+from . import messages as msgs
 from . import defaults as dflts
 from . import handlers
 
@@ -56,7 +49,6 @@ class _FusionWrapper(ABC):
         """
         self._in_fusion = None
 
-        # TODO save parents always as list internally
         if parent is None:
             parent = parent_class()
         self._parent = parent
@@ -126,8 +118,6 @@ class FusionAddin:
 
     def __init__(
         self,
-        name: str = None,
-        author: str = None,
         debug_to_ui: bool = True,
     ):
         """Entry point to create all your elements that will appear in the user interface.
@@ -137,17 +127,11 @@ class FusionAddin:
         Additionally it provides directories for logging, config and user data.
 
         Args:
-            name (str, optional): The name of the addin. Used to create app
-                directories with meaningful names. Defaults to None.
-            author (str, optional): The name of the addins author. Used to create
-                app directories with meaningful names. Defaults to None.
             debug_to_ui (bool, optional): Flag indicating if erorr messages caused
                 by errrors in the eventhandlers are displayed in a `messageBox
                 <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-1692a9a4-3be0-4474-9e15-02fac696b2b2>`_
                 or not. If not they will get logged anyways. Defaults to True.
         """
-        self._name = name
-        self._author = author
         self._debug_to_ui = debug_to_ui
 
         self._registered_elements = defaultdict(list)
@@ -206,24 +190,6 @@ class FusionAddin:
 
     # region
     @property
-    def name(self) -> str:
-        """str: The name of the addin. Used for user directories only."""
-        return self._name
-
-    @name.setter
-    def name(self, new_name: str):
-        self._name = new_name
-
-    @property
-    def author(self) -> str:
-        """str: The author of the addin. Used for user directories only."""
-        return self._author
-
-    @author.setter
-    def author(self, new_author: str):
-        self._author = new_author
-
-    @property
     def debug_to_ui(self) -> bool:
         """bool: Flag indicating if erorr messages are displayed in a `messageBox
         <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-1692a9a4-3be0-4474-9e15-02fac696b2b2>`_
@@ -234,31 +200,6 @@ class FusionAddin:
     @debug_to_ui.setter
     def debug_to_ui(self, new_debug_to_ui: bool):
         self._debug_to_ui = new_debug_to_ui
-
-    @property
-    def user_state_dir(self) -> str:
-        """str: Directory for saving user state data."""
-        return appdirs.user_state_dir(self.name, self.author)
-
-    @property
-    def user_cache_dir(self) -> str:
-        """str: Directory for saving user cache data."""
-        return appdirs.user_cache_dir(self.name, self.author)
-
-    @property
-    def user_config_dir(self) -> str:
-        """str: Directory for saving user config data."""
-        return appdirs.user_config_dir(self.name, self.author)
-
-    @property
-    def user_data_dir(self) -> str:
-        """str: Directory for saving user data."""
-        return appdirs.user_data_dir(self.name, self.author)
-
-    @property
-    def user_log_dir(self) -> str:
-        """str: Directory for saving user log data."""
-        return appdirs.user_log_dir(self.name, self.author)
 
     @property
     def ui_level(self) -> int:
@@ -405,29 +346,31 @@ class Panel(_FusionWrapper):
             self.addin.register_element(self, self.ui_level)
             logging.getLogger(__name__).info(msgs.created_new(__class__, id))
 
-    def button(self, *args, **kwargs):
-        """[summary]
+    # region
+    # def button(self, *args, **kwargs):
+    #     """[summary]
 
-        Returns:
-            [type]: [description]
-        """
-        return Button(self, *args, **kwargs)
+    #     Returns:
+    #         [type]: [description]
+    #     """
+    #     return Button(self, *args, **kwargs)
 
-    def checkbox(self, *args, **kwargs):
-        """[summary]
+    # def checkbox(self, *args, **kwargs):
+    #     """[summary]
 
-        Returns:
-            [type]: [description]
-        """
-        return Checkbox(self, *args, **kwargs)
+    #     Returns:
+    #         [type]: [description]
+    #     """
+    #     return Checkbox(self, *args, **kwargs)
 
-    def list_control(self, *args, **kwargs):
-        """[summary]
+    # def list_control(self, *args, **kwargs):
+    #     """[summary]
 
-        Returns:
-            [type]: [description]
-        """
-        return ListControl(self, *args, **kwargs)
+    #     Returns:
+    #         [type]: [description]
+    #     """
+    #     return ListControl(self, *args, **kwargs)
+    # endregion
 
     def control(self, *args, **kwargs):
         """[summary]
@@ -441,7 +384,7 @@ class Panel(_FusionWrapper):
 class CommandControl(_FusionWrapper):
     def __init__(
         self,
-        parent: Panel = None,
+        parent: Panel = None,  # TODO allow multiple parents ?!
         control_type: str = "button",
         isVisible: bool = True,
         isPromoted: bool = True,
@@ -449,7 +392,9 @@ class CommandControl(_FusionWrapper):
         positionID: int = None,
         isBefore: bool = True,
     ):
-        """[summary]
+        """Wraps around Fusions CommandControl class <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-bb8d8c7b-3049-40c9-b7a5-76d24a462327>
+        A dummy command definition with a button control definition is used to
+        instantiate the control.
 
         Args:
             parent (Panel): [description]
@@ -467,6 +412,8 @@ class CommandControl(_FusionWrapper):
         self._positionID = positionID
         self._isBefore = isBefore
 
+        # create a dummy control so a control is displayed in the UI even if no
+        # command was created
         if control_type == "button":
             dummy_cmd_def = adsk.core.Application.get().userInterface.commandDefinitions.addButtonDefinition(
                 str(uuid4()),
@@ -507,9 +454,12 @@ class CommandControl(_FusionWrapper):
         Args:
             cmd_def ([type]): [description]
         """
+        # to delete the control created by the dummy definition
         if self._in_fusion is not None:
             self._in_fusion.deleteMe()
 
+        # create the control itself with the passed cmd def and the attributs from
+        # the init call
         if self._positionID is not None:
             self._in_fusion = self.parent.controls.addCommand(
                 cmd_def, self._positionID, self._isBefore
@@ -532,190 +482,105 @@ class CommandControl(_FusionWrapper):
         return AddinCommand(self, *args, **kwargs)
 
 
-class Button(CommandControl):
-    def __init__(
-        self,
-        parent: Panel = None,
-        isVisible: bool = True,
-        isPromoted: bool = True,
-        isPromotedByDefault: bool = True,
-        positionID: str = None,
-        isBefore: bool = True,
-    ):
-        """Wraps around Fusions CommandControl class <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-bb8d8c7b-3049-40c9-b7a5-76d24a462327>
-        A dummy command definition with a button control definition is used to
-        instantiate the control.
+# region
+# class Button(CommandControl):
+#     def __init__(
+#         self,
+#         parent: Panel = None,
+#         isVisible: bool = True,
+#         isPromoted: bool = True,
+#         isPromotedByDefault: bool = True,
+#         positionID: str = None,
+#         isBefore: bool = True,
+#     ):
+#         """[summary]
 
-        Args:
-            parent (Panel): [description]
-            isVisible (bool, optional): [description]. Defaults to True.
-            isPromoted (bool, optional): [description]. Defaults to True.
-            isPromotedByDefault (bool, optional): [description]. Defaults to True.
-        """
-        super().__init__(
-            parent,
-            "button",
-            isVisible,
-            isPromoted,
-            isPromotedByDefault,
-            positionID,
-            isBefore,
-        )
-
-        # # create a dummy cmd_def with a button_ctrl_def to instantiate the cmd_ctrl
-        # # itself. This will get overridden by the connected command later.
-        # dummy_cmd_def = adsk.core.Application.get().userInterface.commandDefinitions.addButtonDefinition(
-        #     str(uuid4()),
-        #     "<no command connected>",
-        #     "",
-        #     dflts.eval_image("transparent"),
-        # )
-        # # TODO put in super class
-        # dummy_cmd_def.controlDefinition.isVisible = True
-        # dummy_cmd_def.controlDefinition.isEnabled = True
-        # dummy_cmd_def.controlDefinition.name = "<no command connected>"
-        # # do not connect a handler since its a dummy cmd_def
-
-        # self.addin.register_element(dummy_cmd_def, self.ui_level + 1)
-
-        # self._create_control(dummy_cmd_def)
-
-        # logging.getLogger(__name__).info(msgs.created_new(__class__, None))
-
-    # def buttonCommand(self, *args, **kwargs):
-    #     """[summary]
-
-    #     Returns:
-    #         [type]: [description]
-    #     """
-    #     return ButtonCommand(self, *args, **kwargs)
+#         Args:
+#             parent (Panel, optional): [description]. Defaults to None.
+#             isVisible (bool, optional): [description]. Defaults to True.
+#             isPromoted (bool, optional): [description]. Defaults to True.
+#             isPromotedByDefault (bool, optional): [description]. Defaults to True.
+#             positionID (str, optional): [description]. Defaults to None.
+#             isBefore (bool, optional): [description]. Defaults to True.
+#         """
+#         super().__init__(
+#             parent,
+#             "button",
+#             isVisible,
+#             isPromoted,
+#             isPromotedByDefault,
+#             positionID,
+#             isBefore,
+#         )
 
 
-class Checkbox(CommandControl):
-    def __init__(
-        self,
-        parent: Panel = None,
-        isVisible: bool = True,
-        isPromoted: bool = True,
-        isPromotedByDefault: bool = True,
-        positionID: str = None,
-        isBefore: bool = True,
-    ):
-        """[summary]
+# class Checkbox(CommandControl):
+#     def __init__(
+#         self,
+#         parent: Panel = None,
+#         isVisible: bool = True,
+#         isPromoted: bool = True,
+#         isPromotedByDefault: bool = True,
+#         positionID: str = None,
+#         isBefore: bool = True,
+#     ):
+#         """[summary]
 
-        Args:
-            parent (Panel, optional): [description]. Defaults to None.
-            isVisible (bool, optional): [description]. Defaults to True.
-            isPromoted (bool, optional): [description]. Defaults to True.
-            isPromotedByDefault (bool, optional): [description]. Defaults to True.
-            positionID (str, optional): [description]. Defaults to None.
-            isBefore (bool, optional): [description]. Defaults to True.
-        """
-        super().__init__(
-            parent,
-            "checkbox",
-            isVisible,
-            isPromoted,
-            isPromotedByDefault,
-            positionID,
-            isBefore,
-        )
-
-        # dummy_cmd_def = adsk.core.Application.get().userInterface.commandDefinitions.addCheckBoxDefinition(
-        #     str(uuid4()),
-        #     "<no command connected>",
-        #     "",
-        #     False,
-        # )
-        # # TODO put in super class
-        # dummy_cmd_def.controlDefinition.isVisible = True
-        # dummy_cmd_def.controlDefinition.isEnabled = True
-        # dummy_cmd_def.controlDefinition.name = "<no command connected>"
-
-        # dummy_cmd_def.controlDefinition.isChecked = False
-        # # do not connect a handler since its a dummy cmd_def
-
-        # self.addin.register_element(dummy_cmd_def, self.ui_level + 1)
-
-        # self._create_control(dummy_cmd_def)
-
-        # logging.getLogger(__name__).info(msgs.created_new(__class__, None))
-
-    # def checkboxCommand(self, *args, **kwargs):
-    #     return CheckboxCommand(self, *args, **kwargs)
+#         Args:
+#             parent (Panel, optional): [description]. Defaults to None.
+#             isVisible (bool, optional): [description]. Defaults to True.
+#             isPromoted (bool, optional): [description]. Defaults to True.
+#             isPromotedByDefault (bool, optional): [description]. Defaults to True.
+#             positionID (str, optional): [description]. Defaults to None.
+#             isBefore (bool, optional): [description]. Defaults to True.
+#         """
+#         super().__init__(
+#             parent,
+#             "checkbox",
+#             isVisible,
+#             isPromoted,
+#             isPromotedByDefault,
+#             positionID,
+#             isBefore,
+#         )
 
 
-class ListControl(CommandControl):
-    def __init__(
-        self,
-        parent: Panel = None,
-        isVisible: bool = True,
-        isPromoted: bool = True,
-        isPromotedByDefault: bool = True,
-        positionID: str = None,
-        isBefore: bool = True,
-    ):
-        """[summary]
+# class ListControl(CommandControl):
+#     def __init__(
+#         self,
+#         parent: Panel = None,
+#         isVisible: bool = True,
+#         isPromoted: bool = True,
+#         isPromotedByDefault: bool = True,
+#         positionID: str = None,
+#         isBefore: bool = True,
+#     ):
+#         """[summary]
 
-        Args:
-            parent (Panel, optional): [description]. Defaults to None.
-            isVisible (bool, optional): [description]. Defaults to True.
-            isPromoted (bool, optional): [description]. Defaults to True.
-            isPromotedByDefault (bool, optional): [description]. Defaults to True.
-            positionID (str, optional): [description]. Defaults to None.
-            isBefore (bool, optional): [description]. Defaults to True.
-        """
-        super().__init__(
-            parent,
-            "list",
-            isVisible,
-            isPromoted,
-            isPromotedByDefault,
-            positionID,
-            isBefore,
-        )
-
-        # dummy_cmd_def = adsk.core.Application.get().userInterface.commandDefinitions.addListDefinition(
-        #     str(uuid4()),
-        #     "<no command connected>",
-        #     adsk.core.ListControlDisplayTypes.RadioButtonlistType,
-        # )
-        # # TODO put in super class
-        # dummy_cmd_def.controlDefinition.isVisible = True
-        # dummy_cmd_def.controlDefinition.isEnabled = True
-        # dummy_cmd_def.controlDefinition.name = "<no command connected>"
-        # dummy_cmd_def.controlDefinition.listItems.add("<empty list>", False)
-        # # do not connect a handler since its a dummy cmd_def
-
-        # self.addin.register_element(dummy_cmd_def, self.ui_level + 1)
-
-        # self._create_control(dummy_cmd_def)
-
-        # logging.getLogger(__name__).info(msgs.created_new(__class__, None))
-
-    # def listCommand(self, *args, **kwargs):
-    #     """[summary]
-
-    #     Returns:
-    #         [type]: [description]
-    #     """
-    #     return ListCommand(self, *args, **kwargs)
-
-
-# TODO unify commands
+#         Args:
+#             parent (Panel, optional): [description]. Defaults to None.
+#             isVisible (bool, optional): [description]. Defaults to True.
+#             isPromoted (bool, optional): [description]. Defaults to True.
+#             isPromotedByDefault (bool, optional): [description]. Defaults to True.
+#             positionID (str, optional): [description]. Defaults to None.
+#             isBefore (bool, optional): [description]. Defaults to True.
+#         """
+#         super().__init__(
+#             parent,
+#             "list",
+#             isVisible,
+#             isPromoted,
+#             isPromotedByDefault,
+#             positionID,
+#             isBefore,
+#         )
+# endregion
 
 
 class AddinCommand(_FusionWrapper):
     def __init__(
         self,
-        parent: Union[
-            List[Button],
-            Button,
-            List[Checkbox],
-            Checkbox,
-            List[ListControl],
-            ListControl,
-        ] = None,
+        parent: Union[CommandControl, List[CommandControl]] = None,
         id: str = "random",
         name: str = "random",
         resourceFolder: Union[str, Path] = "lightbulb",
@@ -740,16 +605,15 @@ class AddinCommand(_FusionWrapper):
             isVisible (bool, optional): [description]. Defaults to True.
             isChecked (bool, optional): [description]. Defaults to True.
         """
-        super().__init__(parent, Button)
+        if not isinstance(self.parent, list):
+            parent = [self.parent]
+
+        super().__init__(parent, CommandControl)
 
         id = dflts.eval_id(id)
         name = dflts.eval_name(name, __class__.__bases__[0])
         resourceFolder = dflts.eval_image(resourceFolder)
         toolClipFileName = dflts.eval_image(toolClipFileName, "32x32.png")
-
-        # TODO unify mulitple parent routine
-        if not isinstance(self.parent, list):
-            parent = [self.parent]
 
         self._in_fusion = (
             adsk.core.Application.get().userInterface.commandDefinitions.itemById(id)
@@ -757,33 +621,28 @@ class AddinCommand(_FusionWrapper):
 
         if self._in_fusion:
             logging.getLogger(__name__).info(msgs.using_exisiting(__class__, id))
+
         else:
             # create definition depending on the parent(s) control type
-            # (TODO helper for generc dmf_def creation avoid code duplication in command control class)
-            if (  # if parent.control_type == "button":
-                parent.commandDefinition.controlDefinition.objectType
-                == adsk.core.ButtonControlDefinition.classType()
-            ):
+            parent_control_type = parent[
+                0
+            ].commandDefinition.controlDefinition.objectType
+
+            if parent_control_type == adsk.core.ButtonControlDefinition.classType():
                 self._in_fusion = adsk.core.Application.get().userInterface.commandDefinitions.addButtonDefinition(
                     id,
                     name,
                     tooltip,
                     resourceFolder,
                 )
-            elif (  # if parent.control_type == "checkbox":
-                parent.commandDefinition.controlDefinition.objectType
-                == adsk.core.CheckBoxControlDefinition.classType()
-            ):
+            elif parent_control_type == adsk.core.CheckBoxControlDefinition.classType():
                 self._in_fusion = adsk.core.Application.get().userInterface.commandDefinitions.addCheckBoxDefinition(
                     id,
                     name,
                     tooltip,
                     isChecked,
                 )
-            elif (  # if parent.control_type == "list":
-                parent.commandDefinition.controlDefinition.objectType
-                == adsk.core.ListControlDefinition.classType()
-            ):
+            elif parent_control_type == adsk.core.ListControlDefinition.classType():
                 self._in_fusion = adsk.core.Application.get().userInterface.commandDefinitions.addCListDefinition(
                     id,
                     name,
@@ -813,14 +672,16 @@ class AddinCommand(_FusionWrapper):
 
         logging.getLogger(__name__).info(msgs.created_new(__class__, id))
 
-    def add_parent_control(self, parent):
+    def add_parent_control(self, parent_control):
         """[summary]
 
         Args:
             parent ([type]): [description]
         """
-        parent._create_control(self._in_fusion)  # pylint:disable=protected-access
-        self.parent.append(parent)
+        parent_control._create_control(
+            self._in_fusion
+        )  # pylint:disable=protected-access
+        self.parent.append(parent_control)
 
     def __getattr__(self, attr):
         try:
@@ -837,266 +698,3 @@ class AddinCommand(_FusionWrapper):
                 setattr(self._in_fusion, name, value)
         else:
             super().__setattr__(name, value)
-
-
-# class _CommandWrapper(_FusionWrapper):
-#     def __init__(self, parent, parent_class):
-#         """[summary]
-
-#         Args:
-#             parent ([type]): [description]
-#             parent_class ([type]): [description]
-#         """
-#         super().__init__(parent, parent_class)
-
-#     def _setup_routine(
-#         self,
-#         id,
-#         name,
-#         toolClipFileName,
-#         tooltip,
-#         resourceFolder,
-#         isEnabled,
-#         isVisible,
-#         event_handlers,
-#         subclass,
-#         adding_method,
-#     ):
-#         """[summary]
-
-#         Args:
-#             id ([type]): [description]
-#             name ([type]): [description]
-#             toolClipFileName ([type]): [description]
-#             tooltip ([type]): [description]
-#             resourceFolder ([type]): [description]
-#             isEnabled (bool): [description]
-#             isVisible (bool): [description]
-#             event_handlers ([type]): [description]
-#             subclass ([type]): [description]
-#             adding_method ([type]): [description]
-#         """
-#         self._in_fusion = (
-#             adsk.core.Application.get().userInterface.commandDefinitions.itemById(id)
-#         )
-
-#         if self._in_fusion:
-#             logging.getLogger(__name__).info(msgs.using_exisiting(subclass, id))
-#         else:
-#             # create definition
-#             self._in_fusion = adding_method()
-
-#             if toolClipFileName is not None:
-#                 self._in_fusion.toolClipFilename = toolClipFileName
-#             self._in_fusion.tooltip = tooltip
-#             self._in_fusion.resourceFolder = resourceFolder
-#             self._in_fusion.controlDefinition.isEnabled = isEnabled
-#             self._in_fusion.controlDefinition.isVisible = isVisible
-#             self._in_fusion.controlDefinition.name = name
-
-#             # ! if there is some error (typo) etc. fusion will break instantanious !
-#             self._in_fusion.commandCreated.add(
-#                 handlers._CommandCreatedHandler(  # pylint:disable=protected-access
-#                     self.addin, name, event_handlers
-#                 )
-#             )
-
-#             self.addin.register_element(self, self.ui_level)
-
-#         if not isinstance(self.parent, list):
-#             parent = [self.parent]
-#         for p in parent:
-#             p._create_control(self._in_fusion)  # pylint:disable=protected-access
-
-#         logging.getLogger(__name__).info(msgs.created_new(subclass, id))
-
-#     def add_parent_control(self, parent):
-#         """[summary]
-
-#         Args:
-#             parent ([type]): [description]
-#         """
-#         parent._create_control(self._in_fusion)  # pylint:disable=protected-access
-#         self.parent.append(parent)
-
-#     def __getattr__(self, attr):
-#         try:
-#             return getattr(self._in_fusion.controlDefinition, attr)
-#         except:
-#             return getattr(self._in_fusion, attr)
-
-#     def __setattr__(self, name, value):
-#         # avoid infinite recursion by using self.__dict__ instead of hasattr
-#         if "_in_fusion" in self.__dict__.keys() and hasattr(self._in_fusion, name):
-#             try:
-#                 setattr(self._in_fusion.controlDefinition, name, value)
-#             except:
-#                 setattr(self._in_fusion, name, value)
-#         else:
-#             super().__setattr__(name, value)
-
-
-# class ButtonCommand(_CommandWrapper):
-#     def __init__(
-#         self,
-#         parent: Union[List[Button], Button] = None,
-#         id: str = "random",
-#         name: str = "random",
-#         resourceFolder: Union[str, Path] = "lightbulb",
-#         tooltip: str = "",
-#         toolClipFileName: Union[str, Path] = None,
-#         isEnabled: bool = True,
-#         isVisible: bool = True,
-#         **event_handlers: Callable,
-#     ):
-#         """[summary]
-
-#         Args:
-#             parent (Union[List[Button], Button], optional): [description]. Defaults to None.
-#             id (str, optional): [description]. Defaults to "random".
-#             name (str, optional): [description]. Defaults to "random".
-#             resourceFolder (Union[str, Path], optional): [description]. Defaults to "lightbulb".
-#             tooltip (str, optional): [description]. Defaults to "".
-#             toolClipFileName (Union[str, Path], optional): [description]. Defaults to None.
-#             isEnabled (bool, optional): [description]. Defaults to True.
-#             isVisible (bool, optional): [description]. Defaults to True.
-#         """
-#         super().__init__(parent, Button)
-
-#         id = dflts.eval_id(id)
-#         name = dflts.eval_name(name, __class__.__bases__[0])
-#         resourceFolder = dflts.eval_image(resourceFolder)
-#         toolClipFileName = dflts.eval_image(toolClipFileName, "32x32.png")
-
-#         adding_method = partial(
-#             adsk.core.Application.get().userInterface.commandDefinitions.addButtonDefinition,
-#             id,
-#             name,
-#             tooltip,
-#             resourceFolder,
-#         )
-
-#         self._setup_routine(
-#             id,
-#             name,
-#             toolClipFileName,
-#             tooltip,
-#             resourceFolder,
-#             isEnabled,
-#             isVisible,
-#             event_handlers,
-#             __class__,
-#             adding_method,
-#         )
-
-
-# class CheckboxCommand(_CommandWrapper):
-#     def __init__(
-#         self,
-#         parent: Union[List[Checkbox], Checkbox] = None,
-#         id: str = "random",
-#         name: str = "random",
-#         tooltip: str = "",
-#         toolClipFileName: Union[str, Path] = None,
-#         resourceFolder: str = "lightbulb",
-#         isEnabled: bool = True,
-#         isVisible: bool = True,
-#         isChecked: bool = False,
-#         **event_handlers: Callable,
-#     ):
-#         """[summary]
-
-#         Args:
-#             parent (Union[List[Checkbox], Checkbox], optional): [description]. Defaults to None.
-#             id (str, optional): [description]. Defaults to "random".
-#             name (str, optional): [description]. Defaults to "random".
-#             tooltip (str, optional): [description]. Defaults to "".
-#             toolClipFileName (Union[str, Path], optional): [description]. Defaults to None.
-#             resourceFolder (str, optional): [description]. Defaults to "lightbulb".
-#             isEnabled (bool, optional): [description]. Defaults to True.
-#             isVisible (bool, optional): [description]. Defaults to True.
-#             isChecked (bool, optional): [description]. Defaults to False.
-#         """
-#         super().__init__(parent, Checkbox)
-
-#         id = dflts.eval_id(id)
-#         name = dflts.eval_name(name, __class__.__bases__[0])
-#         resourceFolder = dflts.eval_image(resourceFolder)
-#         toolClipFileName = dflts.eval_image(toolClipFileName, "32x32.png")
-
-#         adding_method = partial(
-#             adsk.core.Application.get().userInterface.commandDefinitions.addCheckBoxDefinition,
-#             id,
-#             name,
-#             tooltip,
-#             isChecked,
-#         )
-
-#         self._setup_routine(
-#             id,
-#             name,
-#             toolClipFileName,
-#             tooltip,
-#             resourceFolder,
-#             isEnabled,
-#             isVisible,
-#             event_handlers,
-#             __class__,
-#             adding_method,
-#         )
-
-
-# class ListCommand(_CommandWrapper):
-#     def __init__(
-#         self,
-#         parent: Union[List[ListControl], ListControl] = None,
-#         id: str = "random",
-#         name: str = "random",
-#         resourceFolder: Union[str, Path] = "lightbulb",
-#         tooltip: str = "",
-#         toolClipFileName: Union[str, Path] = None,
-#         isEnabled: bool = True,
-#         isVisible: bool = True,
-#         listControlDisplayType=adsk.core.ListControlDisplayTypes.RadioButtonlistType,
-#         **event_handlers: Callable,
-#     ):
-#         """[summary]
-
-#         Args:
-#             parent (Union[List[ListControl], ListControl], optional): [description]. Defaults to None.
-#             id (str, optional): [description]. Defaults to "random".
-#             name (str, optional): [description]. Defaults to "random".
-#             resourceFolder (Union[str, Path], optional): [description]. Defaults to "lightbulb".
-#             tooltip (str, optional): [description]. Defaults to "".
-#             toolClipFileName (Union[str, Path], optional): [description]. Defaults to None.
-#             isEnabled (bool, optional): [description]. Defaults to True.
-#             isVisible (bool, optional): [description]. Defaults to True.
-#             listControlDisplayType ([type], optional): [description]. Defaults to adsk.core.ListControlDisplayTypes.RadioButtonlistType.
-#         """
-#         super().__init__(parent, ListControl)
-
-#         id = dflts.eval_id(id)
-#         name = dflts.eval_name(name, __class__.__bases__[0])
-#         resourceFolder = dflts.eval_image(resourceFolder)
-#         toolClipFileName = dflts.eval_image(toolClipFileName, "32x32.png")
-
-#         adding_method = partial(
-#             adsk.core.Application.get().userInterface.commandDefinitions.addCListDefinition,
-#             id,
-#             name,
-#             listControlDisplayType,
-#             resourceFolder,
-#         )
-
-#         self._setup_routine(
-#             id,
-#             name,
-#             toolClipFileName,
-#             tooltip,
-#             resourceFolder,
-#             isEnabled,
-#             isVisible,
-#             event_handlers,
-#             __class__,
-#             adding_method,
-#         )
