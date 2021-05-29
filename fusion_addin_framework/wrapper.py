@@ -53,6 +53,7 @@ class _FusionWrapper(ABC):
             parent = parent_class()
         self._parent = parent
 
+        # for now this is only the case for addincommand class
         if isinstance(parent, list):
             self._addin = self.parent[0].addin
         else:
@@ -61,24 +62,27 @@ class _FusionWrapper(ABC):
         self._ui_level = self.parent.ui_level + 1
 
     def __getattr__(self, attr):
-        """[summary]
+        """Tries to find the attribute in the fusion-object on which the wrapper is
+        wrapped around. This will only get called if no attribute is found on the
+        wrapper object itself.
 
         Args:
-            attr ([type]): [description]
+            attr: The attribute name.
 
         Returns:
-            [type]: [description]
+            Any: The attribute value.
         """
         # will only get called if the attribute is not expicitly contained in
         # the class instance
         return getattr(self._in_fusion, attr)
 
     def __setattr__(self, name, value):
-        """[summary]
+        """Tries to set an attribute on the onject on which this wrapper is wrapped
+        around.
 
         Args:
-            name ([type]): [description]
-            value ([type]): [description]
+            name: The name of the attribute to set.
+            value: The value of the attribute to set.
         """
         # avoid infinite recursion by using self.__dict__ instead of hasattr
         if "_in_fusion" in self.__dict__.keys() and hasattr(self._in_fusion, name):
@@ -90,9 +94,10 @@ class _FusionWrapper(ABC):
     # region
     @property
     def parent(self):
-        """The wrapped parent instance of this object.
+        """The parent wrapper-instance of this wrapper-instance.
 
-        Can be an List of object if multiple parents where provided
+        Can be an List of wrapper-instances if multiple parents where provided
+        (only for addincommand instances for now)
         """
         return self._parent
 
@@ -106,7 +111,7 @@ class _FusionWrapper(ABC):
 
     @property
     def addin(self):
-        """The app instance which manages this instance."""
+        """The addin instance which manages this instance."""
         return self._addin
 
     # endregion
@@ -122,13 +127,12 @@ class FusionAddin:
     ):
         """Entry point to create all your elements that will appear in the user interface.
 
-        It handles their creation and deletes them if the addin is deactivated
-        (by closing Fusion or stopping the Addin manually).
-        Additionally it provides directories for logging, config and user data.
+        Handles their creation and deletes them (by calling the stop method) if
+        the addin is deactivated.
 
         Args:
             debug_to_ui (bool, optional): Flag indicating if erorr messages caused
-                by errrors in the eventhandlers are displayed in a `messageBox
+                by errors in the eventhandlers are displayed in a `messageBox
                 <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-1692a9a4-3be0-4474-9e15-02fac696b2b2>`_
                 or not. If not they will get logged anyways. Defaults to True.
         """
@@ -158,8 +162,7 @@ class FusionAddin:
 
         This methods needs to get called from the stop(context) function of the
         main file of your addin to ensure proper cleanup.
-        If you dont call it, strange thigs can happen the next time you want to
-        run the addin.
+        If you dont call it, strange thigs can happen the next time you run the addin.
         """
         for level in reversed(sorted(list(self._registered_elements.keys()))):
             elems = self._registered_elements.pop(level)
@@ -233,16 +236,38 @@ class Workspace(_FusionWrapper):
         tooltip: str = "",
         tooltipDescription: str = "",
     ):
-        """[summary]
+        """Wraps around the `Workspace
+        <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-33f9ed37-e5c7-4153-ba85-c3254a199dd1>`_
+        object.
+
+        If an Id of an existing workspace is provided, all parameters except
+        parent and id will be ignored.
+
+        IMPORTANT: It is currently not possible to create a custom workspace via
+        the API (maybe a bug). So you need to use a ID of an
 
         Args:
-            parent (FusionAddin): [description]
-            id (str, optional): [description]. Defaults to "FusionSolidEnvironment".
-            productType (str, optional): [description]. Defaults to "DesignProductType".
-            resourceFolder (Union[str, Path], optional): [description]. Defaults to "lightbulb".
-            toolClipFilename (Union[str, Path], optional): [description]. Defaults to "lightbulb".
-            tooltip (str, optional): [description]. Defaults to "".
-            tooltipDescription (str, optional): [description]. Defaults to "".
+            parent (FusionAddin): The parental addin instance. Defaults to a addin with
+                the default values.
+            id (str, optional): The id of the workspace. Defaults to "FusionSolidEnvironment".
+            productType (str, optional): The name of the product this workspace
+                is associated with. Defaults to "DesignProductType".
+            resourceFolder (Union[str, Path], optional): The resource folder
+                should contain two files; 49X31.png and 98x62.png. The larger is
+                used for the Apple Retina display. Alternatively you can provide
+                the name of one of the available default images. Defaults to "lightbulb".
+            toolClipFilename (Union[str, Path], optional): The full filename of
+                the image file (png) used for the tool clip. The tool clip is the
+                image shown when the user hovers the mouse over the workspace name
+                in the workspace drop-down. Alternatively you can provide
+                the name of one of the available default images. Defaults to "lightbulb".
+            tooltip (str, optional): Tooltip text displayed for the workspace.
+                This is the first line of text shown when the user hovers over the
+                workspace name in the Fusion 360 toolbar drop-down. Defaults to "".
+            tooltipDescription (str, optional): The tooltip description displayed
+                for the workspace. The tooltip description is a longer description
+                of the workspace and is only displayed when the user hovers over
+                the workspace name in the Fusion 360 toolbar drop-down. Defaults to "".
         """
         super().__init__(parent, FusionAddin)
 
@@ -270,10 +295,15 @@ class Workspace(_FusionWrapper):
             logging.getLogger(__name__).info(msgs.created_new(__class__, id))
 
     def tab(self, *args, **kwargs):
-        """[summary]
+        """Creates a tab as a child of this workspace.
+
+        Calling this method is the same as initialsing a :class:`.Tab`
+        with this workspace instance as parent parameters. Therefore the same
+        parameters are passed. See :class:`.Workspace` for a detailed description
+        of the paramters.
 
         Returns:
-            [type]: [description]
+            Tab: The newly created or accessed Workspace instance.
         """
         return Tab(self, *args, **kwargs)
 
