@@ -58,7 +58,7 @@ def _notify_routine(
         args ([type]): The arguments passed to the notify function.
     """
     logging.getLogger(__name__).info(msgs.starting_handler(event_name, cmd_name))
-
+    # TODO measure execution time and log it
     try:
         action(args)
     except:
@@ -189,7 +189,7 @@ handler_type_mapping = {
 }
 
 
-def do_nothing(*args, **kwargs):
+def do_nothing(*args, **kwargs):  # pylint:disable=unused-argument
     pass
 
 
@@ -215,9 +215,10 @@ class _CommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
 
         self.handler_dict = {}
         # sanitize the dict to allow on-prefix
+        allowed_prefix = "on"
         for event_name, handler_callable in handler_dict.items():
-            if event_name.lower().startswith("on"):
-                event_name = event_name[2:]
+            if event_name.lower().startswith(allowed_prefix):
+                event_name = event_name[len(allowed_prefix) :]
             event_name = event_name[0].lower() + event_name[1:]
             if event_name in self.handler_dict:
                 logging.warning(msgs.doubled_callbacks(event_name))

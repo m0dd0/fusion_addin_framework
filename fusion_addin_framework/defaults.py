@@ -8,8 +8,9 @@ from uuid import uuid4
 import random
 
 # dictionairy which maps the available image ids ti the corresponding directory path
-default_images_path = Path(__file__).with_name("default_images").absolute()
-default_pictures = {p.stem: p.absolute() for p in default_images_path.iterdir()}
+default_images = {
+    p.stem: p.absolute() for p in Path(__file__).with_name("default_images").iterdir()
+}
 
 # the names for the ui instances if they are not provided by the user
 random_names = {
@@ -112,9 +113,9 @@ def eval_image(value: str, size=None) -> str:
     Returns:
         str: The path to the image or image directory.
     """
-    if value in default_pictures:
+    if value in default_images:
         if size is not None:
-            value = str(default_pictures[value])
+            value = str(default_images[value])
         else:
-            value = str(default_pictures[value] / size)
+            value = str(default_images[value] / size)
     return value

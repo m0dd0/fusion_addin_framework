@@ -17,6 +17,8 @@ from . import messages as msgs
 
 try:
     import appdirs
+
+    # TODO add as submodule
 except:
     logging.getLogger(__name__).warning(msgs.no_appdirs())
 import adsk.core
@@ -511,6 +513,7 @@ class Button(_CommandControlWrapper):
             "",
             dflts.eval_image("transparent"),
         )
+        # TODO put in super class
         dummy_cmd_def.controlDefinition.isVisible = True
         dummy_cmd_def.controlDefinition.isEnabled = True
         dummy_cmd_def.controlDefinition.name = "<no command connected>"
@@ -561,9 +564,11 @@ class Checkbox(_CommandControlWrapper):
             "",
             False,
         )
+        # TODO put in super class
         dummy_cmd_def.controlDefinition.isVisible = True
         dummy_cmd_def.controlDefinition.isEnabled = True
         dummy_cmd_def.controlDefinition.name = "<no command connected>"
+
         dummy_cmd_def.controlDefinition.isChecked = False
         # do not connect a handler since its a dummy cmd_def
 
@@ -606,6 +611,7 @@ class ListControl(_CommandControlWrapper):
             "<no command connected>",
             adsk.core.ListControlDisplayTypes.RadioButtonlistType,
         )
+        # TODO put in super class
         dummy_cmd_def.controlDefinition.isVisible = True
         dummy_cmd_def.controlDefinition.isEnabled = True
         dummy_cmd_def.controlDefinition.name = "<no command connected>"
@@ -627,6 +633,7 @@ class ListControl(_CommandControlWrapper):
         return ListCommand(self, *args, **kwargs)
 
 
+# TODO unify commands
 class _CommandWrapper(_FusionWrapper):
     def __init__(self, parent, parent_class):
         """[summary]
