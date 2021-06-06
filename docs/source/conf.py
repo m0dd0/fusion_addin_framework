@@ -1,3 +1,5 @@
+# TROUBLESHOOTINNG
+
 # To use autodoc the module must be importable.
 # Therefore it must be installed to the python instanve which executes sphinx.
 # By default this is the standard python instance.
@@ -6,6 +8,17 @@
 # requirements_docs.txt gives contains all the dependencies (the framework repo,
 # sphinx itself and the rtd theme) that are needed in the environment to succesfully
 # run the doc generation.
+
+# If you change something in the addin code you must pip install the package agein
+# to the virtual environment
+
+# Using import from other modeules (for typehint etc.) is likely to cause a circular
+# import error regardless of the module which is documented
+# Also the error message will likely by misleading.
+# https://www.stefaanlippens.net/circular-imports-type-hints-python.html
+
+# Use the make clean command from time to time.
+
 # The docstrings are contained in the documentation via the autosummary extension.
 # By default the autosummary extenasion produces only a summarizing table about
 # the elements of the passed elements.
@@ -15,7 +28,6 @@
 # The templates are saved in the _templates directory.
 
 # Configuration file for the Sphinx documentation builder.
-#
 # This file only contains a selection of the most common options. For a full
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html

@@ -13,12 +13,8 @@ Wrapper
    fusion_addin_framework.Workspace
    fusion_addin_framework.Tab
    fusion_addin_framework.Panel
-   fusion_addin_framework.Button
-   fusion_addin_framework.ButtonCommand
-   fusion_addin_framework.Checkbox
-   fusion_addin_framework.CheckboxCommand
-   fusion_addin_framework.ListControl
-   fusion_addin_framework.ListCommand
+   fusion_addin_framework.CommandControl
+   fusion_addin_framework.AddinCommand
 
 Utilities
 ---------
