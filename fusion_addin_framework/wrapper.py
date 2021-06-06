@@ -54,12 +54,12 @@ class _FusionWrapper(ABC):
         self._parent = parent
 
         # for now this is only the case for addincommand class
-        if isinstance(parent, list):
-            self._addin = self.parent[0].addin
+        if isinstance(self._parent, list):
+            self._addin = self._parent[0].addin
         else:
-            self._addin = self.parent.addin
+            self._addin = self._parent.addin
 
-        self._ui_level = self.parent.ui_level + 1
+        self._ui_level = self._parent.ui_level + 1
 
     def __getattr__(self, attr):
         """Tries to find the attribute in the fusion-object on which the wrapper is
@@ -186,10 +186,9 @@ class FusionAddin:
             elem (_FusionWrapper): The wrapper instance to register.
             level (int, optional): The Ui level of the element. Defaults to 0.
         """
-        if isinstance(elem, _FusionWrapper):
+        if isinstance(elem, _FusionWrapper):  # TODO check if still necessary
             elem = elem._in_fusion  # pylint:disable=protected-access
         self._registered_elements[level].append(elem)
-        return self.addin
 
     # region
     @property
@@ -228,7 +227,7 @@ class Workspace(_FusionWrapper):
     def __init__(
         self,
         parent: FusionAddin = None,
-        id: str = "FusionSolidEnvironment",  # pylint:disable=redefined-builtin
+        id: str = "FusionSolidEnvironment",
         name: str = "random",
         productType: str = "DesignProductType",
         resourceFolder: Union[str, Path] = "lightbulb",
@@ -299,11 +298,11 @@ class Workspace(_FusionWrapper):
 
         Calling this method is the same as initialsing a :class:`.Tab`
         with this workspace instance as parent parameters. Therefore the same
-        parameters are passed. See :class:`.Workspace` for a detailed description
+        parameters are passed. See :class:`.Tab` for a detailed description
         of the paramters.
 
         Returns:
-            Tab: The newly created or accessed Workspace instance.
+            Tab: The newly created or accessed tab instance.
         """
         return Tab(self, *args, **kwargs)
 
@@ -315,11 +314,20 @@ class Tab(_FusionWrapper):
         id: str = "default",
         name: str = "random",
     ):
-        """[summary]
+        """Wraps around the `Tab
+        <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-7AF58337-178C-467C-831F-285B0FB02D56>`_
+        object.
+
+        If an Id of an existing Tab is provided, all parameters except parent and
+        id will be ignored.
 
         Args:
-            parent (Workspace, optional): [description]. Defaults to None.
-            name (str, optional): [description]. Defaults to "random".
+            parent (Workspace, optional): The parent workspace which contains this
+                tab. Defaults to a Workspace with the default parameters.
+            id (str, optional): The id of the Tab. Defaults to "ToolsTab" in DesignWorkspace,
+                to "UtilitiesTab" in CAMWorkspace and "RenderTab" in RenderWorkspace.
+            name (str, optional): The name of the tab as seen in the user interface.
+                Defaults to a random name.
         """
         super().__init__(parent, Workspace)
 
@@ -337,6 +345,16 @@ class Tab(_FusionWrapper):
             logging.getLogger(__name__).info(msgs.created_new(__class__, id))
 
     def panel(self, *args, **kwargs):
+        """Creates a panel as a child of this tab.
+
+        Calling this method is the same as initialsing a :class:`.Panel`
+        with this tab instance as parent parameters. Therefore the same
+        parameters are passed. See :class:`.Panel` for a detailed description
+        of the paramters.
+
+        Returns:
+            Panel: The newly created or accessed panel instance.
+        """
         return Panel(self, *args, **kwargs)
 
 
@@ -349,21 +367,34 @@ class Panel(_FusionWrapper):
         positionID: str = "",
         isBefore: bool = True,
     ):
-        """[summary]
+        """Wraps around the `Panel
+        <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-0ca48ac9-da95-4623-bf87-150f3729717a>`_
+        object.
+
+        If an Id of an existing Panel is provided, all parameters except parent and
+        id will be ignored.
 
         Args:
-            parent (Tab, optional): [description]. Defaults to None.
-            name (str, optional): [description]. Defaults to "random".
-            positionID (str, optional): [description]. Defaults to "".
-            isBefore (bool, optional): [description]. Defaults to True.
+            parent (Tab, optional): The parent tab which contains this
+                panel. Defaults to a panel with the default parameters.
+            name (str, optional): The name of the tab as seen in the user interface.
+                Defaults to random name.
+            positionID (str, optional): Specifies the id of the panel to position
+                this panel relative to. Not setting this value indicates that the
+                panel will be created at the end of all other panels. The isBefore
+                parameter specifies whether to place the panel before or after this
+                panel. Defaults to "".
+            isBefore (bool, optional): Specifies whether to place the panel before
+                or after the panel specified by the positionID argument. This
+                argument is ignored is positionID is not specified. Defaults to True.
         """
         super().__init__(parent, Tab)
 
         id = dflts.eval_id(id, self)
         name = dflts.eval_name(name, __class__)
 
-        self._in_fusion = self.parent.toolbarPanels.itemById(id)
         # TODO test what wil happen if ui.allToolbarpanels.itemById() already exists
+        self._in_fusion = self.parent.toolbarPanels.itemById(id)
 
         if self._in_fusion:
             logging.getLogger(__name__).info(msgs.using_exisiting(__class__, id))
@@ -403,10 +434,15 @@ class Panel(_FusionWrapper):
     # endregion
 
     def control(self, *args, **kwargs):
-        """[summary]
+        """Creates a command control as a child of this workspace.
+
+        Calling this method is the same as initialsing a :class:`.CommandControl`
+        with this panel instance as parent parameter. Therefore the same
+        parameters are passed. See :class:`.CommandControl` for a detailed description
+        of the paramters.
 
         Returns:
-            [type]: [description]
+            CommandControl: The newly created or accessed CommandControl instance.
         """
         return CommandControl(self, *args, **kwargs)
 
@@ -428,6 +464,7 @@ class CommandControl(_FusionWrapper):
 
         Args:
             parent (Panel): [description]
+            control_type (str)
             isVisible (bool): [description]
             isPromoted (bool): [description]
             isPromotedByDefault (bool): [description]
@@ -635,10 +672,12 @@ class AddinCommand(_FusionWrapper):
             isVisible (bool, optional): [description]. Defaults to True.
             isChecked (bool, optional): [description]. Defaults to True.
         """
-        if not isinstance(self.parent, list):
-            parent = [self.parent]
-
         super().__init__(parent, CommandControl)
+
+        if not isinstance(self._parent, list):
+            parent_list = [self._parent]
+        else:
+            parent_list = self._parent
 
         id = dflts.eval_id(id)
         name = dflts.eval_name(name, __class__.__bases__[0])
@@ -654,7 +693,7 @@ class AddinCommand(_FusionWrapper):
 
         else:
             # create definition depending on the parent(s) control type
-            parent_control_type = parent[
+            parent_control_type = parent_list[
                 0
             ].commandDefinition.controlDefinition.objectType
 
@@ -697,7 +736,7 @@ class AddinCommand(_FusionWrapper):
 
             self.addin.register_element(self, self.ui_level)
 
-        for p in parent:
+        for p in parent_list:
             p._create_control(self._in_fusion)  # pylint:disable=protected-access
 
         logging.getLogger(__name__).info(msgs.created_new(__class__, id))
@@ -708,10 +747,12 @@ class AddinCommand(_FusionWrapper):
         Args:
             parent ([type]): [description]
         """
-        parent_control._create_control(
+        parent_control._create_control(  # pylint:disable=protected-access
             self._in_fusion
-        )  # pylint:disable=protected-access
-        self.parent.append(parent_control)
+        )
+        if not isinstance(self._parent, list):
+            self._parent = [self._parent]
+        self._parent.append(parent_control)
 
     def __getattr__(self, attr):
         try:
