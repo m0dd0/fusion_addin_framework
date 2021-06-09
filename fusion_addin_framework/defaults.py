@@ -34,7 +34,7 @@ random_names = {
         "pacifisitc panel",
         "pacific panel",
     ],
-    "_CommandWrapper": [
+    "AddinCommand": [
         "comic command",
         "cometic command",
         "comfy command",
@@ -115,7 +115,9 @@ def eval_image(value: str, size=None) -> str:
     """
     if value in default_images:
         if size is not None:
-            value = str(default_images[value])
+            value = default_images[value] / size
         else:
-            value = str(default_images[value] / size)
-    return str(value)  # in case pathlib.Path object was passed
+            value = default_images[value]
+    if isinstance(value, Path):
+        value = str(value)
+    return value

@@ -13,7 +13,7 @@ Wrapper
    fusion_addin_framework.Workspace
    fusion_addin_framework.Tab
    fusion_addin_framework.Panel
-   fusion_addin_framework.CommandControl
+   fusion_addin_framework.Control
    fusion_addin_framework.AddinCommand
 
 Utilities

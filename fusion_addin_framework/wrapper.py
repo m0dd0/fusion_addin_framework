@@ -444,10 +444,10 @@ class Panel(_FusionWrapper):
         Returns:
             CommandControl: The newly created or accessed CommandControl instance.
         """
-        return CommandControl(self, *args, **kwargs)
+        return Control(self, *args, **kwargs)
 
 
-class CommandControl(_FusionWrapper):
+class Control(_FusionWrapper):
     def __init__(
         self,
         parent: Panel = None,  # TODO allow multiple parents ?!
@@ -647,7 +647,7 @@ class CommandControl(_FusionWrapper):
 class AddinCommand(_FusionWrapper):
     def __init__(
         self,
-        parent: Union[CommandControl, List[CommandControl]] = None,
+        parent: Union[Control, List[Control]] = None,
         id: str = "random",
         name: str = "random",
         resourceFolder: Union[str, Path] = "lightbulb",
@@ -672,7 +672,7 @@ class AddinCommand(_FusionWrapper):
             isVisible (bool, optional): [description]. Defaults to True.
             isChecked (bool, optional): [description]. Defaults to True.
         """
-        super().__init__(parent, CommandControl)
+        super().__init__(parent, Control)
 
         if not isinstance(self._parent, list):
             parent_list = [self._parent]
@@ -680,7 +680,7 @@ class AddinCommand(_FusionWrapper):
             parent_list = self._parent
 
         id = dflts.eval_id(id)
-        name = dflts.eval_name(name, __class__.__bases__[0])
+        name = dflts.eval_name(name, __class__)
         resourceFolder = dflts.eval_image(resourceFolder)
         toolClipFileName = dflts.eval_image(toolClipFileName, "32x32.png")
 
