@@ -35,6 +35,13 @@ where provided
 
 The best way to understand this concept is to checkout the exmaples. 
 
+Note on naming convention
+-------------------------
+For consistency with the Fusion API all interfaces of the wrapper classes are in camelCase.
+For all internal variables and utility function, the python naming convention 
+(snake_case for variabels and functions and UpperCamelCase for classes) is used. 
+
+
 .. toctree::
    :hidden:
 

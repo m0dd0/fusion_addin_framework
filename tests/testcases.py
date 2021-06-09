@@ -147,6 +147,52 @@ def test_hello_world_checkbox_no_parents():
         raise test_exception
 
 
+def test_hello_world_button_very_custom():
+    cmd = (
+        faf.FusionAddin(debug_to_ui=True)
+        .addin.workspace(
+            id="FusionSolidEnvironment",
+            name="random",
+            productType="DesignProductType",
+            resourceFolder="lightbulb",
+            toolClipFilename="lightbulb",
+            tooltip="",
+            tooltipDescription="",
+        )
+        .tab(
+            id="default",
+            name="random",
+        )
+        .panel(
+            id="default",
+            name="random",
+            positionID="",
+            isBefore=True,
+        )
+        .control(
+            control_type="button",
+            isVisible=True,
+            isPromoted=True,
+            isPromotedByDefault=True,
+            positionID=None,
+            isBefore=True,
+        )
+        .addin_command(
+            id="random",
+            name="random",
+            resourceFolder="lightbulb",
+            tooltip="",
+            toolClipFileName=None,
+            isEnabled=True,
+            isVisible=True,
+            isChecked=True,
+            onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+                "hello world"
+            ),
+        )
+    )
+
+
 # endregion
 
 

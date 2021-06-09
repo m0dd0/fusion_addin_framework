@@ -25,8 +25,8 @@ setuptools.setup(
         "Documentation": "https://fusion-addin-framework.readthedocs.io/en/stable/"
     },
     python_requires=">=3.7",  # current (01.2021) python version used by Fusion360
-    install_requires=["appdirs"],
-    include_package_data=True, # needs to be kept even setuptools_scm is used !!!
+    install_requires=[],
+    include_package_data=True,  # needs to be kept even setuptools_scm is used !!!
     # including pacakge_data is managed automatically by setuptools_scm which is
     # also defined as buid_dependency in pyproject.toml
     use_scm_version=True,

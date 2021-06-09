@@ -10,7 +10,10 @@ from typing import Callable, Dict
 import adsk.core
 
 from . import messages as msgs
-from .wrapper import FusionAddin  # for typehints only
+
+# for typehints only
+# do not use because it will cause an circular import error in sphix
+# from .wrapper import FusionAddin
 
 # keep all handlers referenced
 _handlers = []
@@ -45,13 +48,11 @@ _handlers = []
 # pylint:disable=arguments-differ
 
 
-def _notify_routine(
-    addin: FusionAddin, cmd_name: str, event_name: str, action: Callable, args
-):
+def _notify_routine(addin, cmd_name: str, event_name: str, action: Callable, args):
     """Executes the handler action and ensures proper logging.
 
     Args:
-        addin (FusionAddin): The addin instance of the parent command.
+        addin(FusionAddin): The addin instance of the parent command.
         cmd_name (str): The command name.
         event_name (str): The name of the event.
         action (Callable): The notify function of the event to execute.
@@ -71,9 +72,7 @@ def _notify_routine(
 
 
 class _InputChangedHandler(adsk.core.InputChangedEventHandler):
-    def __init__(
-        self, addin: FusionAddin, cmd_name: str, event_name: str, action: Callable
-    ):
+    def __init__(self, addin, cmd_name: str, event_name: str, action: Callable):
         """Generic version of a InputChangedHandler class.
 
         All other handler classes behave the same but due to the mro it is not much
@@ -196,7 +195,7 @@ def do_nothing(*args, **kwargs):  # pylint:disable=unused-argument
 class _CommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
     def __init__(
         self,
-        addin: FusionAddin,
+        addin,
         cmd_name: str,
         handler_dict: Dict[str, Callable],
     ):

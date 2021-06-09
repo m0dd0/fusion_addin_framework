@@ -4,7 +4,7 @@ multiple plces in the code in some variation."""
 ### FUSION WRAPPERS ###
 
 
-def using_exisitng(cls, id):  # pylint:disable=redefined-builtin
+def using_exisiting(cls, id):  # pylint:disable=redefined-builtin
     msg = (
         "Using existing {0} (id: {1})."
         # "All arguments except 'id' will be "
