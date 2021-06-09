@@ -1,15 +1,73 @@
+"""This modules contains utility functions."""
+
+from typing import Iterable
 import logging
 
-import adsk, adsk.core
+import adsk.core, adsk.fusion
 
 
-def get_input_values(event_args):
-    pass
-    # TODO implement
+def create_logger(
+    name: str,
+    handlers: Iterable[logging.Handler],
+    level: int = logging.DEBUG,
+    message_format: str = "{asctime} {levelname} {module}/{funcName}: {message}",
+) -> logging.Logger:
+    """Sets up a logger instance with the provided settings.
+
+    The given level and format will be set to all passed handlers.
+    It will be ensured that all handlers are removed before the handlers are added.
+    This can be useful because they will not always get deleted when restarting
+    your addin.
+
+    Args:
+        name (str): The name of the logger.
+        handlers (Iterable[logging.Handler]): A list of handlers to connect to the logger.
+        level (int, optional): The logger level. Defaults to logging.DEBUG.
+        message_format (str, optional): The format string for the handlers. Defaults to "{asctime} {levelname} {module}/{funcName}: {message}".
+
+    Returns:
+        logging.Logger: The configured logger instance.
+    """
+    logger = logging.getLogger(name)
+
+    # logger always at lowest level set only handlers levels are set by level attribute
+    logger.setLevel(logging.DEBUG)
+
+    # delete allexisting handlers, to ensure no duplicated handler is added
+    # when this method is called twice
+    if logger.hasHandlers():
+        logger.handlers.clear()
+
+    # logging format (for all handlers)
+    formatter = logging.Formatter(message_format, style="{")
+
+    for handler in handlers:
+        handler.setFormatter(formatter)
+        handler.setLevel(level)
+        logger.addHandler(handler)
+
+    return logger
+
+
+# TODO implement
+# def get_input_values(event_args: adsk.core.CommandEventArgs):
+#     """Extracts the input values from the commandEventArgs and returns them as a
+#     dict mapping the input id to the value
+
+#     Args:
+#         event_args ([type]): [description]
+#     """
+#     pass
 
 
 class TextPaletteLoggingHandler(logging.StreamHandler):
     def __init__(self):
+        """Logging handler utilizing Fusions text command pallete.
+
+        Using this logging handler logging messages will be displayed in the
+        text command palette in the Fusion GUI.
+        The TextCommand palette needs to be accessed manually.
+        """
         super().__init__()
         self.textPalette = adsk.core.Application.get().userInterface.palettes.itemById(
             "TextCommands"
@@ -22,11 +80,13 @@ class TextPaletteLoggingHandler(logging.StreamHandler):
 
 
 def ui_ids_dict():
-    """
-    dumping the ui strucure to a file:
-    with open(Path(__file__).absolute().parent / "ui_ids.json", "w+") as f:
-        json.dump(ui_ids_dict(), f, indent=4)
+    """Dumps the ids of the fusion user interface element to a hierachical dict.
 
+    To dump the dict to a file use
+    .. code-block:: python
+
+        with open(Path(__file__).absolute().parent / "ui_ids.json", "w+") as f:
+            json.dump(ui_ids_dict(), f, indent=4)
     """
 
     def get_controls(parent):

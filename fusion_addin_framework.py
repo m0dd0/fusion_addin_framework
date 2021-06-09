@@ -13,8 +13,6 @@ import adsk.core, adsk.fusion, adsk.cam
 # using reative imports because editable pip install doesnt work
 from .tests import testcases
 from . import fusion_addin_framework as faf
-from .fusion_addin_framework import py_utils
-from .fusion_addin_framework import fusion_utils
 
 addins = []
 
@@ -25,9 +23,9 @@ def run(context):  # pylint:disable=unused-argument
         app = adsk.core.Application.get()
         ui = app.userInterface
 
-        py_utils.create_logger(
+        faf.utils.create_logger(
             faf.__name__,
-            [logging.StreamHandler(), fusion_utils.TextPaletteLoggingHandler()],
+            [logging.StreamHandler(), faf.utils.TextPaletteLoggingHandler()],
         )
 
         logging.getLogger(faf.__name__).info(

@@ -10,7 +10,7 @@
 
 .. autosummary::
 {% for item in methods %}
-    {% if item != '__init__' %} 
+   {% if item != '__init__' and item not in inherited_members %} 
         ~{{ name }}.{{ item }}
     {% endif %}
 {%- endfor %}
@@ -22,12 +22,18 @@
 
 .. autosummary::
 {% for item in attributes %}
-    ~{{ name }}.{{ item }}
+   {% if item not in inherited_members %}
+         ~{{ name }}.{{ item }}
+   {% endif %}
 {%- endfor %}
 {% endif %}
 
 
+{% if methods %}
 .. autoclass:: {{ module }}.{{ objname }}
-    :members:
+   :members:
+{% else %}
+.. autofunction:: {{ module }}.{{ objname }}
+{% endif %}
    
     

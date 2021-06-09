@@ -1,13 +1,24 @@
+""" """
+
 from collections import defaultdict
 from time import perf_counter
 import traceback
+from typing import List, Callable
 
 import adsk.fusion, adsk.core
 
 from .. import fusion_addin_framework as faf
 
 
-def execute_cases(cases):
+def execute_cases(cases: List[Callable]):
+    """[summary]
+
+    Args:
+        cases (List[Callable]): [description]
+
+    Returns:
+        [type]: [description]
+    """
     results = defaultdict(dict)
     addins = []
     for case in cases:
@@ -25,6 +36,8 @@ def execute_cases(cases):
 
     return results, addins
 
+
+### Testcases (and their subfunctions) ###
 
 # region hello_world_button
 def test_hello_world_button():
@@ -132,6 +145,52 @@ def test_hello_world_checkbox_no_parents():
         )
     except Exception as test_exception:
         raise test_exception
+
+
+def test_hello_world_button_very_custom():
+    cmd = (
+        faf.FusionAddin(debug_to_ui=True)
+        .addin.workspace(
+            id="FusionSolidEnvironment",
+            name="random",
+            productType="DesignProductType",
+            resourceFolder="lightbulb",
+            toolClipFilename="lightbulb",
+            tooltip="",
+            tooltipDescription="",
+        )
+        .tab(
+            id="default",
+            name="random",
+        )
+        .panel(
+            id="default",
+            name="random",
+            positionID="",
+            isBefore=True,
+        )
+        .control(
+            control_type="button",
+            isVisible=True,
+            isPromoted=True,
+            isPromotedByDefault=True,
+            positionID=None,
+            isBefore=True,
+        )
+        .addin_command(
+            id="random",
+            name="random",
+            resourceFolder="lightbulb",
+            tooltip="",
+            toolClipFileName=None,
+            isEnabled=True,
+            isVisible=True,
+            isChecked=True,
+            onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+                "hello world"
+            ),
+        )
+    )
 
 
 # endregion
@@ -249,7 +308,7 @@ def test_access_all_properties_default_button():
 
 
 # region setting paramters
-def test_highly_custom_button_checkbox():
+def test_highly_custom_button_and_checkbox():
     pass
     # try:
     #     ws = faf.Workspace(addin)
@@ -274,3 +333,11 @@ def test_all_handlers_checkbox():
 
 
 # enregion
+
+
+def test_multiple_controls():
+    pass
+
+
+def test_empty_control():
+    pass
