@@ -11,13 +11,15 @@ from .. import fusion_addin_framework as faf
 
 
 def execute_cases(cases: List[Callable]):
-    """[summary]
+    """Executes the passed functions in a controlled environment and logs some
+        data about their axacution.
 
     Args:
-        cases (List[Callable]): [description]
+        cases (List[Callable]): A list of the testfuctions to execute.
 
     Returns:
-        [type]: [description]
+        dict: A dictionairy with the test resulte mapped to the function name.
+        list: A list of addins which where created durin the execution of the tests.
     """
     results = defaultdict(dict)
     addins = []
@@ -37,7 +39,7 @@ def execute_cases(cases: List[Callable]):
     return results, addins
 
 
-### Testcases (and their subfunctions) ###
+### Testcases ###
 
 
 def test_hello_world_button_normal():
@@ -69,7 +71,7 @@ def test_hello_world_button_dotted():
             .tab()
             .panel()
             .control()
-            .addin_command(
+            .addinCommand(
                 onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
                     "hello world"
                 ),
@@ -93,27 +95,107 @@ def test_hello_world_button_defaults():
 
 
 def test_checkbox_normal():
-    pass
+    addin = faf.FusionAddin()
+    try:
+        ws = faf.Workspace(addin)
+        tab = faf.Tab(ws)
+        panel = faf.Panel(tab)
+        checkbox = faf.Control(panel, controlType="checkbox")
+        cmd = faf.AddinCommand(
+            checkbox,
+            onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+                "hello world"
+            ),
+        )
+    except Exception as test_exception:
+        addin.stop()
+        raise test_exception
+    return addin
 
 
 def test_checkbox_dotted():
-    pass
+    addin = faf.FusionAddin()
+    try:
+        cmd = (
+            addin.workspace()
+            .tab()
+            .panel()
+            .control(controlType="checkbox")
+            .addinCommand(
+                onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+                    "hello world"
+                ),
+            )
+        )
+    except Exception as test_exception:
+        addin.stop()
+        raise test_exception
+    return addin
 
 
 def test_checkbox_defaults():
-    pass
+    try:
+        checkbox = faf.Control(controlType="checkbox")
+        cmd = faf.AddinCommand(
+            checkbox,
+            onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+                "hello world"
+            ),
+        )
+    except Exception as test_exception:
+        raise test_exception
 
 
 def test_list_normal():
-    pass
+    addin = faf.FusionAddin()
+    try:
+        ws = faf.Workspace(addin)
+        tab = faf.Tab(ws)
+        panel = faf.Panel(tab)
+        checkbox = faf.Control(panel, controlType="list")
+        cmd = faf.AddinCommand(
+            checkbox,
+            onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+                "hello world"
+            ),
+        )
+    except Exception as test_exception:
+        addin.stop()
+        raise test_exception
+    return addin
 
 
 def test_list_dotted():
-    pass
+    addin = faf.FusionAddin()
+    try:
+        cmd = (
+            addin.workspace()
+            .tab()
+            .panel()
+            .control(controlType="list")
+            .addinCommand(
+                onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+                    "hello world"
+                ),
+            )
+        )
+    except Exception as test_exception:
+        addin.stop()
+        raise test_exception
+    return addin
 
 
 def test_list_defaults():
-    pass
+    try:
+        checkbox = faf.Control(controlType="list")
+        cmd = faf.AddinCommand(
+            checkbox,
+            onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+                "hello world"
+            ),
+        )
+    except Exception as test_exception:
+        raise test_exception
 
 
 def test_very_custom_button():
@@ -139,14 +221,14 @@ def test_very_custom_button():
             isBefore=True,
         )
         .control(
-            control_type="button",
+            controlType="button",
             isVisible=True,
             isPromoted=True,
             isPromotedByDefault=True,
             positionID=None,
             isBefore=True,
         )
-        .addin_command(
+        .addinCommand(
             id="random",
             name="random",
             resourceFolder="lightbulb",
@@ -170,6 +252,7 @@ def test_very_custom_list():
     pass
 
 
+# TODO check also setability
 # region access attributes
 def test_addin_properties():
     pass

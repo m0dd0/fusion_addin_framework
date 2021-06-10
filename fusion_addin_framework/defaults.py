@@ -97,7 +97,7 @@ def eval_name(value: str, cls) -> str:
         str: The ultimately used name.
     """
     if value == "random":
-        value = random.choice(random_names[cls.__name__])
+        value = random.choice(random_names.get(cls.__name__, ["Unnamed"]))
     return value
 
 

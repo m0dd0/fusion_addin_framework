@@ -91,7 +91,6 @@ class _FusionWrapper(ABC):
             super().__setattr__(name, value)
 
     # simply override the properties to use individual docstrings
-    # region
     @property
     def parent(self):
         """The parent wrapper-instance of this wrapper-instance.
@@ -113,8 +112,6 @@ class _FusionWrapper(ABC):
     def addin(self):
         """The addin instance which manages this instance."""
         return self._addin
-
-    # endregion
 
 
 class FusionAddin:
@@ -451,7 +448,7 @@ class Control(_FusionWrapper):
     def __init__(
         self,
         parent: Panel = None,  # TODO allow multiple parents ?!
-        control_type: str = "button",
+        controlType: str = "button",
         isVisible: bool = True,
         isPromoted: bool = True,
         isPromotedByDefault: bool = True,
@@ -464,7 +461,9 @@ class Control(_FusionWrapper):
 
         Args:
             parent (Panel): [description]
-            control_type (str)
+            controlType (str): If you use a checkbox or list you should set isPromoted and isPromotedByDefault to False.
+                Otherwise an additional button which has no functionality will be created.
+                This is caused by the somewhat misleading behavior from ths Fusion API.
             isVisible (bool): [description]
             isPromoted (bool): [description]
             isPromotedByDefault (bool): [description]
@@ -481,14 +480,14 @@ class Control(_FusionWrapper):
 
         # create a dummy control so a control is displayed in the UI even if no
         # command was created
-        if control_type == "button":
+        if controlType == "button":
             dummy_cmd_def = adsk.core.Application.get().userInterface.commandDefinitions.addButtonDefinition(
                 str(uuid4()),
                 "<no command connected>",
                 "",
                 dflts.eval_image("transparent"),
             )
-        elif control_type == "checkbox":
+        elif controlType == "checkbox":
             dummy_cmd_def = adsk.core.Application.get().userInterface.commandDefinitions.addCheckBoxDefinition(
                 str(uuid4()),
                 "<no command connected>",
@@ -496,7 +495,7 @@ class Control(_FusionWrapper):
                 False,
             )
             dummy_cmd_def.controlDefinition.isChecked = False
-        elif control_type == "list":
+        elif controlType == "list":
             dummy_cmd_def = adsk.core.Application.get().userInterface.commandDefinitions.addListDefinition(
                 str(uuid4()),
                 "<no command connected>",
@@ -540,7 +539,7 @@ class Control(_FusionWrapper):
 
         self.addin.register_element(self, self.ui_level)
 
-    def addin_command(self, *args, **kwargs):
+    def addinCommand(self, *args, **kwargs):
         """[summary]
 
         Returns:
@@ -741,18 +740,18 @@ class AddinCommand(_FusionWrapper):
 
         logging.getLogger(__name__).info(msgs.created_new(__class__, id))
 
-    def add_parent_control(self, parent_control):
+    def addParentControl(self, parentControl):
         """[summary]
 
         Args:
             parent ([type]): [description]
         """
-        parent_control._create_control(  # pylint:disable=protected-access
+        parentControl._create_control(  # pylint:disable=protected-access
             self._in_fusion
         )
         if not isinstance(self._parent, list):
             self._parent = [self._parent]
-        self._parent.append(parent_control)
+        self._parent.append(parentControl)
 
     def __getattr__(self, attr):
         try:
