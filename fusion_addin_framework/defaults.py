@@ -119,5 +119,5 @@ def eval_image(value: str, size=None) -> str:
         else:
             value = default_images[value]
     if isinstance(value, Path):
-        value = str(value)
+        value = value.as_posix()
     return value

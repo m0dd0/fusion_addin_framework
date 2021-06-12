@@ -59,6 +59,10 @@ If you want to make your addin pulicly available you need to attribute the autho
 of these images. See https://support.flaticon.com/hc/en-us/articles/207248209-How-I-must-insert-the-attribution-
 for more details. 
 
+API errors and undocumented behavior
+------------------------------------
+The commandDefinition.tooltip property will alway return an empty string.
+Changes to the attribute will be reflected in the UI though.
 
 
 .. toctree::

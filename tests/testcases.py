@@ -261,8 +261,8 @@ def test_very_custom_button():
             id="FusionSolidEnvironment",
             name="my test name",
             productType="DesignProductType",
-            resourceFolder=r"C:\Users\mohes\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\fusion_addin_framework\tests\test_images",
-            toolClipFilename=r"C:\Users\mohes\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\fusion_addin_framework\tests\test_images\32x32.png",
+            resourceFolder=r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/tests/test_images",
+            toolClipFilename=r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/tests/test_images/32x32.png",
             tooltip="my test tooltip",
             tooltipDescription="my test tooltip description",
         )
@@ -291,9 +291,9 @@ def test_very_custom_button():
             ctrl,
             id="mycustomcmdid",
             name="ma command",
-            resourceFolder=r"C:\Users\mohes\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\fusion_addin_framework\tests\test_images",
+            resourceFolder=r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/tests/test_images",
             tooltip="my custom tooltip",
-            toolClipFileName=r"C:\Users\mohes\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\fusion_addin_framework\tests\test_images\32x32.png",
+            toolClipFileName=r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/tests/test_images/32x32.png",
             isEnabled=True,
             isVisible=True,
             isChecked=True,
@@ -315,8 +315,8 @@ def test_very_custom_checkbox():
             id="FusionSolidEnvironment",
             name="my test name",
             productType="DesignProductType",
-            resourceFolder=r"C:\Users\mohes\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\fusion_addin_framework\tests\test_images",
-            toolClipFilename=r"C:\Users\mohes\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\fusion_addin_framework\tests\test_images\32x32.png",
+            resourceFolder=r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/tests/test_images",
+            toolClipFilename=r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/tests/test_images/32x32.png",
             tooltip="my test tooltip",
             tooltipDescription="my test tooltip description",
         )
@@ -345,9 +345,9 @@ def test_very_custom_checkbox():
             ctrl,
             id="mycustomcheckboxcmdid",
             name="ma command",
-            resourceFolder=r"C:\Users\mohes\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\fusion_addin_framework\tests\test_images",
+            resourceFolder=r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/tests/test_images",
             tooltip="my custom tooltip",
-            toolClipFileName=r"C:\Users\mohes\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\fusion_addin_framework\tests\test_images\32x32.png",
+            toolClipFileName=r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/tests/test_images/32x32.png",
             isEnabled=True,
             isVisible=True,
             isChecked=True,
@@ -369,8 +369,8 @@ def test_very_custom_list():
             id="FusionSolidEnvironment",
             name="my test name",
             productType="DesignProductType",
-            resourceFolder=r"C:\Users\mohes\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\fusion_addin_framework\tests\test_images",
-            toolClipFilename=r"C:\Users\mohes\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\fusion_addin_framework\tests\test_images\32x32.png",
+            resourceFolder=r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/tests/test_images",
+            toolClipFilename=r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/tests/test_images/32x32.png",
             tooltip="my test tooltip",
             tooltipDescription="my test tooltip description",
         )
@@ -399,9 +399,9 @@ def test_very_custom_list():
             ctrl,
             id="mycustomlistcmdid",
             name="ma command",
-            resourceFolder=r"C:\Users\mohes\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\fusion_addin_framework\tests\test_images",
+            resourceFolder=r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/tests/test_images",
             tooltip="my custom tooltip",
-            toolClipFileName=r"C:\Users\mohes\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\fusion_addin_framework\tests\test_images\32x32.png",
+            toolClipFileName=r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/tests/test_images/32x32.png",
             isEnabled=True,
             isVisible=True,
             isChecked=True,
@@ -433,11 +433,11 @@ def test_workspace_properties():
         addin = faf.FusionAddin()
         ws = faf.Workspace(
             addin,
-            id="FusionSolidEnvironment",
+            id="FusionSolidEnvironment",  # TODO test custom ws with posix path
             name="my test name",
             productType="DesignProductType",
-            resourceFolder=r"C:\Users\mohes\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\fusion_addin_framework\tests\test_images",
-            toolClipFilename=r"C:\Users\mohes\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\fusion_addin_framework\tests\test_images\32x32.png",
+            resourceFolder=r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/tests/test_images",
+            toolClipFilename=r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/tests/test_images/32x32.png",
             tooltip="my test tooltip",
             tooltipDescription="my test tooltip description",
         )
@@ -543,68 +543,234 @@ def test_panel_properties():
     return addin
 
 
-def test_button_properteis():
+def test_button_properties():
     try:
         addin = faf.FusionAddin()
         ws = faf.Workspace(addin)
         tab = faf.Tab(ws)
         panel = faf.Panel(tab)
-        button = faf.Control(panel)
+        button = faf.Control(
+            panel,
+            controlType="button",
+            isVisible=True,
+            isPromoted=True,
+            isPromotedByDefault=True,
+            positionID="",
+            isBefore=True,
+        )
+        print(button.parent)
+        print(button.addin)
+        assert button.ui_level == 4
+
+        print(button.commandDefinition)
+        print(button.id)
+        assert button.isPromoted == True
+        button.isPromoted = False
+        assert button.isPromoted == False
+        assert button.isPromotedByDefault == True
+        button.isPromotedByDefault = False
+        assert button.isPromotedByDefault == False
+        assert button.isValid == True
+        print(button.isVisible)
+        print(button.objectType)
+        print(button.parent)
+
+        print(button.classType())
+        print(button.deleteMe)
+
+        assert (
+            button.commandDefinition.controlDefinition.objectType
+            == adsk.core.ButtonControlDefinition.classType()
+        )
 
     except Exception as test_exception:
         addin.stop()
         raise test_exception
     return addin
 
-    # def test_checkbox_properties():
-    #     try:
-    #         addin = faf.FusionAddin()
-    #         ws = faf.Workspace(addin)
-    #         tab = faf.Tab(ws)
-    #         panel = faf.Panel(tab)
-    #         button = faf.Control(panel)
 
-    #     except Exception as test_exception:
-    #         addin.stop()
-    #         raise test_exception
-    #     return addin
+def test_checkbox_properties():
+    try:
+        addin = faf.FusionAddin()
+        ws = faf.Workspace(addin)
+        tab = faf.Tab(ws)
+        panel = faf.Panel(tab)
+        checkbox = faf.Control(
+            panel,
+            controlType="checkbox",
+            isVisible=True,
+            isPromoted=True,
+            isPromotedByDefault=True,
+            positionID="",
+            isBefore=True,
+        )
+        print(checkbox.parent)
+        print(checkbox.addin)
+        assert checkbox.ui_level == 4
 
-    # def test_list_properties():
-    #     try:
-    #         addin = faf.FusionAddin()
-    #         ws = faf.Workspace(addin)
-    #         tab = faf.Tab(ws)
-    #         panel = faf.Panel(tab)
-    #         button = faf.Control(panel)
+        print(checkbox.commandDefinition)
+        print(checkbox.id)
+        assert checkbox.isPromoted == True
+        checkbox.isPromoted = False
+        assert checkbox.isPromoted == False
+        assert checkbox.isPromotedByDefault == True
+        checkbox.isPromotedByDefault = False
+        assert checkbox.isPromotedByDefault == False
+        assert checkbox.isValid == True
+        print(checkbox.isVisible)
+        print(checkbox.objectType)
+        print(checkbox.parent)
 
-    #     except Exception as test_exception:
-    #         addin.stop()
-    #         raise test_exception
-    #     return addin
+        print(checkbox.classType())
+        print(checkbox.deleteMe)
 
-    # def test_command_properties():
-    #     try:
-    #         addin = faf.FusionAddin()
-    #         ws = faf.Workspace(addin)
-    #         tab = faf.Tab(ws)
-    #         panel = faf.Panel(tab)
-    #         button = faf.Control(panel)
-    #         cmd = faf.AddinCommand(
-    #             button,
-    #             onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
-    #                 "hello world"
-    #             ),
-    #         )
-    #     except Exception as test_exception:
-    #         addin.stop()
-    #         raise test_exception
-    #     return addin
+        assert (
+            checkbox.commandDefinition.controlDefinition.objectType
+            == adsk.core.CheckBoxControlDefinition.classType()
+        )
 
-    # def test_all_handlers_buttton():
-    #     pass
+    except Exception as test_exception:
+        addin.stop()
+        raise test_exception
+    return addin
 
-    # def test_multiple_controls():
-    #     pass
 
-    # def test_empty_control():
-    pass
+def test_list_properties():
+    try:
+        addin = faf.FusionAddin()
+        ws = faf.Workspace(addin)
+        tab = faf.Tab(ws)
+        panel = faf.Panel(tab)
+        list_ctrl = faf.Control(
+            panel,
+            controlType="list",
+            isVisible=True,
+            isPromoted=True,
+            isPromotedByDefault=True,
+            positionID="",
+            isBefore=True,
+        )
+        print(list_ctrl.parent)
+        print(list_ctrl.addin)
+        assert list_ctrl.ui_level == 4
+
+        print(list_ctrl.commandDefinition)
+        print(list_ctrl.id)
+        assert list_ctrl.isPromoted == True
+        list_ctrl.isPromoted = False
+        assert list_ctrl.isPromoted == False
+        assert list_ctrl.isPromotedByDefault == True
+        list_ctrl.isPromotedByDefault = False
+        assert list_ctrl.isPromotedByDefault == False
+        assert list_ctrl.isValid == True
+        print(list_ctrl.isVisible)
+        print(list_ctrl.objectType)
+        print(list_ctrl.parent)
+
+        print(list_ctrl.classType())
+        print(list_ctrl.deleteMe)
+
+        assert (
+            list_ctrl.commandDefinition.controlDefinition.objectType
+            == adsk.core.ListControlDefinition.classType()
+        )
+
+    except Exception as test_exception:
+        addin.stop()
+        raise test_exception
+    return addin
+
+
+def test_button_command_properties():
+    try:
+        addin = faf.FusionAddin()
+        ws = faf.Workspace(addin)
+        tab = faf.Tab(ws)
+        panel = faf.Panel(tab)
+        button = faf.Control(panel)
+        cmd = faf.AddinCommand(
+            button,
+            id="test_button_command_properties_cmd_id",
+            name="ma command",
+            resourceFolder=r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/tests/test_images",
+            tooltip="my custom tooltip",
+            toolClipFileName=r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/tests/test_images/32x32.png",
+            isEnabled=True,
+            isVisible=True,
+            isChecked=True,
+            onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+                "hello world"
+            ),
+        )
+        print(cmd.parent)
+        print(cmd.addin)
+        assert cmd.ui_level == 5
+
+        # controlDefinition attributes
+        print(cmd.controlDefinition)
+        assert cmd.isEnabled == True
+        cmd.isEnabled = False
+        assert cmd.isEnabled == False
+        assert cmd.isValid == True
+        assert cmd.isVisible == True
+        cmd.isVisible = False
+        assert cmd.isVisible == False
+        # assert cmd.name == "ma command"
+        # cmd.name = "2"
+        # assert cmd.name == "2"
+        # print(cmd.objectType)
+
+        # commandDefinition attributes
+        assert cmd.id == "test_button_command_properties_cmd_id"
+        assert cmd.isNative == False
+        assert cmd.isValid == True
+        assert cmd.name == "ma command"
+        cmd.name = "2"
+        assert cmd.name == "2"
+        print(cmd.objectType)
+        assert (
+            cmd.resourceFolder
+            == r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/tests/test_images"
+        )
+        # this seems like an error in the API which doesnt allow to change the resouceFolder after initialization
+        # cmd.resourceFolder = r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/fusion_addin_framework/default_images/cubes"
+        print(cmd.resourceFolder)
+        # assert (
+        #     cmd.resourceFolder
+        #     == r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/fusion_addin_framework/default_images/cubes"
+        # )
+        assert (
+            cmd.toolClipFilename
+            == r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/tests/test_images/32x32.png"
+        )
+        # cmd.toolClipFilename = r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/fusion_addin_framework/default_images/cubes/32x32.png"
+        # assert (
+        #     cmd.toolClipFilename
+        #     == r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/fusion_addin_framework/default_images/cubes/32x32.png"
+        # )
+        print(cmd.tooltip)
+        print("####")
+        cmd.tooltip = "asdasaweraerd"
+        print(cmd.tooltip)
+        # assert cmd.tooltip == "my custom tooltip"
+        # cmd.tooltip = "2"
+        # assert cmd.tooltip == "2"
+
+        print(cmd.classType())
+        print(cmd.deleteMe)
+        print(cmd.execute)
+
+    except Exception as test_exception:
+        addin.stop()
+        raise test_exception
+    return addin
+
+
+# def test_all_handlers_buttton():
+#     pass
+
+# def test_multiple_controls():
+#     pass
+
+# def test_empty_control():
+# pass
