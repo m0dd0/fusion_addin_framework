@@ -43,14 +43,12 @@ def execute_cases(cases: List[Callable]):
 
 
 def test_hello_world_button_normal():
-    addin = faf.FusionAddin()
     try:
+        addin = faf.FusionAddin()
         ws = faf.Workspace(addin)
         tab = faf.Tab(ws)
         panel = faf.Panel(tab)
-        button = faf.Control(
-            panel,
-        )
+        button = faf.Control(panel)
         cmd = faf.AddinCommand(
             button,
             onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
@@ -64,8 +62,8 @@ def test_hello_world_button_normal():
 
 
 def test_hello_world_button_dotted():
-    addin = faf.FusionAddin()
     try:
+        addin = faf.FusionAddin()
         cmd = (
             addin.workspace()
             .tab()
@@ -91,12 +89,14 @@ def test_hello_world_button_defaults():
             )
         )
     except Exception as test_exception:
+        cmd.addin.stop()
         raise test_exception
+    return cmd.addin
 
 
 def test_checkbox_normal():
-    addin = faf.FusionAddin()
     try:
+        addin = faf.FusionAddin()
         ws = faf.Workspace(addin)
         tab = faf.Tab(ws)
         panel = faf.Panel(tab)
@@ -114,8 +114,8 @@ def test_checkbox_normal():
 
 
 def test_checkbox_dotted():
-    addin = faf.FusionAddin()
     try:
+        addin = faf.FusionAddin()
         cmd = (
             addin.workspace()
             .tab()
@@ -143,12 +143,14 @@ def test_checkbox_defaults():
             ),
         )
     except Exception as test_exception:
+        checkbox.addin.stop()
         raise test_exception
+    return checkbox.addin
 
 
 def test_list_normal():
-    addin = faf.FusionAddin()
     try:
+        addin = faf.FusionAddin()
         ws = faf.Workspace(addin)
         tab = faf.Tab(ws)
         panel = faf.Panel(tab)
@@ -166,8 +168,8 @@ def test_list_normal():
 
 
 def test_list_dotted():
-    addin = faf.FusionAddin()
     try:
+        addin = faf.FusionAddin()
         cmd = (
             addin.workspace()
             .tab()
@@ -187,53 +189,111 @@ def test_list_dotted():
 
 def test_list_defaults():
     try:
-        checkbox = faf.Control(controlType="list")
+        list_ctrl = faf.Control(controlType="list")
         cmd = faf.AddinCommand(
-            checkbox,
+            list_ctrl,
             onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
                 "hello world"
             ),
         )
     except Exception as test_exception:
+        list_ctrl.addin.stop()
         raise test_exception
+    return list_ctrl.addin
+
+
+def test_standard_attrs_button():
+    try:
+        cmd = (
+            faf.FusionAddin(debug_to_ui=True)
+            .workspace(
+                id="FusionSolidEnvironment",
+                name="random",
+                productType="DesignProductType",
+                resourceFolder="lightbulb",
+                toolClipFilename="lightbulb",
+                tooltip="",
+                tooltipDescription="",
+            )
+            .tab(
+                id="default",
+                name="random",
+            )
+            .panel(
+                id="default",
+                name="random",
+                positionID="",
+                isBefore=True,
+            )
+            .control(
+                controlType="button",
+                isVisible=True,
+                isPromoted=True,
+                isPromotedByDefault=True,
+                positionID="",
+                isBefore=True,
+            )
+            .addinCommand(
+                id="random",
+                name="random",
+                resourceFolder="lightbulb",
+                tooltip="",
+                toolClipFileName=None,
+                isEnabled=True,
+                isVisible=True,
+                isChecked=True,
+                onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+                    "hello world"
+                ),
+            )
+        )
+    except Exception as test_exception:
+        cmd.addin.stop()
+        raise test_exception
+    return cmd.addin
 
 
 def test_very_custom_button():
-    cmd = (
-        faf.FusionAddin(debug_to_ui=True)
-        .workspace(
+    try:
+        addin = faf.FusionAddin(debug_to_ui=True)
+        ws = faf.Workspace(
+            addin,
             id="FusionSolidEnvironment",
-            name="random",
+            name="my test name",
             productType="DesignProductType",
-            resourceFolder="lightbulb",
-            toolClipFilename="lightbulb",
-            tooltip="",
-            tooltipDescription="",
+            resourceFolder=r"C:\Users\mohes\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\fusion_addin_framework\tests\test_images",
+            toolClipFilename=r"C:\Users\mohes\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\fusion_addin_framework\tests\test_images\32x32.png",
+            tooltip="my test tooltip",
+            tooltipDescription="my test tooltip description",
         )
-        .tab(
-            id="default",
-            name="random",
+        tab = faf.Tab(
+            ws,
+            id="my test tab id",
+            name="my name",
         )
-        .panel(
-            id="default",
-            name="random",
+        panel = faf.Panel(
+            tab,
+            id="mytestpanelid",
+            name="my panels name",
             positionID="",
             isBefore=True,
         )
-        .control(
+        ctrl = faf.Control(
+            panel,
             controlType="button",
             isVisible=True,
             isPromoted=True,
             isPromotedByDefault=True,
-            positionID=None,
+            positionID="",
             isBefore=True,
         )
-        .addinCommand(
-            id="random",
-            name="random",
-            resourceFolder="lightbulb",
-            tooltip="",
-            toolClipFileName=None,
+        cmd = faf.AddinCommand(
+            ctrl,
+            id="mycustomcmdid",
+            name="ma command",
+            resourceFolder=r"C:\Users\mohes\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\fusion_addin_framework\tests\test_images",
+            tooltip="my custom tooltip",
+            toolClipFileName=r"C:\Users\mohes\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\fusion_addin_framework\tests\test_images\32x32.png",
             isEnabled=True,
             isVisible=True,
             isChecked=True,
@@ -241,115 +301,310 @@ def test_very_custom_button():
                 "hello world"
             ),
         )
-    )
+    except Exception as test_exception:
+        addin.stop()
+        raise test_exception
+    return addin
 
 
 def test_very_custom_checkbox():
-    pass
+    try:
+        addin = faf.FusionAddin(debug_to_ui=True)
+        ws = faf.Workspace(
+            addin,
+            id="FusionSolidEnvironment",
+            name="my test name",
+            productType="DesignProductType",
+            resourceFolder=r"C:\Users\mohes\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\fusion_addin_framework\tests\test_images",
+            toolClipFilename=r"C:\Users\mohes\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\fusion_addin_framework\tests\test_images\32x32.png",
+            tooltip="my test tooltip",
+            tooltipDescription="my test tooltip description",
+        )
+        tab = faf.Tab(
+            ws,
+            id="my test tab id",
+            name="my name",
+        )
+        panel = faf.Panel(
+            tab,
+            id="mytestpanelid",
+            name="my panels name",
+            positionID="",
+            isBefore=True,
+        )
+        ctrl = faf.Control(
+            panel,
+            controlType="checkbox",
+            isVisible=True,
+            isPromoted=True,
+            isPromotedByDefault=True,
+            positionID="",
+            isBefore=True,
+        )
+        cmd = faf.AddinCommand(
+            ctrl,
+            id="mycustomcheckboxcmdid",
+            name="ma command",
+            resourceFolder=r"C:\Users\mohes\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\fusion_addin_framework\tests\test_images",
+            tooltip="my custom tooltip",
+            toolClipFileName=r"C:\Users\mohes\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\fusion_addin_framework\tests\test_images\32x32.png",
+            isEnabled=True,
+            isVisible=True,
+            isChecked=True,
+            onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+                "hello world"
+            ),
+        )
+    except Exception as test_exception:
+        addin.stop()
+        raise test_exception
+    return addin
 
 
 def test_very_custom_list():
-    pass
+    try:
+        addin = faf.FusionAddin(debug_to_ui=True)
+        ws = faf.Workspace(
+            addin,
+            id="FusionSolidEnvironment",
+            name="my test name",
+            productType="DesignProductType",
+            resourceFolder=r"C:\Users\mohes\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\fusion_addin_framework\tests\test_images",
+            toolClipFilename=r"C:\Users\mohes\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\fusion_addin_framework\tests\test_images\32x32.png",
+            tooltip="my test tooltip",
+            tooltipDescription="my test tooltip description",
+        )
+        tab = faf.Tab(
+            ws,
+            id="my test tab id",
+            name="my name",
+        )
+        panel = faf.Panel(
+            tab,
+            id="mytestpanelid",
+            name="my panels name",
+            positionID="",
+            isBefore=True,
+        )
+        ctrl = faf.Control(
+            panel,
+            controlType="list",
+            isVisible=True,
+            isPromoted=True,
+            isPromotedByDefault=True,
+            positionID="",
+            isBefore=True,
+        )
+        cmd = faf.AddinCommand(
+            ctrl,
+            id="mycustomlistcmdid",
+            name="ma command",
+            resourceFolder=r"C:\Users\mohes\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\fusion_addin_framework\tests\test_images",
+            tooltip="my custom tooltip",
+            toolClipFileName=r"C:\Users\mohes\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\fusion_addin_framework\tests\test_images\32x32.png",
+            isEnabled=True,
+            isVisible=True,
+            isChecked=True,
+            onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+                "hello world"
+            ),
+        )
+    except Exception as test_exception:
+        addin.stop()
+        raise test_exception
+    return addin
 
 
-# TODO check also setability
-# region access attributes
 def test_addin_properties():
-    pass
-    # print(addin.name)
-    # print(addin.author)
-    # print(addin.debug_to_ui)
-    # print(addin.user_state_dir)
-    # print(addin.user_cache_dir)
-    # print(addin.user_config_dir)
-    # print(addin.user_data_dir)
-    # print(addin.user_log_dir)
-    # print(addin.ui_level)
-    # print(addin.created_elements)
+    try:
+        addin = faf.FusionAddin(debug_to_ui=False)
+        assert addin.debug_to_ui == False
+        addin.debug_to_ui = True
+        assert addin.debug_to_ui == True
+        assert addin.ui_level == 0
+    except Exception as test_exception:
+        addin.stop()
+        raise test_exception
+    return addin
 
 
 def test_workspace_properties():
-    pass
-    # print(workspace.parent)
-    # print(workspace.addin)
-    # print(workspace.ui_level)
+    try:
+        addin = faf.FusionAddin()
+        ws = faf.Workspace(
+            addin,
+            id="FusionSolidEnvironment",
+            name="my test name",
+            productType="DesignProductType",
+            resourceFolder=r"C:\Users\mohes\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\fusion_addin_framework\tests\test_images",
+            toolClipFilename=r"C:\Users\mohes\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\fusion_addin_framework\tests\test_images\32x32.png",
+            tooltip="my test tooltip",
+            tooltipDescription="my test tooltip description",
+        )
+        print(ws.parent)
+        print(ws.addin)
+        assert ws.ui_level == 1
 
-    # print(workspace.id)
-    # print(workspace.isActive)
-    # print(workspace.isNative)
-    # print(workspace.isValid)
-    # print(workspace.name)
-    # print(workspace.objectType)
-    # print(workspace.productType)
-    # print(workspace.resourceFolder)
-    # print(workspace.toolbarPanels)
-    # print(workspace.toolbarTabs)
-    # print(workspace.toolClipFileName)
-    # print(workspace.tooltip)
-    # print(workspace.tooltipDescription)
+        assert ws.id == "FusionSolidEnvironment"
+        print(ws.isActive)
+        assert ws.isNative == True
+        assert ws.isValid == True
+        print(ws.name)
+        print(ws.objectType)
+        assert ws.productType == "DesignProductType"
+        print(ws.toolbarPanels)
+        print(ws.toolbarTabs)
+        print(ws.resourceFolder)
+        print(ws.toolClipFilename)
+        print(ws.tooltip)
+        print(ws.tooltipDescription)
+        # no setable attributes
+
+        print(ws.activate)
+        print(ws.deleteMe)
+        print(ws.classType())
+    except Exception as test_exception:
+        addin.stop()
+        raise test_exception
+    return addin
 
 
 def test_tab_properties():
-    pass
-    # print(tab.parent)
-    # print(tab.addin)
-    # print(tab.ui_level)
+    try:
+        addin = faf.FusionAddin()
+        ws = faf.Workspace(addin)
+        tab = faf.Tab(
+            ws,
+            id="test_tab_properties_tab_id",
+            name="my name",
+        )
+        print(tab.parent)
+        print(tab.addin)
+        assert tab.ui_level == 2
 
-    # print(tab.id)
-    # print(tab.index)
-    # print(tab.isActive)
-    # print(tab.isNative)
-    # print(tab.isValid)
-    # print(tab.isVisible)
-    # print(tab.name)
-    # print(tab.objectType)
-    # print(tab.parenUserInterface)
-    # print(tab.productType)
-    # print(tab.toolbarPanels)
+        assert tab.id == "test_tab_properties_tab_id"
+        print(tab.index)
+        print(tab.isActive)
+        assert tab.isNative == False
+        assert tab.isValid == True
+        print(tab.isVisible)
+        assert tab.name == "my name"
+        print(tab.objectType)
+        print(tab.parentUserInterface)
+        assert tab.productType == "DesignProductType"
+        print(tab.toolbarPanels)
+        # no setable attributes
+
+        print(tab.activate)
+        print(tab.deleteMe)
+        print(tab.classType())
+
+    except Exception as test_exception:
+        addin.stop()
+        raise test_exception
+    return addin
 
 
 def test_panel_properties():
-    pass
-    # print(panel.parent)
-    # print(panel.addin)
-    # print(panel.ui_level)
+    try:
+        addin = faf.FusionAddin()
+        ws = faf.Workspace(addin)
+        tab = faf.Tab(ws)
+        panel = faf.Panel(
+            tab,
+            id="test_panel_properties_panel_id",
+            name="my panels name",
+            positionID="",
+            isBefore=True,
+        )
+        print(tab.parent)
+        print(tab.addin)
+        assert tab.ui_level == 3
 
-    # print(panel.controls)
-    # print(panel.id)
-    # print(panel.index)
-    # print(panel.isValid)
-    # print(panel.isVisible)
-    # print(panel.name)
-    # print(panel.objectType)
-    # print(panel.parenUserInterface)
-    # print(panel.productType)
-    # print(panel.promotedControls)
-    # print(panel.relatedWorkspaces)
+        print(panel.controls)
+        assert panel.id == "test_panel_properties_panel_id"
+        assert panel.isValid == True
+        print(panel.isVisible)
+        assert panel.name == "my panels name"
+        print(panel.objectType)
+        print(panel.parentUserInterface)
+        assert panel.productType == "DesignProductType"
+        print(panel.promotedControls)
+        print(panel.relatedWorkspaces)
+        # no setable attributes
+
+        print(panel.classType())
+        print(panel.deleteMe)
+        print(panel.indexWithinTab())
+
+    except Exception as test_exception:
+        addin.stop()
+        raise test_exception
+    return addin
 
 
 def test_button_properteis():
-    pass
+    try:
+        addin = faf.FusionAddin()
+        ws = faf.Workspace(addin)
+        tab = faf.Tab(ws)
+        panel = faf.Panel(tab)
+        button = faf.Control(panel)
 
+    except Exception as test_exception:
+        addin.stop()
+        raise test_exception
+    return addin
 
-def test_checkbox_properties():
-    pass
+    # def test_checkbox_properties():
+    #     try:
+    #         addin = faf.FusionAddin()
+    #         ws = faf.Workspace(addin)
+    #         tab = faf.Tab(ws)
+    #         panel = faf.Panel(tab)
+    #         button = faf.Control(panel)
 
+    #     except Exception as test_exception:
+    #         addin.stop()
+    #         raise test_exception
+    #     return addin
 
-def test_list_properties():
-    pass
+    # def test_list_properties():
+    #     try:
+    #         addin = faf.FusionAddin()
+    #         ws = faf.Workspace(addin)
+    #         tab = faf.Tab(ws)
+    #         panel = faf.Panel(tab)
+    #         button = faf.Control(panel)
 
+    #     except Exception as test_exception:
+    #         addin.stop()
+    #         raise test_exception
+    #     return addin
 
-def test_command_properties():
-    pass
+    # def test_command_properties():
+    #     try:
+    #         addin = faf.FusionAddin()
+    #         ws = faf.Workspace(addin)
+    #         tab = faf.Tab(ws)
+    #         panel = faf.Panel(tab)
+    #         button = faf.Control(panel)
+    #         cmd = faf.AddinCommand(
+    #             button,
+    #             onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+    #                 "hello world"
+    #             ),
+    #         )
+    #     except Exception as test_exception:
+    #         addin.stop()
+    #         raise test_exception
+    #     return addin
 
+    # def test_all_handlers_buttton():
+    #     pass
 
-def test_all_handlers_buttton():
-    pass
+    # def test_multiple_controls():
+    #     pass
 
-
-def test_multiple_controls():
-    pass
-
-
-def test_empty_control():
+    # def test_empty_control():
     pass

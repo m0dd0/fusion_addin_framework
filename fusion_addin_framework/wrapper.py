@@ -452,7 +452,7 @@ class Control(_FusionWrapper):
         isVisible: bool = True,
         isPromoted: bool = True,
         isPromotedByDefault: bool = True,
-        positionID: int = None,
+        positionID: int = "",
         isBefore: bool = True,
     ):
         """Wraps around Fusions CommandControl class <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-bb8d8c7b-3049-40c9-b7a5-76d24a462327>
@@ -526,12 +526,9 @@ class Control(_FusionWrapper):
 
         # create the control itself with the passed cmd def and the attributs from
         # the init call
-        if self._positionID is not None:
-            self._in_fusion = self.parent.controls.addCommand(
-                cmd_def, self._positionID, self._isBefore
-            )
-        else:
-            self._in_fusion = self.parent.controls.addCommand(cmd_def)
+        self._in_fusion = self.parent.controls.addCommand(
+            cmd_def, self._positionID, self._isBefore
+        )
 
         self._in_fusion.isPromoted = self._isPromoted
         self._in_fusion.isPromotedByDefault = self._isPromotedByDefault
@@ -711,7 +708,7 @@ class AddinCommand(_FusionWrapper):
                     isChecked,
                 )
             elif parent_control_type == adsk.core.ListControlDefinition.classType():
-                self._in_fusion = adsk.core.Application.get().userInterface.commandDefinitions.addCListDefinition(
+                self._in_fusion = adsk.core.Application.get().userInterface.commandDefinitions.addListDefinition(
                     id,
                     name,
                     listControlDisplayType,
