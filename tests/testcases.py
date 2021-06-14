@@ -336,8 +336,8 @@ def execute_cases(cases: List[Callable]):
 #             panel,
 #             controlType="checkbox",
 #             isVisible=True,
-#             isPromoted=True,
-#             isPromotedByDefault=True,
+#             isPromoted=False,
+#             isPromotedByDefault=False,
 #             positionID="",
 #             isBefore=True,
 #         )
@@ -468,7 +468,6 @@ def execute_cases(cases: List[Callable]):
 #         raise test_exception
 #     return addin
 
-
 # def test_tab_properties():
 #     try:
 #         addin = faf.FusionAddin()
@@ -503,7 +502,6 @@ def execute_cases(cases: List[Callable]):
 #         addin.stop()
 #         raise test_exception
 #     return addin
-
 
 # def test_panel_properties():
 #     try:
@@ -541,7 +539,6 @@ def execute_cases(cases: List[Callable]):
 #         addin.stop()
 #         raise test_exception
 #     return addin
-
 
 # def test_button_properties():
 #     try:
@@ -692,7 +689,7 @@ def test_button_command_properties():
             button,
             id="test_button_command_properties_cmd_id",
             name="ma command",
-            resourceFolder=r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/fusion_addin_framework/default_images/cubes",  # r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/tests/test_images/one",
+            resourceFolder=r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/tests/test_images/one",
             tooltip="my custom tooltip",
             toolClipFileName=r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/tests/test_images/one/32x32.png",
             isEnabled=True,
@@ -711,10 +708,12 @@ def test_button_command_properties():
         assert cmd.isEnabled == True
         cmd.isEnabled = False
         assert cmd.isEnabled == False
+
         assert cmd.isValid == True
         assert cmd.isVisible == True
         cmd.isVisible = False
         assert cmd.isVisible == False
+        cmd.isVisible = True
         # assert cmd.name == "ma command"
         # cmd.name = "2"
         # assert cmd.name == "2"
@@ -728,35 +727,29 @@ def test_button_command_properties():
         cmd.name = "2"
         assert cmd.name == "2"
         print(cmd.objectType)
-        cmd.resourceFolder = r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/fusion_addin_framework/default_images/cubes"
-
         assert (
             cmd.resourceFolder
             == r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/tests/test_images/one"
         )
-        # this seems like an error in the API which doesnt allow to change the resouceFolder after initialization
-        cmd.resourceFolder = r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/fusion_addin_framework/default_images/cubes"
-        print(cmd.resourceFolder)
-        # assert (
-        #     cmd.resourceFolder
-        #     == r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/fusion_addin_framework/default_images/cubes"
-        # )
+        cmd.resourceFolder = r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/tests/test_images/two"
+        assert (
+            cmd.resourceFolder
+            == r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/tests/test_images/two"
+        )
         assert (
             cmd.toolClipFilename
             == r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/tests/test_images/one/32x32.png"
         )
-        # cmd.toolClipFilename = r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/fusion_addin_framework/default_images/cubes/32x32.png"
-        # assert (
-        #     cmd.toolClipFilename
-        #     == r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/fusion_addin_framework/default_images/cubes/32x32.png"
-        # )
-        print(cmd.tooltip)
-        print("####")
-        cmd.tooltip = "asdasaweraerd"
-        print(cmd.tooltip)
+        cmd.toolClipFilename = r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/tests/test_images/two/32x32.png"
+        assert (
+            cmd.toolClipFilename
+            == r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/tests/test_images/two/32x32.png"
+        )
+        # accessing the tooltip returns empty string. This is an error in the API.
+        # print(cmd.tooltip)
         # assert cmd.tooltip == "my custom tooltip"
-        # cmd.tooltip = "2"
-        # assert cmd.tooltip == "2"
+        cmd.tooltip = "my tooltip 2"
+        # assert cmd.tooltip == "my tooltip 2"
 
         print(cmd.classType())
         print(cmd.deleteMe)

@@ -84,7 +84,7 @@ class _FusionWrapper(ABC):
             name: The name of the attribute to set.
             value: The value of the attribute to set.
         """
-        # avoid infinite recursion by using self.__dict__ instead of hasattr
+        # avoid infinite recursion by using self.__dict__ instead of self.hasattr
         if "_in_fusion" in self.__dict__.keys() and hasattr(self._in_fusion, name):
             setattr(self._in_fusion, name, value)
         else:
@@ -752,16 +752,18 @@ class AddinCommand(_FusionWrapper):
 
     def __getattr__(self, attr):
         try:
-            return getattr(self._in_fusion.controlDefinition, attr)
-        except:
             return getattr(self._in_fusion, attr)
+        except:
+            return getattr(self._in_fusion.controlDefinition, attr)
 
     def __setattr__(self, name, value):
-        # avoid infinite recursion by using self.__dict__ instead of hasattr
-        if "_in_fusion" in self.__dict__.keys() and hasattr(self._in_fusion, name):
-            try:
-                setattr(self._in_fusion.controlDefinition, name, value)
-            except:
+        # avoid infinite recursion by using self.__dict__ instead of self.hasattr
+        if "_in_fusion" in self.__dict__.keys() and self._in_fusion is not None:
+            if hasattr(self._in_fusion, name):
                 setattr(self._in_fusion, name, value)
+            elif hasattr(self._in_fusion.controlDefinition, name):
+                setattr(self._in_fusion.controlDefinition, name, value)
+            else:
+                super().__setattr__(name, value)
         else:
             super().__setattr__(name, value)

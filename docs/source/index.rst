@@ -64,6 +64,10 @@ API errors and undocumented behavior
 The commandDefinition.tooltip property will alway return an empty string.
 Changes to the attribute will be reflected in the UI though.
 
+Changing the resourceFolder of an commandDefinition will first become visible If
+the button got unpinned and pinned again from the toolbar.
+
+
 
 .. toctree::
    :hidden:
