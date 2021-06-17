@@ -47,6 +47,11 @@ def unknown_event_name(event_name):
     return msg
 
 
+def handler_execution_time(event_name, cmd_name, elapsed_time):
+    msg = f"Executed {event_name} handler of '{cmd_name}' in {elapsed_time:.3f}s."
+    return msg
+
+
 ### MISCELLANEOUS ###
 
 

@@ -6,6 +6,7 @@ the Fusion API. This module is utilized by the Command Wrapper.
 import logging
 import traceback
 from typing import Callable, Dict
+import time
 
 import adsk.core
 
@@ -59,9 +60,14 @@ def _notify_routine(addin, cmd_name: str, event_name: str, action: Callable, arg
         args ([type]): The arguments passed to the notify function.
     """
     logging.getLogger(__name__).info(msgs.starting_handler(event_name, cmd_name))
-    # TODO measure execution time and log it
     try:
+        start = time.perf_counter()
         action(args)
+        logging.getLogger(__name__).info(
+            msgs.handler_execution_time(
+                event_name, cmd_name, time.perf_counter() - start
+            )
+        )
     except:
         # no exception gets raised outside the handlers so this try, except
         # block is mandatory to prevent silent errors !!!!!!!

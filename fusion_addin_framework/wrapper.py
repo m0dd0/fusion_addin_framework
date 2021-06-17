@@ -653,7 +653,7 @@ class AddinCommand(_FusionWrapper):
         isVisible: bool = True,
         isChecked: bool = True,  # only checkbox
         listControlDisplayType=adsk.core.ListControlDisplayTypes.RadioButtonlistType,  # only list
-        **event_handlers: Callable,
+        **eventHandlers: Callable,
     ):
         """[summary]
 
@@ -728,7 +728,7 @@ class AddinCommand(_FusionWrapper):
             # ! if there is some error (typo) etc. fusion will break instantanious !
             self._in_fusion.commandCreated.add(
                 handlers._CommandCreatedHandler(  # pylint:disable=protected-access
-                    self.addin, name, event_handlers
+                    self.addin, name, eventHandlers
                 )
             )
 
