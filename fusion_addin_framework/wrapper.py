@@ -36,11 +36,11 @@ class _FusionWrapper(ABC):
         Provides basic functionality used by the framework to handle the wrapper
         instances.
         Such as having a app attribute, which contains the controlling addin instance.
-        Also sets the ui_level which is a atrtibute used by all wrapper classes.
+        Also sets the uiLevel which is a atrtibute used by all wrapper classes.
         Defining class variables shared by all wrapper classes.
         Sets the attributes app attribute of the wrapped instance by getting its
         parents app attribute.
-        Sets the ui_level attribute by incrementing the parents ui_level attribute.
+        Sets the uiLevel attribute by incrementing the parents uiLevel attribute.
 
         Args:
             parent (Union[_FusionWrapper, FusionApp]): the parent ui object instance
@@ -56,10 +56,10 @@ class _FusionWrapper(ABC):
         # for now this is only the case for addincommand class
         if isinstance(self._parent, list):
             self._addin = self._parent[0].addin
+            self._ui_level = self._parent[0].uiLevel + 1
         else:
             self._addin = self._parent.addin
-
-        self._ui_level = self._parent.ui_level + 1
+            self._ui_level = self._parent.uiLevel + 1
 
     def __getattr__(self, attr):
         """Tries to find the attribute in the fusion-object on which the wrapper is
@@ -101,7 +101,7 @@ class _FusionWrapper(ABC):
         return self._parent
 
     @property
-    def ui_level(self):
+    def uiLevel(self):
         """The level this instance is in the user interface hierachy.
 
         For Example: Workspace is always level 1, Tab always level 2
@@ -120,7 +120,7 @@ class FusionAddin:
 
     def __init__(
         self,
-        debug_to_ui: bool = True,
+        debugToUi: bool = True,
     ):
         """Entry point to create all your elements that will appear in the user interface.
 
@@ -133,7 +133,7 @@ class FusionAddin:
                 <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-1692a9a4-3be0-4474-9e15-02fac696b2b2>`_
                 or not. If not they will get logged anyways. Defaults to True.
         """
-        self._debug_to_ui = debug_to_ui
+        self._debug_to_ui = debugToUi
 
         self._registered_elements = defaultdict(list)
 
@@ -170,7 +170,7 @@ class FusionAddin:
                     # element is probably already deleted
                     pass
 
-    def register_element(self, elem: _FusionWrapper, level: int = 0):
+    def registerElement(self, elem: _FusionWrapper, level: int = 0):
         """Registers a instance of a ui wrapper object to the addin.
 
         All wrapper objects that are registered will get deleted if the addin stops.
@@ -189,19 +189,19 @@ class FusionAddin:
 
     # region
     @property
-    def debug_to_ui(self) -> bool:
+    def debugToUi(self) -> bool:
         """bool: Flag indicating if erorr messages are displayed in a `messageBox
         <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-1692a9a4-3be0-4474-9e15-02fac696b2b2>`_
         or only send to the module logger.
         """
         return self._debug_to_ui
 
-    @debug_to_ui.setter
-    def debug_to_ui(self, new_debug_to_ui: bool):
+    @debugToUi.setter
+    def debugToUi(self, new_debug_to_ui: bool):
         self._debug_to_ui = new_debug_to_ui
 
     @property
-    def ui_level(self) -> int:
+    def uiLevel(self) -> int:
         """int: The ui level ot the app. (Always 0)"""
         return self._ui_level
 
@@ -211,7 +211,7 @@ class FusionAddin:
         return self
 
     @property
-    def created_elements(self):  # -> Dict[int, List[FusionApp]]:
+    def createdElements(self):  # -> Dict[int, List[FusionApp]]:
         """Dict[int, List[FusionApp]]: A dictonary with all the created ui elemnts.
         Mapped by their level.
         """
@@ -287,7 +287,7 @@ class Workspace(_FusionWrapper):
             self._in_fusion.tooltip = tooltip
             self._in_fusion.tooltipDescription = tooltipDescription
 
-            self.addin.register_element(self, self.ui_level)
+            self.addin.registerElement(self, self.uiLevel)
             logging.getLogger(__name__).info(msgs.created_new(__class__, id))
 
     def tab(self, *args, **kwargs):
@@ -338,7 +338,7 @@ class Tab(_FusionWrapper):
         else:
             self._in_fusion = self.parent.toolbarTabs.add(id, name)
 
-            self.addin.register_element(self, self.ui_level)
+            self.addin.registerElement(self, self.uiLevel)
             logging.getLogger(__name__).info(msgs.created_new(__class__, id))
 
     def panel(self, *args, **kwargs):
@@ -401,7 +401,7 @@ class Panel(_FusionWrapper):
                 id, name, positionID, isBefore
             )
 
-            self.addin.register_element(self, self.ui_level)
+            self.addin.registerElement(self, self.uiLevel)
             logging.getLogger(__name__).info(msgs.created_new(__class__, id))
 
     # region
@@ -508,7 +508,7 @@ class Control(_FusionWrapper):
         dummy_cmd_def.controlDefinition.name = "<no command connected>"
         # do not connect a handler since its a dummy cmd_def
 
-        self.addin.register_element(dummy_cmd_def, self.ui_level + 1)
+        self.addin.registerElement(dummy_cmd_def, self.uiLevel + 1)
 
         self._create_control(dummy_cmd_def)
 
@@ -534,7 +534,7 @@ class Control(_FusionWrapper):
         self._in_fusion.isPromotedByDefault = self._isPromotedByDefault
         self._in_fusion.isVisible = self._isVisible
 
-        self.addin.register_element(self, self.ui_level)
+        self.addin.registerElement(self, self.uiLevel)
 
     def addinCommand(self, *args, **kwargs):
         """[summary]
@@ -657,6 +657,8 @@ class AddinCommand(_FusionWrapper):
     ):
         """[summary]
 
+        If you provide multiple parent controls you must make shier that they are all of the same controlType and that None od them is ahring the same panel.
+
         Args:
             parent (Union[ List[Button], Button, List[Checkbox], Checkbox, List[ListControl], ListControl, ], optional): [description]. Defaults to None.
             id (str, optional): [description]. Defaults to "random".
@@ -730,7 +732,7 @@ class AddinCommand(_FusionWrapper):
                 )
             )
 
-            self.addin.register_element(self, self.ui_level)
+            self.addin.registerElement(self, self.uiLevel)
 
         for p in parent_list:
             p._create_control(self._in_fusion)  # pylint:disable=protected-access

@@ -43,6 +43,10 @@ def run(context):  # pylint:disable=unused-argument
 
         print("### RESULTS ###")
         pprint(dict(results))
+        if all([r["passed"] for r in results.values()]):
+            print("### PASSED ###")
+        else:
+            print("### FAILED ###")
 
     except:
         if ui:
