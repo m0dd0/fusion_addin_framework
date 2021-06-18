@@ -1083,3 +1083,90 @@ def test_multiple_controls_different_type():
         addin.stop()
         raise test_exception
     return addin
+
+
+def test_dropdown_normal():
+    try:
+        addin = faf.FusionAddin()
+        ws = faf.Workspace(addin)
+        tab = faf.Tab(ws, id="random")
+        panel = faf.Panel(tab)
+        dd = faf.Dropdown(panel)
+        ctrl = faf.Control(dd, isPromoted=False, isPromotedByDefault=False)
+        ctrl_2 = faf.Control(dd)
+        cmd = faf.AddinCommand(ctrl)
+
+    except Exception as test_exception:
+        addin.stop()
+        raise test_exception
+    return addin
+
+
+def test_dropdown_default():
+    try:
+        dd = faf.Dropdown()
+        ctrl = faf.Control(dd)
+
+    except Exception as test_exception:
+        dd.addin.stop()
+        raise test_exception
+    return dd.addin
+
+
+def test_dropdown_dotted():
+    try:
+        ctrl = faf.Workspace().tab().panel().dropdown().control()
+
+    except Exception as test_exception:
+        ctrl.addin.stop()
+        raise test_exception
+    return ctrl.addin
+
+
+def test_dropdown_nested():
+    try:
+        ctrl = (
+            faf.Workspace()
+            .tab()
+            .panel()
+            .dropdown()
+            .dropdown()
+            .dropdown()
+            .dropdown()
+            .control()
+        )
+
+    except Exception as test_exception:
+        ctrl.addin.stop()
+        raise test_exception
+    return ctrl.addin
+
+
+def test_dropdown_properties():
+    try:
+        dd = faf.Dropdown(
+            id="test_dropdown_properties_id",
+            text="dd_name",
+            resourceFolder=r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/tests/test_images/one",
+            isVisible=True,
+        )
+        ctrl = faf.Control(dd)
+
+        assert dd.uiLevel == 4
+        print(dd.controls)
+        assert dd.id == "test_dropdown_properties_id"
+        print(dd.index)
+        assert dd.isValid == True
+        print(dd.isVisible)
+        assert dd.name == "dd_name"
+        print(dd.objectType)
+        print(dd.parent)
+        assert (
+            dd.resourceFolder
+            == r"C:/Users/mohes/AppData/Roaming/Autodesk/Autodesk Fusion 360/API/AddIns/fusion_addin_framework/tests/test_images/one"
+        )
+
+    except Exception as test_exception:
+        dd.addin.stop()
+        raise test_exception
+    return dd.addin

@@ -396,7 +396,6 @@ class Panel(_FusionWrapper):
         if self._in_fusion:
             logging.getLogger(__name__).info(msgs.using_exisiting(__class__, id))
         else:
-
             self._in_fusion = self.parent.toolbarPanels.add(
                 id, name, positionID, isBefore
             )
@@ -439,9 +438,68 @@ class Panel(_FusionWrapper):
         of the paramters.
 
         Returns:
-            CommandControl: The newly created or accessed CommandControl instance.
+            Control: The newly created or accessed CommandControl instance.
         """
         return Control(self, *args, **kwargs)
+
+    def dropdown(self, *args, **kwargs):
+        """[summary]
+
+        Returns:
+            [type]: [description]
+        """
+        return Dropdown(self, *args, **kwargs)
+
+
+class Dropdown(_FusionWrapper):
+    def __init__(
+        self,
+        parent: Union["Dropdown", Panel] = None,
+        id: str = "random",
+        text: str = "random",
+        resourceFolder: str = "lightbulb",
+        positionID: str = "",
+        isBefore: str = True,
+        isVisible: bool = True,
+    ):
+        super().__init__(parent, Panel)
+
+        id = dflts.eval_id(id)
+        text = dflts.eval_name(text, __class__)
+        resourceFolder = dflts.eval_image(resourceFolder)
+
+        self._in_fusion = self.parent.controls.itemById(id)
+
+        if self._in_fusion:
+            logging.getLogger(__name__).info(msgs.using_exisiting(__class__, id))
+        else:
+            self._in_fusion = self.parent.controls.addDropDown(
+                text, resourceFolder, id, positionID, isBefore
+            )
+            self._in_fusion.isVisible = isVisible
+            self.addin.registerElement(self, self.uiLevel)
+            logging.getLogger(__name__).info(msgs.created_new(__class__, id))
+
+    def control(self, *args, **kwargs):
+        """Creates a command control as a child of this workspace.
+
+        Calling this method is the same as initialsing a :class:`.CommandControl`
+        with this panel instance as parent parameter. Therefore the same
+        parameters are passed. See :class:`.CommandControl` for a detailed description
+        of the paramters.
+
+        Returns:
+            Control: The newly created or accessed CommandControl instance.
+        """
+        return Control(self, *args, **kwargs)
+
+    def dropdown(self, *args, **kwargs):
+        """[summary]
+
+        Returns:
+            [type]: [description]
+        """
+        return Dropdown(self, *args, **kwargs)
 
 
 class Control(_FusionWrapper):
@@ -450,8 +508,8 @@ class Control(_FusionWrapper):
         parent: Panel = None,  # TODO allow multiple parents ?!
         controlType: str = "button",
         isVisible: bool = True,
-        isPromoted: bool = True,
-        isPromotedByDefault: bool = True,
+        isPromoted: bool = False,
+        isPromotedByDefault: bool = False,
         positionID: int = "",
         isBefore: bool = True,
     ):
@@ -473,6 +531,9 @@ class Control(_FusionWrapper):
         super().__init__(parent, Panel)
 
         self._isVisible = isVisible
+        # if controlType != "button" or isinstance(parent, Dropdown):
+        #     isPromoted = False
+        #     isPromotedByDefault = False
         self._isPromoted = isPromoted
         self._isPromotedByDefault = isPromotedByDefault
         self._positionID = positionID

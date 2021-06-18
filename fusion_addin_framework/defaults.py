@@ -41,6 +41,13 @@ random_names = {
         "cozy command",
         "corned command",
     ],
+    "Dropdown": [
+        "dusty dropdown",
+        "demo dropdown",
+        "dracula dropdown",
+        "dominant dropdown",
+        "dummy dropdown",
+    ],
 }
 
 # for some ui entities default ids are provided so no alway a newpanel/tab gets
