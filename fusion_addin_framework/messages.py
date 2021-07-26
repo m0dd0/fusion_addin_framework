@@ -6,16 +6,24 @@ multiple plces in the code in some variation."""
 
 def using_exisiting(cls, id):  # pylint:disable=redefined-builtin
     msg = (
-        "Using existing {0} (id: {1})."
+        f"Using existing {cls.__name__} (id: {id})."
         # "All arguments except 'id' will be "
         # "ignored. If you want to change properties of this {0}, you can "
         # "access and set the attributes if its not a native {0}."
-    ).format(cls.__name__, id)
+    )
     return msg
 
 
 def created_new(cls, id):  # pylint:disable=redefined-builtin
     msg = f"Created a new {cls.__name__}. (id: {id})"
+    return msg
+
+
+def invalid_control_type(control_type_name):
+    msg = (
+        f"'{control_type_name}' is no valid control type. Valid control types "
+        + "are 'button', 'checkbox' or 'list'"
+    )
     return msg
 
 
@@ -40,13 +48,16 @@ def doubled_callbacks(event_name):
     return msg
 
 
-### MISCELLANEOUS ###
-
-
-def no_appdirs():
+def unknown_event_name(event_name):
     msg = (
-        "The appdirs package is not installed. Using path related attributes "
-        + "(like addin.user_cache_dir) of the addin object will result in an Error. "
-        + "Consider pip-installing the fusion_addin_framework."
+        f"There is no event called '{event_name}'. The passed handler will be ignored."
     )
     return msg
+
+
+def handler_execution_time(event_name, cmd_name, elapsed_time):
+    msg = f"Executed {event_name} handler of '{cmd_name}' in {elapsed_time:.3f}s."
+    return msg
+
+
+### MISCELLANEOUS ###

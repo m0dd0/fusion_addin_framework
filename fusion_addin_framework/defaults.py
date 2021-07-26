@@ -34,12 +34,19 @@ random_names = {
         "pacifisitc panel",
         "pacific panel",
     ],
-    "_CommandWrapper": [
+    "AddinCommand": [
         "comic command",
         "cometic command",
         "comfy command",
         "cozy command",
         "corned command",
+    ],
+    "Dropdown": [
+        "dusty dropdown",
+        "demo dropdown",
+        "dracula dropdown",
+        "dominant dropdown",
+        "dummy dropdown",
     ],
 }
 
@@ -97,7 +104,7 @@ def eval_name(value: str, cls) -> str:
         str: The ultimately used name.
     """
     if value == "random":
-        value = random.choice(random_names[cls.__name__])
+        value = random.choice(random_names.get(cls.__name__, ["Unnamed"]))
     return value
 
 
@@ -115,7 +122,9 @@ def eval_image(value: str, size=None) -> str:
     """
     if value in default_images:
         if size is not None:
-            value = str(default_images[value])
+            value = default_images[value] / size
         else:
-            value = str(default_images[value] / size)
-    return str(value)  # in case pathlib.Path object was passed
+            value = default_images[value]
+    if isinstance(value, Path):
+        value = value.as_posix()
+    return value

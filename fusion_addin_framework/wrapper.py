@@ -36,11 +36,11 @@ class _FusionWrapper(ABC):
         Provides basic functionality used by the framework to handle the wrapper
         instances.
         Such as having a app attribute, which contains the controlling addin instance.
-        Also sets the ui_level which is a atrtibute used by all wrapper classes.
+        Also sets the uiLevel which is a atrtibute used by all wrapper classes.
         Defining class variables shared by all wrapper classes.
         Sets the attributes app attribute of the wrapped instance by getting its
         parents app attribute.
-        Sets the ui_level attribute by incrementing the parents ui_level attribute.
+        Sets the uiLevel attribute by incrementing the parents uiLevel attribute.
 
         Args:
             parent (Union[_FusionWrapper, FusionApp]): the parent ui object instance
@@ -56,10 +56,10 @@ class _FusionWrapper(ABC):
         # for now this is only the case for addincommand class
         if isinstance(self._parent, list):
             self._addin = self._parent[0].addin
+            self._ui_level = self._parent[0].uiLevel + 1
         else:
             self._addin = self._parent.addin
-
-        self._ui_level = self._parent.ui_level + 1
+            self._ui_level = self._parent.uiLevel + 1
 
     def __getattr__(self, attr):
         """Tries to find the attribute in the fusion-object on which the wrapper is
@@ -84,25 +84,24 @@ class _FusionWrapper(ABC):
             name: The name of the attribute to set.
             value: The value of the attribute to set.
         """
-        # avoid infinite recursion by using self.__dict__ instead of hasattr
+        # avoid infinite recursion by using self.__dict__ instead of self.hasattr
         if "_in_fusion" in self.__dict__.keys() and hasattr(self._in_fusion, name):
             setattr(self._in_fusion, name, value)
         else:
             super().__setattr__(name, value)
 
     # simply override the properties to use individual docstrings
-    # region
     @property
     def parent(self):
         """The parent wrapper-instance of this wrapper-instance.
 
-        Can be an List of wrapper-instances if multiple parents where provided
+        Can be an List of wrapper-instances if multiple parents were provided
         (only for addincommand instances for now)
         """
         return self._parent
 
     @property
-    def ui_level(self):
+    def uiLevel(self):
         """The level this instance is in the user interface hierachy.
 
         For Example: Workspace is always level 1, Tab always level 2
@@ -114,8 +113,6 @@ class _FusionWrapper(ABC):
         """The addin instance which manages this instance."""
         return self._addin
 
-    # endregion
-
 
 class FusionAddin:
 
@@ -123,12 +120,11 @@ class FusionAddin:
 
     def __init__(
         self,
-        debug_to_ui: bool = True,
+        debugToUi: bool = True,
     ):
         """Entry point to create all your elements that will appear in the user interface.
 
-        Handles their creation and deletes them (by calling the stop method) if
-        the addin is deactivated.
+        Handles the creation of UI elements and deletes them (by calling the stop method).
 
         Args:
             debug_to_ui (bool, optional): Flag indicating if erorr messages caused
@@ -136,7 +132,7 @@ class FusionAddin:
                 <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-1692a9a4-3be0-4474-9e15-02fac696b2b2>`_
                 or not. If not they will get logged anyways. Defaults to True.
         """
-        self._debug_to_ui = debug_to_ui
+        self._debug_to_ui = debugToUi
 
         self._registered_elements = defaultdict(list)
 
@@ -173,7 +169,7 @@ class FusionAddin:
                     # element is probably already deleted
                     pass
 
-    def register_element(self, elem: _FusionWrapper, level: int = 0):
+    def registerElement(self, elem: _FusionWrapper, level: int = 0):
         """Registers a instance of a ui wrapper object to the addin.
 
         All wrapper objects that are registered will get deleted if the addin stops.
@@ -192,29 +188,29 @@ class FusionAddin:
 
     # region
     @property
-    def debug_to_ui(self) -> bool:
+    def debugToUi(self) -> bool:
         """bool: Flag indicating if erorr messages are displayed in a `messageBox
         <http://help.autodesk.com/view/fusion360/ENU/?guid=GUID-1692a9a4-3be0-4474-9e15-02fac696b2b2>`_
         or only send to the module logger.
         """
         return self._debug_to_ui
 
-    @debug_to_ui.setter
-    def debug_to_ui(self, new_debug_to_ui: bool):
+    @debugToUi.setter
+    def debugToUi(self, new_debug_to_ui: bool):
         self._debug_to_ui = new_debug_to_ui
 
     @property
-    def ui_level(self) -> int:
+    def uiLevel(self) -> int:
         """int: The ui level ot the app. (Always 0)"""
         return self._ui_level
 
     @property
     def addin(self):  # do not use typehint --> doc generation will craah
-        """FusionApp: Itself. Kept for consistency with the other wrapper classses."""
+        """FusionApp: Itself. Kept for consistency with the other wrapper classes."""
         return self
 
     @property
-    def created_elements(self):  # -> Dict[int, List[FusionApp]]:
+    def createdElements(self):  # -> Dict[int, List[FusionApp]]:
         """Dict[int, List[FusionApp]]: A dictonary with all the created ui elemnts.
         Mapped by their level.
         """
@@ -243,7 +239,9 @@ class Workspace(_FusionWrapper):
         parent and id will be ignored.
 
         IMPORTANT: It is currently not possible to create a custom workspace via
-        the API (maybe a bug). So you need to use a ID of an
+        the API. This seems like a bug in Fusion360s API.
+        So you need to use a ID of an native workspace.
+        If you have any information on this please ansesr this `<>`_ thread.
 
         Args:
             parent (FusionAddin): The parental addin instance. Defaults to a addin with
@@ -290,7 +288,7 @@ class Workspace(_FusionWrapper):
             self._in_fusion.tooltip = tooltip
             self._in_fusion.tooltipDescription = tooltipDescription
 
-            self.addin.register_element(self, self.ui_level)
+            self.addin.registerElement(self, self.uiLevel)
             logging.getLogger(__name__).info(msgs.created_new(__class__, id))
 
     def tab(self, *args, **kwargs):
@@ -341,7 +339,7 @@ class Tab(_FusionWrapper):
         else:
             self._in_fusion = self.parent.toolbarTabs.add(id, name)
 
-            self.addin.register_element(self, self.ui_level)
+            self.addin.registerElement(self, self.uiLevel)
             logging.getLogger(__name__).info(msgs.created_new(__class__, id))
 
     def panel(self, *args, **kwargs):
@@ -372,7 +370,8 @@ class Panel(_FusionWrapper):
         object.
 
         If an Id of an existing Panel is provided, all parameters except parent and
-        id will be ignored.
+        id will be ignored. If you want to change properties of the Panel, you can
+        simply set the attributes after initialization if its not a native Panel.
 
         Args:
             parent (Tab, optional): The parent tab which contains this
@@ -399,12 +398,11 @@ class Panel(_FusionWrapper):
         if self._in_fusion:
             logging.getLogger(__name__).info(msgs.using_exisiting(__class__, id))
         else:
-
             self._in_fusion = self.parent.toolbarPanels.add(
                 id, name, positionID, isBefore
             )
 
-            self.addin.register_element(self, self.ui_level)
+            self.addin.registerElement(self, self.uiLevel)
             logging.getLogger(__name__).info(msgs.created_new(__class__, id))
 
     # region
@@ -434,6 +432,90 @@ class Panel(_FusionWrapper):
     # endregion
 
     def control(self, *args, **kwargs):
+        """Creates a command control as a child of this panel.
+
+        Calling this method is the same as initialsing a :class:`.CommandControl`
+        with this panel instance as parent parameter. Therefore the same
+        parameters are passed. See :class:`.CommandControl` for a detailed description
+        of the paramters.
+
+        Returns:
+            Control: The newly created or accessed CommandControl instance.
+        """
+        return Control(self, *args, **kwargs)
+
+    def dropdown(self, *args, **kwargs):
+        """Creates a dropdown as a child of this panel.
+
+        Calling this method is the same as initialsing a :class:`.Dropdown`
+        with this panel instance as parent parameter. Therefore the same
+        parameters are passed. See :class:`.Dropdown` for a detailed description
+        of the paramters.
+
+        Returns:
+            Dropdown: The newly created or accessed Dropdown instance.
+        """
+        return Dropdown(self, *args, **kwargs)
+
+
+class Dropdown(_FusionWrapper):
+    def __init__(
+        self,
+        parent: Union["Dropdown", Panel] = None,
+        id: str = "random",
+        text: str = "random",
+        resourceFolder: str = "lightbulb",
+        positionID: str = "",
+        isBefore: str = True,
+        isVisible: bool = True,
+    ):
+        """Wraps around the `Dropdown
+        <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-47de53a5-90f0-4d3c-9eee-3fc16d794014>`_
+        object.
+
+        If an Id of an existing Dropdown is provided, all parameters except parent and
+        id will be ignored.
+
+        Args:
+            parent (Union[Dropdown, Panel], optional): The parent panel or dropdown
+                where this dropdoen is added to. Defaults to None.
+            id (str, optional): The id of this dropdwown. Defaults to a random id.
+            text (str, optional): The text displayed for the drop-down in a menu.
+                For a drop-down in a toolbar this argument is ignored because an
+                icon is used. Defaults to a random text.
+            resourceFolder (str, optional): The resource folder containing the
+                image used for the icon when the drop-down is in a toolbar.
+                Defaults to "lightbulb".
+            positionID (str, optional): Specifies the reference id of the control
+                to position this control relative to. Not setting this value indicates
+                that the control will be created at the end of all other controls
+                in toolbar. The isBefore parameter specifies whether to place the
+                control before or after the reference control.
+            isBefore (str, optional): Specifies whether to place the control before
+                or after the reference control specified by the positionID parameter.
+                This argument is ignored is positionID is not specified. Defaults to True.
+            isVisible (bool, optional): Sets if this dropdown is currently visible.
+                Defaults to True.
+        """
+        super().__init__(parent, Panel)
+
+        id = dflts.eval_id(id)
+        text = dflts.eval_name(text, __class__)
+        resourceFolder = dflts.eval_image(resourceFolder)
+
+        self._in_fusion = self.parent.controls.itemById(id)
+
+        if self._in_fusion:
+            logging.getLogger(__name__).info(msgs.using_exisiting(__class__, id))
+        else:
+            self._in_fusion = self.parent.controls.addDropDown(
+                text, resourceFolder, id, positionID, isBefore
+            )
+            self._in_fusion.isVisible = isVisible
+            self.addin.registerElement(self, self.uiLevel)
+            logging.getLogger(__name__).info(msgs.created_new(__class__, id))
+
+    def control(self, *args, **kwargs):
         """Creates a command control as a child of this workspace.
 
         Calling this method is the same as initialsing a :class:`.CommandControl`
@@ -442,38 +524,67 @@ class Panel(_FusionWrapper):
         of the paramters.
 
         Returns:
-            CommandControl: The newly created or accessed CommandControl instance.
+            Control: The newly created or accessed CommandControl instance.
         """
-        return CommandControl(self, *args, **kwargs)
+        return Control(self, *args, **kwargs)
+
+    def dropdown(self, *args, **kwargs):
+        """Creates a dropdown as a child of this panel.
+
+        Calling this method is the same as initialsing a :class:`.Dropdown`
+        with this panel instance as parent parameter. Therefore the same
+        parameters are passed. See :class:`.Dropdown` for a detailed description
+        of the paramters.
+
+        Returns:
+            Dropdown: The newly created or accessed Dropdown instance.
+        """
+        return Dropdown(self, *args, **kwargs)
 
 
-class CommandControl(_FusionWrapper):
+class Control(_FusionWrapper):
     def __init__(
         self,
         parent: Panel = None,  # TODO allow multiple parents ?!
-        control_type: str = "button",
+        controlType: str = "button",
         isVisible: bool = True,
-        isPromoted: bool = True,
-        isPromotedByDefault: bool = True,
-        positionID: int = None,
+        isPromoted: bool = False,
+        isPromotedByDefault: bool = False,
+        positionID: int = "",
         isBefore: bool = True,
     ):
         """Wraps around Fusions CommandControl class <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-bb8d8c7b-3049-40c9-b7a5-76d24a462327>
-        A dummy command definition with a button control definition is used to
-        instantiate the control.
+
+        Depending on the passed control
 
         Args:
             parent (Panel): [description]
-            control_type (str)
-            isVisible (bool): [description]
-            isPromoted (bool): [description]
-            isPromotedByDefault (bool): [description]
-            positionID (int): [description]
-            isBefore (bool): [description]
+            controlType (str): If you use a checkbox or list you should set isPromoted and isPromotedByDefault to False.
+                Otherwise an additional button which has no functionality will be created.
+                This is caused by the somewhat misleading behavior from ths Fusion API.
+            isVisible (bool): Sets if this control is currently visible. Defaults to True.
+            isPromoted (bool): Sets if this command has been promoted to the parent panel.
+                This property is ignored in the case where this controls parent isn't a panel.
+                Defaults to False.
+            isPromotedByDefault (bool): Sets if this command is a default command in the panel.
+                This defines the default state of the panel if the UI is reset.
+                This property is ignored in the case where this control isn't in a panel.
+                Defaults to False.
+            positionID (int): Specifies the reference id of the control to position this
+                control relative to. Not setting this value indicates that the
+                control will be created at the end of all other controls in toolbar.
+                The isBefore parameter specifies whether to place the control before
+                or after the reference control.
+            isBefore (bool): Specifies whether to place the control before or after
+                the reference control specified by the positionID parameter. This
+                argument is ignored is positionID is not specified. Defaults to True.
         """
         super().__init__(parent, Panel)
 
         self._isVisible = isVisible
+        # if controlType != "button" or isinstance(parent, Dropdown):
+        #     isPromoted = False
+        #     isPromotedByDefault = False
         self._isPromoted = isPromoted
         self._isPromotedByDefault = isPromotedByDefault
         self._positionID = positionID
@@ -481,14 +592,14 @@ class CommandControl(_FusionWrapper):
 
         # create a dummy control so a control is displayed in the UI even if no
         # command was created
-        if control_type == "button":
+        if controlType == "button":
             dummy_cmd_def = adsk.core.Application.get().userInterface.commandDefinitions.addButtonDefinition(
                 str(uuid4()),
                 "<no command connected>",
                 "",
                 dflts.eval_image("transparent"),
             )
-        elif control_type == "checkbox":
+        elif controlType == "checkbox":
             dummy_cmd_def = adsk.core.Application.get().userInterface.commandDefinitions.addCheckBoxDefinition(
                 str(uuid4()),
                 "<no command connected>",
@@ -496,30 +607,37 @@ class CommandControl(_FusionWrapper):
                 False,
             )
             dummy_cmd_def.controlDefinition.isChecked = False
-        elif control_type == "list":
+        elif controlType == "list":
             dummy_cmd_def = adsk.core.Application.get().userInterface.commandDefinitions.addListDefinition(
                 str(uuid4()),
                 "<no command connected>",
                 adsk.core.ListControlDisplayTypes.RadioButtonlistType,
             )
             dummy_cmd_def.controlDefinition.listItems.add("<empty list>", False)
+        else:
+            raise ValueError(msgs.invalid_control_type(controlType))
 
         dummy_cmd_def.controlDefinition.isVisible = True
         dummy_cmd_def.controlDefinition.isEnabled = True
         dummy_cmd_def.controlDefinition.name = "<no command connected>"
         # do not connect a handler since its a dummy cmd_def
 
-        self.addin.register_element(dummy_cmd_def, self.ui_level + 1)
+        self.addin.registerElement(dummy_cmd_def, self.uiLevel + 1)
 
         self._create_control(dummy_cmd_def)
 
         logging.getLogger(__name__).info(msgs.created_new(__class__, None))
 
     def _create_control(self, cmd_def):
-        """[summary]
+        """Creates a control with the properties that are passed at the initialization
+        of the class and the given command defintion.
+        If a control already has been created (the dummy command defintion control)
+        the previous control will be deleted first.
+        The control will be (re)registered to the parent adiin instance.
 
         Args:
-            cmd_def ([type]): [description]
+            cmd_def (adsk.fusion.CommandDefinition): The command definition object for
+                which will be used to create the control in the user interface.
         """
         # to delete the control created by the dummy definition
         if self._in_fusion is not None:
@@ -527,24 +645,26 @@ class CommandControl(_FusionWrapper):
 
         # create the control itself with the passed cmd def and the attributs from
         # the init call
-        if self._positionID is not None:
-            self._in_fusion = self.parent.controls.addCommand(
-                cmd_def, self._positionID, self._isBefore
-            )
-        else:
-            self._in_fusion = self.parent.controls.addCommand(cmd_def)
+        self._in_fusion = self.parent.controls.addCommand(
+            cmd_def, self._positionID, self._isBefore
+        )
 
         self._in_fusion.isPromoted = self._isPromoted
         self._in_fusion.isPromotedByDefault = self._isPromotedByDefault
         self._in_fusion.isVisible = self._isVisible
 
-        self.addin.register_element(self, self.ui_level)
+        self.addin.registerElement(self, self.uiLevel)
 
-    def addin_command(self, *args, **kwargs):
-        """[summary]
+    def addinCommand(self, *args, **kwargs):
+        """Creates a AddinCommand as a child of this CommandControl.
+
+        Calling this method is the same as initialsing a :class:`.AddinCommand`
+        with this CommandControl instance as parent parameter. Therefore the same
+        parameters are passed. See :class:`.AddinCommand` for a detailed description
+        of the paramters.
 
         Returns:
-            [type]: [description]
+            AddinCommand: The newly created or accessed AddinCommand instance.
         """
         return AddinCommand(self, *args, **kwargs)
 
@@ -647,7 +767,7 @@ class CommandControl(_FusionWrapper):
 class AddinCommand(_FusionWrapper):
     def __init__(
         self,
-        parent: Union[CommandControl, List[CommandControl]] = None,
+        parent: Union[Control, List[Control]] = None,
         id: str = "random",
         name: str = "random",
         resourceFolder: Union[str, Path] = "lightbulb",
@@ -657,12 +777,23 @@ class AddinCommand(_FusionWrapper):
         isVisible: bool = True,
         isChecked: bool = True,  # only checkbox
         listControlDisplayType=adsk.core.ListControlDisplayTypes.RadioButtonlistType,  # only list
-        **event_handlers: Callable,
+        **eventHandlers: Callable,
     ):
-        """[summary]
+        """Wraps around the CommandDefinitionObject and its ComandControl onject.
+        Attributes and methods of both classes can be accessed via this class.
+        The atributes of the commandDefintion object will be looked up first.
+        The class also encapsulates the concepts of the eventhandlers you would
+        connect the onCreated event handler when not using the framework.
+        Instead of conneccting handlers, you simply pass a function to an
+
+        If an Id of an existing CommandDefintion is provided, all parameters except
+        parent and id will be ignored.
+
+        This class does NOT wrap aroun Fusions Command ckass `<>`_.
+        (Thats why its called 'AddinCommand' and not only 'Command')
 
         Args:
-            parent (Union[ List[Button], Button, List[Checkbox], Checkbox, List[ListControl], ListControl, ], optional): [description]. Defaults to None.
+            parent (Union[Control, List[Control]], optional): The parent CommandControl this command is connected to. If a list of controls is passed you must make shier that they are all of the same controlType and that None od them is ahring the same panel. Defaults to None.
             id (str, optional): [description]. Defaults to "random".
             name (str, optional): [description]. Defaults to "random".
             resourceFolder (Union[str, Path], optional): [description]. Defaults to "lightbulb".
@@ -672,7 +803,7 @@ class AddinCommand(_FusionWrapper):
             isVisible (bool, optional): [description]. Defaults to True.
             isChecked (bool, optional): [description]. Defaults to True.
         """
-        super().__init__(parent, CommandControl)
+        super().__init__(parent, Control)
 
         if not isinstance(self._parent, list):
             parent_list = [self._parent]
@@ -680,7 +811,7 @@ class AddinCommand(_FusionWrapper):
             parent_list = self._parent
 
         id = dflts.eval_id(id)
-        name = dflts.eval_name(name, __class__.__bases__[0])
+        name = dflts.eval_name(name, __class__)
         resourceFolder = dflts.eval_image(resourceFolder)
         toolClipFileName = dflts.eval_image(toolClipFileName, "32x32.png")
 
@@ -712,12 +843,14 @@ class AddinCommand(_FusionWrapper):
                     isChecked,
                 )
             elif parent_control_type == adsk.core.ListControlDefinition.classType():
-                self._in_fusion = adsk.core.Application.get().userInterface.commandDefinitions.addCListDefinition(
+                self._in_fusion = adsk.core.Application.get().userInterface.commandDefinitions.addListDefinition(
                     id,
                     name,
                     listControlDisplayType,
                     resourceFolder,
                 )
+            else:
+                raise ValueError(msgs.invalid_control_type(parent_control_type))
 
             if toolClipFileName is not None:
                 self._in_fusion.toolClipFilename = toolClipFileName
@@ -727,45 +860,75 @@ class AddinCommand(_FusionWrapper):
             self._in_fusion.controlDefinition.isVisible = isVisible
             self._in_fusion.controlDefinition.name = name
 
+            # maybe move handler dict sanitation here
+            # not done yet because handler type mapping in handlers.py
+            # move when reconnecting handlers is implemented
+
             # ! if there is some error (typo) etc. fusion will break instantanious !
             self._in_fusion.commandCreated.add(
                 handlers._CommandCreatedHandler(  # pylint:disable=protected-access
-                    self.addin, name, event_handlers
+                    self.addin, name, eventHandlers
                 )
             )
 
-            self.addin.register_element(self, self.ui_level)
+            self.addin.registerElement(self, self.uiLevel)
 
         for p in parent_list:
             p._create_control(self._in_fusion)  # pylint:disable=protected-access
 
         logging.getLogger(__name__).info(msgs.created_new(__class__, id))
 
-    def add_parent_control(self, parent_control):
-        """[summary]
+    def addParentControl(self, parentControl):
+        """Adds an additional control for acticvating this command.
+
+        The control should be of the same control type as the other controls of
+        this command.
 
         Args:
-            parent ([type]): [description]
+            parent (CommandControl): The additional control for the command.
         """
-        parent_control._create_control(  # pylint:disable=protected-access
+        parentControl._create_control(  # pylint:disable=protected-access
             self._in_fusion
         )
         if not isinstance(self._parent, list):
             self._parent = [self._parent]
-        self._parent.append(parent_control)
+        self._parent.append(parentControl)
 
     def __getattr__(self, attr):
-        try:
-            return getattr(self._in_fusion.controlDefinition, attr)
-        except:
+        """Tries to find the attribute in the commandDefintion object first and
+        in the commandDefintion.controlDefintion object second on which this class
+        is wrapped around.
+        This will only get called if no attribute is found in the AddinCommand
+        wrapper object itself.
+
+        Args:
+            attr: The attribute name.
+
+        Returns:
+            Any: The attribute value.
+        """
+        if hasattr(self._in_fusion, attr):
             return getattr(self._in_fusion, attr)
+        else:  # hasattr(self._in_fusion.controlDefinition, attr):
+            return getattr(self._in_fusion.controlDefinition, attr)
 
     def __setattr__(self, name, value):
-        # avoid infinite recursion by using self.__dict__ instead of hasattr
-        if "_in_fusion" in self.__dict__.keys() and hasattr(self._in_fusion, name):
-            try:
-                setattr(self._in_fusion.controlDefinition, name, value)
-            except:
+        """Tries to set an attribute on the commandDefintion first and on the
+        commandDefintion.controlDefintion object second on which this wrapper is
+        wrapped around.
+        If the attribute is not found it will be set on the wrapper object.
+
+        Args:
+            name: The name of the attribute to set.
+            value: The value of the attribute to set.
+        """
+        # avoid infinite recursion by using self.__dict__ instead of self.hasattr
+        if "_in_fusion" in self.__dict__.keys() and self._in_fusion is not None:
+            if hasattr(self._in_fusion, name):
                 setattr(self._in_fusion, name, value)
+            elif hasattr(self._in_fusion.controlDefinition, name):
+                setattr(self._in_fusion.controlDefinition, name, value)
+            else:
+                super().__setattr__(name, value)
         else:
             super().__setattr__(name, value)

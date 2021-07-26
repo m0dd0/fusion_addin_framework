@@ -32,20 +32,22 @@ def run(context):  # pylint:disable=unused-argument
             "started fusion_addin_framework testing addin"
         )
 
+        all_testcases = [
+            getattr(testcases, name)
+            for name in dir(testcases)
+            if name.startswith("test") and callable(getattr(testcases, name))
+        ]
+
         global addins
+        results, addins = testcases.execute_cases(all_testcases)
+        # results, addins = testcases.execute_cases([testcases.test_dropdown_properties])
 
-        results, addins = testcases.execute_cases(
-            [
-                testcases.test_hello_world_button,
-                testcases.test_hello_world_button_dotted,
-                testcases.test_hello_world_button_no_parents,
-                testcases.test_hello_world_checkbox,
-                testcases.test_hello_world_checkbox_dotted,
-                testcases.test_hello_world_checkbox_no_parents,
-            ]
-        )
-
+        print("### RESULTS ###")
         pprint(dict(results))
+        if all([r["passed"] for r in results.values()]):
+            print("### PASSED ###")
+        else:
+            print("### FAILED ###")
 
     except:
         if ui:
@@ -60,10 +62,9 @@ def stop(context):  # pylint:disable=unused-argument
 
         global addins
 
-        faf.stop_all()
-        # for addin in reversed(addins):
-        #     if addin is not None:
-        #         addin.stop()
+        for addin in reversed(addins):
+            if addin is not None:
+                addin.stop()
 
         logging.getLogger(faf.__name__).info("stopped all addin instances")
 

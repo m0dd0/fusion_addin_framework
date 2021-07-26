@@ -6,13 +6,14 @@ the Fusion API. This module is utilized by the Command Wrapper.
 import logging
 import traceback
 from typing import Callable, Dict
+import time
 
 import adsk.core
 
 from . import messages as msgs
 
 # for typehints only
-# do not use because it will cause an circular import error in sphix
+# do not use because it will cause an circular import error in sphinx
 # from .wrapper import FusionAddin
 
 # keep all handlers referenced
@@ -59,15 +60,20 @@ def _notify_routine(addin, cmd_name: str, event_name: str, action: Callable, arg
         args ([type]): The arguments passed to the notify function.
     """
     logging.getLogger(__name__).info(msgs.starting_handler(event_name, cmd_name))
-    # TODO measure execution time and log it
     try:
+        start = time.perf_counter()
         action(args)
+        logging.getLogger(__name__).info(
+            msgs.handler_execution_time(
+                event_name, cmd_name, time.perf_counter() - start
+            )
+        )
     except:
         # no exception gets raised outside the handlers so this try, except
         # block is mandatory to prevent silent errors !!!!!!!
         msg = msgs.handler_error(event_name, cmd_name, traceback.format_exc())
         logging.getLogger(__name__).error(msg)
-        if addin.debug_to_ui:
+        if addin.debugToUi:
             adsk.core.Application.get().userInterface.messageBox(msg)
 
 
@@ -220,8 +226,13 @@ class _CommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
                 event_name = event_name[len(allowed_prefix) :]
             event_name = event_name[0].lower() + event_name[1:]
             if event_name in self.handler_dict:
-                logging.warning(msgs.doubled_callbacks(event_name))
-            self.handler_dict[event_name] = handler_callable
+                logging.getLogger(__name__).warning(msgs.doubled_callbacks(event_name))
+            if event_name not in handler_type_mapping:
+                # raising an (custom) error would result in a silent error and crash
+                # the further adding of handlers so use logging instead
+                logging.getLogger(__name__).warning(msgs.unknown_event_name(event_name))
+            else:
+                self.handler_dict[event_name] = handler_callable
 
         self.addin = addin
         self.cmd_name = cmd_name
@@ -236,13 +247,19 @@ class _CommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
         # create handlers for all events in the handler dict and connect them to
         # the correct event
         for event_name, handler_callable in self.handler_dict.items():
-            handler = handler_type_mapping[event_name](
-                self.addin,
-                self.cmd_name,
-                event_name,
-                handler_callable,
-            )
-            getattr(cmd, event_name).add(handler)
-            _handlers.append(handler)
+            handler_class = handler_type_mapping.get(event_name)
+            if handler_class is None:
+                # shouldnt happened
+                # just in case sanitation in init hasnt worked properly
+                logging.getLogger(__name__).warning(msgs.unknown_event_name(event_name))
+            else:
+                handler = handler_class(
+                    self.addin,
+                    self.cmd_name,
+                    event_name,
+                    handler_callable,
+                )
+                getattr(cmd, event_name).add(handler)
+                _handlers.append(handler)
 
         _notify_routine(self.addin, self.cmd_name, self.event_name, self.action, args)

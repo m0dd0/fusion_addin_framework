@@ -28,18 +28,47 @@ Basic idea and concept
 ----------------------
 The idea of this framework is to simplify the creation of Fusion360 Addin by 
 providing wrapper classes which represent the 
+Especially the concept of the handler classes is substituted by simply using
 After these classes got instantiated you can use them as they would be "normal"
 instances. All attribute and function calls will be redirected to the undelying object.
 In addition to the originally implementation default values for all parameters 
 where provided 
 
-The best way to understand this concept is to checkout the exmaples. 
+The best way to understand this concept and the usage of this addin in general 
+is to checkout the exmaples. 
 
-Note on naming convention
--------------------------
-For consistency with the Fusion API all interfaces of the wrapper classes are in camelCase.
-For all internal variables and utility function, the python naming convention 
-(snake_case for variabels and functions and UpperCamelCase for classes) is used. 
+..
+   Note on naming convention
+   -------------------------
+   For consistency with the Fusion API all interfaces of the wrapper classes are in camelCase.
+   For all internal variables and utility function, the python naming convention 
+   (snake_case for variabels and functions and UpperCamelCase for classes) is used. 
+
+Default images
+--------------
+For some of the UI-classes in the Fusion360-API you can provide the path to an image 
+or image folder (called "resourceFolder" in the API) for customizing their appearance.
+This framework provides some default images you can choose from.
+Instead of providing a path you simply pass the name of one of the images  
+The following default images are available:
+
+Please note that no sepereate images are provided for the dark and disabled
+image option.
+
+All these default icons were made by Freepik from www.flaticon.com.
+If you want to make your addin pulicly available and use one of the default images 
+from this framework you need to attribute the author of these images. 
+See https://support.flaticon.com/hc/en-us/articles/207248209-How-I-must-insert-the-attribution-
+for more details. 
+
+API errors and undocumented behavior
+------------------------------------
+The commandDefinition.tooltip property will alway return an empty string.
+Changes to the attribute will be reflected in the UI though.
+
+Changing the resourceFolder of an commandDefinition will first become visible If
+the button got unpinned and pinned again from the toolbar.
+
 
 
 .. toctree::
