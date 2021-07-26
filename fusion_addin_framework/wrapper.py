@@ -124,8 +124,7 @@ class FusionAddin:
     ):
         """Entry point to create all your elements that will appear in the user interface.
 
-        Handles their creation and deletes them (by calling the stop method) if
-        the addin is deactivated.
+        Handles the creation of UI elements and deletes them (by calling the stop method).
 
         Args:
             debug_to_ui (bool, optional): Flag indicating if erorr messages caused
@@ -240,7 +239,9 @@ class Workspace(_FusionWrapper):
         parent and id will be ignored.
 
         IMPORTANT: It is currently not possible to create a custom workspace via
-        the API (maybe a bug). So you need to use a ID of an
+        the API. This seems like a bug in Fusion360s API.
+        So you need to use a ID of an native workspace.
+        If you have any information on this please ansesr this `<>`_ thread.
 
         Args:
             parent (FusionAddin): The parental addin instance. Defaults to a addin with
@@ -369,7 +370,8 @@ class Panel(_FusionWrapper):
         object.
 
         If an Id of an existing Panel is provided, all parameters except parent and
-        id will be ignored.
+        id will be ignored. If you want to change properties of the Panel, you can
+        simply set the attributes after initialization if its not a native Panel.
 
         Args:
             parent (Tab, optional): The parent tab which contains this
@@ -552,19 +554,30 @@ class Control(_FusionWrapper):
         isBefore: bool = True,
     ):
         """Wraps around Fusions CommandControl class <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-bb8d8c7b-3049-40c9-b7a5-76d24a462327>
-        A dummy command definition with a button control definition is used to
-        instantiate the control.
+
+        Depending on the passed control
 
         Args:
             parent (Panel): [description]
             controlType (str): If you use a checkbox or list you should set isPromoted and isPromotedByDefault to False.
                 Otherwise an additional button which has no functionality will be created.
                 This is caused by the somewhat misleading behavior from ths Fusion API.
-            isVisible (bool): [description]
-            isPromoted (bool): [description]
-            isPromotedByDefault (bool): [description]
-            positionID (int): [description]
-            isBefore (bool): [description]
+            isVisible (bool): Sets if this control is currently visible. Defaults to True.
+            isPromoted (bool): Sets if this command has been promoted to the parent panel.
+                This property is ignored in the case where this controls parent isn't a panel.
+                Defaults to False.
+            isPromotedByDefault (bool): Sets if this command is a default command in the panel.
+                This defines the default state of the panel if the UI is reset.
+                This property is ignored in the case where this control isn't in a panel.
+                Defaults to False.
+            positionID (int): Specifies the reference id of the control to position this
+                control relative to. Not setting this value indicates that the
+                control will be created at the end of all other controls in toolbar.
+                The isBefore parameter specifies whether to place the control before
+                or after the reference control.
+            isBefore (bool): Specifies whether to place the control before or after
+                the reference control specified by the positionID parameter. This
+                argument is ignored is positionID is not specified. Defaults to True.
         """
         super().__init__(parent, Panel)
 
@@ -616,10 +629,15 @@ class Control(_FusionWrapper):
         logging.getLogger(__name__).info(msgs.created_new(__class__, None))
 
     def _create_control(self, cmd_def):
-        """[summary]
+        """Creates a control with the properties that are passed at the initialization
+        of the class and the given command defintion.
+        If a control already has been created (the dummy command defintion control)
+        the previous control will be deleted first.
+        The control will be (re)registered to the parent adiin instance.
 
         Args:
-            cmd_def ([type]): [description]
+            cmd_def (adsk.fusion.CommandDefinition): The command definition object for
+                which will be used to create the control in the user interface.
         """
         # to delete the control created by the dummy definition
         if self._in_fusion is not None:
@@ -766,6 +784,7 @@ class AddinCommand(_FusionWrapper):
         The atributes of the commandDefintion object will be looked up first.
         The class also encapsulates the concepts of the eventhandlers you would
         connect the onCreated event handler when not using the framework.
+        Instead of conneccting handlers, you simply pass a function to an
 
         If an Id of an existing CommandDefintion is provided, all parameters except
         parent and id will be ignored.
@@ -843,6 +862,7 @@ class AddinCommand(_FusionWrapper):
 
             # maybe move handler dict sanitation here
             # not done yet because handler type mapping in handlers.py
+            # move when reconnecting handlers is implemented
 
             # ! if there is some error (typo) etc. fusion will break instantanious !
             self._in_fusion.commandCreated.add(
@@ -859,10 +879,13 @@ class AddinCommand(_FusionWrapper):
         logging.getLogger(__name__).info(msgs.created_new(__class__, id))
 
     def addParentControl(self, parentControl):
-        """[summary]
+        """Adds an additional control for acticvating this command.
+
+        The control should be of the same control type as the other controls of
+        this command.
 
         Args:
-            parent ([type]): [description]
+            parent (CommandControl): The additional control for the command.
         """
         parentControl._create_control(  # pylint:disable=protected-access
             self._in_fusion
@@ -872,12 +895,33 @@ class AddinCommand(_FusionWrapper):
         self._parent.append(parentControl)
 
     def __getattr__(self, attr):
+        """Tries to find the attribute in the commandDefintion object first and
+        in the commandDefintion.controlDefintion object second on which this class
+        is wrapped around.
+        This will only get called if no attribute is found in the AddinCommand
+        wrapper object itself.
+
+        Args:
+            attr: The attribute name.
+
+        Returns:
+            Any: The attribute value.
+        """
         if hasattr(self._in_fusion, attr):
             return getattr(self._in_fusion, attr)
         else:  # hasattr(self._in_fusion.controlDefinition, attr):
             return getattr(self._in_fusion.controlDefinition, attr)
 
     def __setattr__(self, name, value):
+        """Tries to set an attribute on the commandDefintion first and on the
+        commandDefintion.controlDefintion object second on which this wrapper is
+        wrapped around.
+        If the attribute is not found it will be set on the wrapper object.
+
+        Args:
+            name: The name of the attribute to set.
+            value: The value of the attribute to set.
+        """
         # avoid infinite recursion by using self.__dict__ instead of self.hasattr
         if "_in_fusion" in self.__dict__.keys() and self._in_fusion is not None:
             if hasattr(self._in_fusion, name):

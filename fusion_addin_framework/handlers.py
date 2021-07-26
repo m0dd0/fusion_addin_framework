@@ -13,7 +13,7 @@ import adsk.core
 from . import messages as msgs
 
 # for typehints only
-# do not use because it will cause an circular import error in sphix
+# do not use because it will cause an circular import error in sphinx
 # from .wrapper import FusionAddin
 
 # keep all handlers referenced

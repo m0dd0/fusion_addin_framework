@@ -37,11 +37,12 @@ where provided
 The best way to understand this concept and the usage of this addin in general 
 is to checkout the exmaples. 
 
-Note on naming convention
--------------------------
-For consistency with the Fusion API all interfaces of the wrapper classes are in camelCase.
-For all internal variables and utility function, the python naming convention 
-(snake_case for variabels and functions and UpperCamelCase for classes) is used. 
+..
+   Note on naming convention
+   -------------------------
+   For consistency with the Fusion API all interfaces of the wrapper classes are in camelCase.
+   For all internal variables and utility function, the python naming convention 
+   (snake_case for variabels and functions and UpperCamelCase for classes) is used. 
 
 Default images
 --------------
@@ -55,8 +56,9 @@ Please note that no sepereate images are provided for the dark and disabled
 image option.
 
 All these default icons were made by Freepik from www.flaticon.com.
-If you want to make your addin pulicly available you need to attribute the author
-of these images. See https://support.flaticon.com/hc/en-us/articles/207248209-How-I-must-insert-the-attribution-
+If you want to make your addin pulicly available and use one of the default images 
+from this framework you need to attribute the author of these images. 
+See https://support.flaticon.com/hc/en-us/articles/207248209-How-I-must-insert-the-attribution-
 for more details. 
 
 API errors and undocumented behavior
