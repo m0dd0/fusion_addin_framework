@@ -240,7 +240,7 @@ class Workspace(_FusionWrapper):
         If an Id of an existing workspace is provided, all parameters except
         `parent` and `id` will be ignored.
 
-        IMPORTANT: It is currently not possible to create a custom workspace via
+        It is currently not possible to create a custom workspace via
         the API. This seems like a bug in Fusion360s API.
         Therfore you need to use a ID of an native workspace.
         If you have any information on this please ansesr this `<https://forums.autodesk.com/t5/fusion-360-api-and-scripts/custom-workspace-is-not-visible/m-p/10278987>`_ forum post.
@@ -433,15 +433,15 @@ class Panel(_FusionWrapper):
     # endregion
 
     def control(self, *args, **kwargs):
-        """Creates a :class:`.CommandControl` as a child of this panel.
+        """Creates a :class:`.Control` as a child of this panel.
 
-        Calling this method is the same as initialsing a :class:`.CommandControl`
+        Calling this method is the same as initialsing a :class:`.Control`
         with this panel instance as parent parameter. Therefore the same
-        parameters are passed. See :class:`.CommandControl` for a detailed description
+        parameters are passed. See :class:`.Control` for a detailed description
         of the paramters.
 
         Returns:
-            Control: The newly created or accessed CommandControl instance.
+            Control: The newly created or accessed Control instance.
         """
         return Control(self, *args, **kwargs)
 
@@ -517,15 +517,15 @@ class Dropdown(_FusionWrapper):
             logging.getLogger(__name__).info(msgs.created_new(__class__, id))
 
     def control(self, *args, **kwargs):
-        """Creates a :class:`.CommandControl` as a child of this workspace.
+        """Creates a :class:`.Control` as a child of this workspace.
 
-        Calling this method is the same as initialsing a :class:`.CommandControl`
+        Calling this method is the same as initialsing a :class:`.Control`
         with this panel instance as parent parameter. Therefore the same
-        parameters are passed. See :class:`.CommandControl` for a detailed description
+        parameters are passed. See :class:`.Control` for a detailed description
         of the paramters.
 
         Returns:
-            Control: The newly created or accessed CommandControl instance.
+            Control: The newly created or accessed Control instance.
         """
         return Control(self, *args, **kwargs)
 
@@ -561,32 +561,36 @@ class Control(_FusionWrapper):
         Note that in contrast to the usage of the 'orignal' API a commandDefintion
         is *not* needed to initialize the commandControl. Instead a commandDefintion
         can be added as a children of the commandControl by using the :class:`.AddinCommand`
-        wrapper. If no commandDefintion is provided as default a dummy defintion
-        is used which doesnt have any functionality connected to its command.
+        wrapper. If no commandDefintion is provided a dummy defintion is used
+        which doesnt have any functionality connected to its command.
         Depending on the passed `controlType` attribute the ControlDefinition of
         the commandDefintion child will be determined.
 
         Args:
-            parent (Union[Panel, Dropdown]): The parent panel or dropdown which
-                contains this control.
-            controlType (str): If you use a checkbox or list you should set
-                isPromoted and isPromotedByDefault to False.
-                Otherwise an additional button which has no functionality will be created.
+            parent (Union[Panel, Dropdown], optional): The parent panel or dropdown which
+                contains this control. Defaults to a Panel with the default properties.
+            controlType (str, optional): The kind of control which is used to activate the
+                associated command. Possible options are "button", "checkbox" or "list".
+                Only "button" control type can be used in the panel directly.
+                Therefore you should set the isPromoted and isPromotedByDefault 
+                to False ff you use a checkbox or list. Otherwise an additional 
+                button which has no functionality will be created.
                 This is caused by the somewhat misleading behavior of the Fusion API.
-            isVisible (bool): Sets if this control is currently visible. Defaults to True.
-            isPromoted (bool): Sets if this command has been promoted to the parent panel.
+                Defaults to "button".
+            isVisible (bool, optional): Sets if this control is currently visible. Defaults to True.
+            isPromoted (bool, optional): Sets if this command has been promoted to the parent panel.
                 This property is ignored in the case where this controls parent isn't a panel.
                 Defaults to False.
-            isPromotedByDefault (bool): Sets if this command is a default command in the panel.
+            isPromotedByDefault (bool, optional): Sets if this command is a default command in the panel.
                 This defines the default state of the panel if the UI is reset.
                 This property is ignored in the case where this control isn't in a panel.
                 Defaults to False.
-            positionID (int): Specifies the reference id of the control to position this
+            positionID (int, optional): Specifies the reference id of the control to position this
                 control relative to. Not setting this value indicates that the
                 control will be created at the end of all other controls in toolbar.
                 The isBefore parameter specifies whether to place the control before
                 or after the reference control.
-            isBefore (bool): Specifies whether to place the control before or after
+            isBefore (bool, optional): Specifies whether to place the control before or after
                 the reference control specified by the positionID parameter. This
                 argument is ignored is positionID is not specified. Defaults to True.
         """
@@ -667,10 +671,10 @@ class Control(_FusionWrapper):
         self.addin.registerElement(self, self.uiLevel)
 
     def addinCommand(self, *args, **kwargs):
-        """Creates a :class:`.AddinCommand` as a child of this CommandControl.
+        """Creates a :class:`.AddinCommand` as a child of this Control.
 
         Calling this method is the same as initialsing a :class:`.AddinCommand`
-        with this CommandControl instance as parent parameter. Therefore the same
+        with this Control instance as parent parameter. Therefore the same
         parameters are passed. See :class:`.AddinCommand` for a detailed description
         of the paramters.
 
@@ -790,13 +794,14 @@ class AddinCommand(_FusionWrapper):
         listControlDisplayType: int = adsk.core.ListControlDisplayTypes.RadioButtonlistType,  # only list
         **eventHandlers: Callable,
     ):
-        """Wraps around Fusions `CommandDefinitionObject<
-        https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-5e5a72e2-0869-4f85-936f-eab4ebd4aced>`_
+        """Wraps around Fusions `CommandDefinition
+        <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-5e5a72e2-0869-4f85-936f-eab4ebd4aced>`_
         object and its `ControlDefintion
         <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-f4282920-9484-49db-bcdd-b46f6506543d>`_
         attribute.
-        This class does NOT wrap around Fusions `Command<
-        https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-0550963a-ff63-4183-b0a7-a1bf0c99f821>`_
+
+        This class does NOT wrap around Fusions `Command
+        <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-0550963a-ff63-4183-b0a7-a1bf0c99f821>`_
         class.
         (Thats why its called 'AddinCommand' and not 'Command' only.)
 
@@ -814,12 +819,13 @@ class AddinCommand(_FusionWrapper):
         of the commandDefintion.
         Instead of connecting handlers, you simply pass a function as an arguments
         to this wrapper class.
-        The argument name must correspond to a event name of Fusions `Command<
-        https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-0550963a-ff63-4183-b0a7-a1bf0c99f821>`_
+        The argument name must correspond to a event name of Fusions `Command
+        <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-0550963a-ff63-4183-b0a7-a1bf0c99f821>`_
         class or 'commandCreated' for the `commandCreatedEventHandler`.
         The passed function will get executed as the notify method of the corresponding
         handler. Also the same argument will get passed to this function
-        (e.g. `CommandCreatedEventArgs<https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-97617dc7-d815-4b05-ac50-8880afe8937b>`_
+        (e.g. `CommandCreatedEventArgs
+        <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-97617dc7-d815-4b05-ac50-8880afe8937b>`_
         for a function passed to the argument `onCommandCreated`).
         Therfore the signature of the passed (notify-)functions must accept exactly
         one positional argument (which can be used within the fucntion).
@@ -829,7 +835,7 @@ class AddinCommand(_FusionWrapper):
         instead of handlers understandable in no time.
 
         Args:
-            parent (Union[Control, List[Control]], optional): The parent CommandControl
+            parent (Union[Control, List[Control]], optional): The parent Control
                 this command is connected to. You can also pass a list of controls.
                 In this case the same command/functionality getx connected to multiple
                 controls. If a list of controls is passed you must ensure that all
@@ -870,11 +876,11 @@ class AddinCommand(_FusionWrapper):
                 command. Defaults to True.
             listControlDisplayType (int, optional): Will be ignored if the controlType
                 of the paerntal Control is not 'list'. Sets how the parental list
-                    control will be displayed; as a standard list, a list of check boxes,
-                    or a list of radio buttons. Possible Values can be found in
-                    the `ListControlDisplayType
-                    <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-3b2f79e4-2b1b-4bc9-8632-d3b6fe1fc421>`_
-                    enumerator. Defaults to RadioButtonListType (1).
+                control will be displayed; as a standard list, a list of check boxes,
+                or a list of radio buttons. Possible Values can be found in
+                the `ListControlDisplayType
+                <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-3b2f79e4-2b1b-4bc9-8632-d3b6fe1fc421>`_
+                enumerator. Defaults to RadioButtonListType (1).
         """
         super().__init__(parent, Control)
 
@@ -958,7 +964,7 @@ class AddinCommand(_FusionWrapper):
         this command.
 
         Args:
-            parent (CommandControl): The additional control for the command.
+            parent (Control): The additional control for the command.
         """
         parentControl._create_control(  # pylint:disable=protected-access
             self._in_fusion

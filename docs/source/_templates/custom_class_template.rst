@@ -1,8 +1,10 @@
 {{ fullname | escape | underline}}
 
-
-
 .. currentmodule:: {{ module }}
+
+
+.. autoclass:: {{ module }}.{{ objname }}
+    :members:
 
 
 {% if methods %}
@@ -25,8 +27,5 @@
     ~{{ name }}.{{ item }}
 {%- endfor %}
 {% endif %}
-
-.. autoclass:: {{ module }}.{{ objname }}
-    :members:
    
     

@@ -1,9 +1,14 @@
 {{ fullname | escape | underline}}
 
-
-
 .. currentmodule:: {{ module }}
 
+{% if methods %}
+.. autoclass:: {{ module }}.{{ objname }}
+   :members:
+{% else %}
+.. autofunction:: {{ module }}.{{ objname }}
+{% endif %}
+   
 
 {% if methods %}
 .. rubric:: {{ _('Methods') }}
@@ -27,13 +32,4 @@
    {% endif %}
 {%- endfor %}
 {% endif %}
-
-
-{% if methods %}
-.. autoclass:: {{ module }}.{{ objname }}
-   :members:
-{% else %}
-.. autofunction:: {{ module }}.{{ objname }}
-{% endif %}
-   
     
