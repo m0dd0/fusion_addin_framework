@@ -213,9 +213,7 @@ class FusionAddin:
 
     @property
     def createdElements(self):  # -> Dict[int, List[FusionApp]]:
-        """Dict[int, List[FusionApp]]: A dictonary with all the created ui elemnts.
-        Mapped by their level.
-        """
+        """Dict[int, List[FusionApp]]: A dictonary with all the created ui elemnts mapped by their ui level."""
         return self._registered_elements
 
     # endregion
@@ -236,6 +234,9 @@ class Workspace(_FusionWrapper):
         """Wraps around Fusions `Workspace
         <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-33f9ed37-e5c7-4153-ba85-c3254a199dd1>`_
         object.
+        Besides the documented attributes and methods on this page all
+        attributes and methods of the wrapped class can be accessed with the same
+        attribute and method names as in the wrapped class.
 
         If an Id of an existing workspace is provided, all parameters except
         `parent` and `id` will be ignored.
@@ -243,10 +244,12 @@ class Workspace(_FusionWrapper):
         It is currently not possible to create a custom workspace via
         the API. This seems like a bug in Fusion360s API.
         Therfore you need to use a ID of an native workspace.
-        If you have any information on this please ansesr this `<https://forums.autodesk.com/t5/fusion-360-api-and-scripts/custom-workspace-is-not-visible/m-p/10278987>`_ forum post.
+        If you have any information on this please answer `this
+        <https://forums.autodesk.com/t5/fusion-360-api-and-scripts/custom-workspace-is-not-visible/m-p/10278987>`_
+        forum post.
 
         Args:
-            parent (FusionAddin): The parental addin instance. Defaults to a addin with
+            parent (FusionAddin): The parental addin instance. Defaults to an addin with
                 the default values.
             id (str, optional): The id of the workspace. Defaults to "FusionSolidEnvironment".
             productType (str, optional): The name of the product this workspace
@@ -317,6 +320,9 @@ class Tab(_FusionWrapper):
         """Wraps around Fusions `Tab
         <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-7AF58337-178C-467C-831F-285B0FB02D56>`_
         object.
+        Besides the documented attributes and methods on this page all
+        attributes and methods of the wrapped class can be accessed with the same
+        attribute and method names as in the wrapped class.
 
         If an Id of an existing Tab is provided, all parameters except `parent` and
         `id` will be ignored.
@@ -370,6 +376,9 @@ class Panel(_FusionWrapper):
         """Wraps around the `Panel
         <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-0ca48ac9-da95-4623-bf87-150f3729717a>`_
         object.
+        Besides the documented attributes and methods on this page all
+        attributes and methods of the wrapped class can be accessed with the same
+        attribute and method names as in the wrapped class.
 
         If an Id of an existing Panel is provided, all parameters except `parent` and
         `id` will be ignored.
@@ -473,6 +482,9 @@ class Dropdown(_FusionWrapper):
         """Wraps around Fusions `Dropdown
         <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-47de53a5-90f0-4d3c-9eee-3fc16d794014>`_
         object.
+        Besides the documented attributes and methods on this page all
+        attributes and methods of the wrapped class can be accessed with the same
+        attribute and method names as in the wrapped class.
 
         If an Id of an existing Dropdown is provided, all parameters except `parent`
         and `id` will be ignored.
@@ -557,6 +569,9 @@ class Control(_FusionWrapper):
         """Wraps around Fusions `CommandControl
         <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-bb8d8c7b-3049-40c9-b7a5-76d24a462327>`_
         object.
+        Besides the documented attributes and methods on this page all
+        attributes and methods of the wrapped class can be accessed with the same
+        attribute and method names as in the wrapped class.
 
         Note that in contrast to the usage of the 'orignal' API a commandDefintion
         is *not* needed to initialize the commandControl. Instead a commandDefintion
@@ -572,8 +587,8 @@ class Control(_FusionWrapper):
             controlType (str, optional): The kind of control which is used to activate the
                 associated command. Possible options are "button", "checkbox" or "list".
                 Only "button" control type can be used in the panel directly.
-                Therefore you should set the isPromoted and isPromotedByDefault 
-                to False ff you use a checkbox or list. Otherwise an additional 
+                Therefore you should set the isPromoted and isPromotedByDefault
+                to False ff you use a checkbox or list. Otherwise an additional
                 button which has no functionality will be created.
                 This is caused by the somewhat misleading behavior of the Fusion API.
                 Defaults to "button".
@@ -799,6 +814,10 @@ class AddinCommand(_FusionWrapper):
         object and its `ControlDefintion
         <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-f4282920-9484-49db-bcdd-b46f6506543d>`_
         attribute.
+        Besides the documented attributes and methods on this page all
+        attributes and methods of the wrapped classes can be accessed with the same
+        attribute and method names as in the wrapped classes.
+        The atributes of the commandDefintion object will be looked up first.
 
         This class does NOT wrap around Fusions `Command
         <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-0550963a-ff63-4183-b0a7-a1bf0c99f821>`_
@@ -807,9 +826,6 @@ class AddinCommand(_FusionWrapper):
 
         If an Id of an existing CommandDefintion is provided, all parameters except
         `parent` and `id` will be ignored.
-
-        Attributes and methods of both wrapped classes can be accessed via this class.
-        The atributes of the commandDefintion object will be looked up first.
 
         This class also encapsulates the concepts of the `event handlers
         <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID->`_
