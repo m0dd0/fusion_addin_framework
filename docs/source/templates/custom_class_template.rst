@@ -6,6 +6,9 @@
 .. autoclass:: {{ module }}.{{ objname }}
     :members:
 
+Summary
+-------
+
 
 {% if methods %}
 .. rubric:: {{ _('Methods') }}

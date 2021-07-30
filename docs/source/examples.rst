@@ -1,17 +1,26 @@
+.. _examples:
+
 Examples
 ========
 
 The usage of this framework should be easy to unnderstand by having a look at at 
 the examples below.
 
-All the given xamples assume that you cloned the `fusion_addin_framework<>`_ into
-the directory of your addin as explained `here<>_`.
+All the given examples assume that you cloned the `fusion_addin_framework
+<https://github.com/m0dd0/fusion_addin_framework>`_ 
+into the directory of your addin as explained :ref:`here<installation>` and the 
+code is executed from the main-file of your addin.
 
 
 Simplest possible addin
 -----------------------
 
-Creating a very simple command at the default location () with only on the default values.
+Creating a very simple addin/command at the default location 
+(Design Workspace, Addin Panel, Button Controlled).
+The Workspace, Panel and Button are not explicitly defined and therefore the default 
+values are used.
+The next example will demonstrate how to specify the 
+When clicking 
 
 .. code-block:: python 
 
@@ -20,7 +29,7 @@ Creating a very simple command at the default location () with only on the defau
 
     cmd = None
 
-    def say_hi():
+    def say_hi(cmd_args: adsk.core.):
         adsk.core.Application.get().userInterface.messageBox("hi")
 
     def run(context):

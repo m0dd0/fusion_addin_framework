@@ -104,7 +104,7 @@ class _FusionWrapper(ABC):
     def uiLevel(self):
         """The level this instance is in the user interface hierachy.
 
-        For Example: Workspace is always level 1, Tab always level 2
+        For Example: Workspace is always level 1, Tab always level 2, ...
         """
         return self._ui_level
 
