@@ -16,16 +16,19 @@ Simplest possible addin
 -----------------------
 
 Creating a very simple addin/command at the default location 
-(Design Workspace, Addin Panel, Button Controlled).
+(Design-workspace, Tools-tab, Addin-panel, button controlled).
 The Workspace, Panel and Button are not explicitly defined and therefore the default 
 values are used.
-The next example will demonstrate how to specify the 
+The next example will demonstrate how to specify the exact position of the Control
+which activates the command of your addin.
+Note that the created button is not promoted by default.
+
 When clicking 
 
 .. code-block:: python 
 
-    import fusion_addin_framework as faf
     import adsk.core, adsk.fusion
+    from .fusion_addin_framework import  as faf
 
     cmd = None
 
@@ -46,23 +49,7 @@ Creating a button controlled command at a very specific location:
 
 .. code-block:: python 
 
-    import fusion_addin_framework as faf
-    import adsk.core, adsk.fusion
-
-    cmd = None
-
-    def say_hi():
-        adsk.core.Application.get().userInterface.messageBox("hi")
-
-    def run(context):
-        global cmd
-        addin = Addin()
-        ws = Workspace(parent=addin, id='')
-        tab = Tab()
-        cmd = faf.ButtonCommand(onExecute=say_hi)
-        
-    def stop(context):
-        cmd.addin.stop()
+    
 
 Alternativly to the the notation above xou could also use the following code which
 results in exactly the same wrapper 
@@ -83,3 +70,6 @@ Addin with multiple controls
 
 Addin using dropdowns
 ---------------------
+
+Using the module logger
+-----------------------
