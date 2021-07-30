@@ -58,7 +58,7 @@ author = "Moritz Hesche"
 extensions = ["sphinx.ext.autodoc", "sphinx.ext.napoleon", "sphinx.ext.autosummary"]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ["_templates"]
+templates_path = ["templates"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -83,7 +83,7 @@ html_theme_options = {
     # # Toc options
     # "collapse_navigation": False,
     # "sticky_navigation": True,
-    # "navigation_depth": 4,
+    "navigation_depth": 3,
     # "includehidden": True,
     # "titles_only": False,
 }

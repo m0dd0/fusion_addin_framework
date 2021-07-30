@@ -1,8 +1,13 @@
 {{ fullname | escape | underline}}
 
-
-
 .. currentmodule:: {{ module }}
+
+
+.. autoclass:: {{ module }}.{{ objname }}
+    :members:
+
+Summary
+-------
 
 
 {% if methods %}
@@ -10,7 +15,7 @@
 
 .. autosummary::
 {% for item in methods %}
-   {% if item != '__init__' and item not in inherited_members %} 
+    {% if item != '__init__' %} 
         ~{{ name }}.{{ item }}
     {% endif %}
 {%- endfor %}
@@ -22,18 +27,8 @@
 
 .. autosummary::
 {% for item in attributes %}
-   {% if item not in inherited_members %}
-         ~{{ name }}.{{ item }}
-   {% endif %}
+    ~{{ name }}.{{ item }}
 {%- endfor %}
-{% endif %}
-
-
-{% if methods %}
-.. autoclass:: {{ module }}.{{ objname }}
-   :members:
-{% else %}
-.. autofunction:: {{ module }}.{{ objname }}
 {% endif %}
    
     
