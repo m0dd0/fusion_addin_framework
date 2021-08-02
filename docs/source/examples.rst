@@ -87,14 +87,18 @@ We set ``isPromoted=True`` so the control will appear in the Panel.
 
 
     def run(context):
-        global addin
-        addin = faf.FusionAddin()
-        ws = faf.Workspace(parent=addin, id="FusionSolidEnvironment")
-        tab = faf.Tab(parent=ws, id="SolidTab")
-        panel = faf.Panel(parent=tab, id="SolidCreatePanel")
-        control = faf.Control(parent=panel, isPromoted=True)
-        cmd = faf.AddinCommand(parent=control, onExecute=say_hi, name="my command")
-
+        try:
+            global addin
+            addin = faf.FusionAddin()
+            ws = faf.Workspace(parent=addin, id="FusionSolidEnvironment")
+            tab = faf.Tab(parent=ws, id="SolidTab")
+            panel = faf.Panel(parent=tab, id="SolidCreatePanel")
+            control = faf.Control(parent=panel, isPromoted=True)
+            cmd = faf.AddinCommand(parent=control, onExecute=say_hi, name="my command")
+        except:
+            adsk.core.Application.get().userInterface.messageBox(
+                "Failed:\n{}".format(traceback.format_exc())
+            )
 
     def stop(context):
         addin.stop()
@@ -120,15 +124,20 @@ as well as long as you dont need to add more than one child to a parent UI eleme
 
 
     def run(context):
-        global cmd
-        cmd = (
-            faf.FusionAddin()
-            .workspace(id="FusionSolidEnvironment")
-            .tab(id="SolidTab")
-            .panel(id="SolidCreatePanel")
-            .control(isPromoted=True)
-            .addinCommand(onExecute=say_hi, name="my command")
-        )
+        try:
+            global cmd
+            cmd = (
+                faf.FusionAddin()
+                .workspace(id="FusionSolidEnvironment")
+                .tab(id="SolidTab")
+                .panel(id="SolidCreatePanel")
+                .control(isPromoted=True)
+                .addinCommand(onExecute=say_hi, name="my command")
+            )
+        except:
+            adsk.core.Application.get().userInterface.messageBox(
+                "Failed:\n{}".format(traceback.format_exc())
+            )
 
 
     def stop(context):
@@ -179,7 +188,9 @@ image.
                 parent=control, onExecute=say_hi, name="my command", resourceFolder="cubes"
             )
         except:
-            print("except")
+            adsk.core.Application.get().userInterface.messageBox(
+                "Failed:\n{}".format(traceback.format_exc())
+            )
 
 
     def stop(context):
@@ -253,12 +264,7 @@ As in the first example the addin will be positioned at the default position (Ad
 
 
     def stop(context):
-        try:
-            cmd.addin.stop()
-        except:
-            adsk.core.Application.get().userInterface.messageBox(
-                "Failed:\n{}".format(traceback.format_exc())
-            )
+        cmd.addin.stop()
 
 
 
@@ -298,12 +304,7 @@ Control wrapper.
 
 
     def stop(context):
-        try:
-            addin.stop()
-        except:
-            adsk.core.Application.get().userInterface.messageBox(
-                "Failed:\n{}".format(traceback.format_exc())
-            )
+        addin.stop()
 
 
 Addin with multiple controls
@@ -329,24 +330,29 @@ both activate the same command.
 
 
     def run(context):
-        global addin
-        addin = faf.FusionAddin()
-        ws = faf.Workspace(parent=addin, id="FusionSolidEnvironment")
+        try:
+            global addin
+            addin = faf.FusionAddin()
+            ws = faf.Workspace(parent=addin, id="FusionSolidEnvironment")
 
-        solid_tab = faf.Tab(parent=ws, id="SolidTab")
-        tools_tab = faf.Tab(parent=ws, id="ToolsTab")
+            solid_tab = faf.Tab(parent=ws, id="SolidTab")
+            tools_tab = faf.Tab(parent=ws, id="ToolsTab")
 
-        solid_panel = faf.Panel(parent=solid_tab, id="SolidCreatePanel")
-        addin_panel = faf.Panel(parent=tools_tab, id="SolidScriptsAddinsPanel")
+            solid_panel = faf.Panel(parent=solid_tab, id="SolidCreatePanel")
+            addin_panel = faf.Panel(parent=tools_tab, id="SolidScriptsAddinsPanel")
 
-        control_1 = faf.Control(parent=solid_panel, isPromoted=True)
-        control_2 = faf.Control(parent=addin_panel, isPromoted=True)
+            control_1 = faf.Control(parent=solid_panel, isPromoted=True)
+            control_2 = faf.Control(parent=addin_panel, isPromoted=True)
 
-        # this command has two parental controls and can therfore be acticated from
-        # different postions in the UI
-        cmd = faf.AddinCommand(
-            parent=[control_1, control_2], onExecute=say_hi, name="my command"
-        )
+            # this command has two parental controls and can therfore be acticated from
+            # different postions in the UI
+            cmd = faf.AddinCommand(
+                parent=[control_1, control_2], onExecute=say_hi, name="my command"
+            )
+        except:
+            adsk.core.Application.get().userInterface.messageBox(
+                "Failed:\n{}".format(traceback.format_exc())
+            )
 
 
     def stop(context):
@@ -374,63 +380,68 @@ looked up in the API documentation of the wrapped class.
 
 
     def run(context):
-        global addin
-        addin = faf.FusionAddin()
+        try:
+            global addin
+            addin = faf.FusionAddin()
 
-        # access the attributes and methods of the workspace instance
-        ws = faf.Workspace(parent=addin, id="FusionSolidEnvironment")
-        print(ws.parent)
-        print(ws.addin)
-        print(ws.isActive)
-        print(ws.name)
-        print(ws.objectType)
-        print(ws.productType)
-        print(ws.resourceFolder)
-        print(ws.toolClipFilename)
-        ws.activate()
-        # ...
+            # access the attributes and methods of the workspace instance
+            ws = faf.Workspace(parent=addin, id="FusionSolidEnvironment")
+            print(ws.parent)
+            print(ws.addin)
+            print(ws.isActive)
+            print(ws.name)
+            print(ws.objectType)
+            print(ws.productType)
+            print(ws.resourceFolder)
+            print(ws.toolClipFilename)
+            ws.activate()
+            # ...
 
-        tab = faf.Tab(parent=ws, id="SolidTab")
-        print(tab.parent)
-        print(tab.id)
-        print(tab.index)
-        print(tab.isActive)
-        print(tab.name)
-        print(tab.objectType)
-        tab.activate()
-        # ...
+            tab = faf.Tab(parent=ws, id="SolidTab")
+            print(tab.parent)
+            print(tab.id)
+            print(tab.index)
+            print(tab.isActive)
+            print(tab.name)
+            print(tab.objectType)
+            tab.activate()
+            # ...
 
-        panel = faf.Panel(parent=tab, id="SolidCreatePanel")
-        print(panel.parent)
-        print(panel.controls)
-        print(panel.id)
-        print(panel.isValid)
-        print(panel.isVisible)
-        print(panel.name)
-        print(panel.indexWithinTab("SolidTab"))
-        # ...
+            panel = faf.Panel(parent=tab, id="SolidCreatePanel")
+            print(panel.parent)
+            print(panel.controls)
+            print(panel.id)
+            print(panel.isValid)
+            print(panel.isVisible)
+            print(panel.name)
+            print(panel.indexWithinTab("SolidTab"))
+            # ...
 
-        button = faf.Control(parent=panel, isPromoted=True)
-        print(button.parent)
-        print(button.commandDefinition)
-        print(button.id)
-        print(button.isPromoted)
-        button.isPromoted = False
-        button.isPromotedByDefault = False
-        print(button.isVisible)
-        print(button.objectType)
-        print(button.parent)
-        # ...
+            button = faf.Control(parent=panel, isPromoted=True)
+            print(button.parent)
+            print(button.commandDefinition)
+            print(button.id)
+            print(button.isPromoted)
+            button.isPromoted = False
+            button.isPromotedByDefault = False
+            print(button.isVisible)
+            print(button.objectType)
+            print(button.parent)
+            # ...
 
-        cmd = faf.AddinCommand(parent=button, onExecute=say_hi, name="my command")
-        print(cmd.parent)
-        print(cmd.controlDefinition)
-        print(cmd.isVisible)
-        print(cmd.id)
-        print(cmd.isNative)
-        print(cmd.resourceFolder)
-        # ...
-
+            cmd = faf.AddinCommand(parent=button, onExecute=say_hi, name="my command")
+            print(cmd.parent)
+            print(cmd.controlDefinition)
+            print(cmd.isVisible)
+            print(cmd.id)
+            print(cmd.isNative)
+            print(cmd.resourceFolder)
+            # ...
+        except:
+            adsk.core.Application.get().userInterface.messageBox(
+                "Failed:\n{}".format(traceback.format_exc())
+            )
+            
 
     def stop(context):
         addin.stop()
@@ -478,12 +489,7 @@ In this exampled we use the "dotted" notation to create 4 nested dropdowns.
 
 
     def stop(context):
-        try:
-            cmd.addin.stop()
-        except:
-            adsk.core.Application.get().userInterface.messageBox(
-                "Failed:\n{}".format(traceback.format_exc())
-            )
+        cmd.addin.stop()
 
 
 Using the module logger
@@ -511,26 +517,31 @@ to Fusions integrated text pallette.
 
 
     def run(context):
-        logger = logging.getLogger(faf.__name__)
-        logger.setLevel(logging.DEBUG)
-        stream_handler = logging.StreamHandler()
-        logger.addHandler(stream_handler)
-        palette_handler = faf.utils.TextPaletteLoggingHandler()
-        logger.addHandler(palette_handler)
+        try:
+            logger = logging.getLogger(faf.__name__)
+            logger.setLevel(logging.DEBUG)
+            stream_handler = logging.StreamHandler()
+            logger.addHandler(stream_handler)
+            palette_handler = faf.utils.TextPaletteLoggingHandler()
+            logger.addHandler(palette_handler)
 
-        # alternativly you can use this utiltiy function
-        # faf.utils.create_logger(
-        #     faf.__name__,
-        #     [logging.StreamHandler(), faf.utils.TextPaletteLoggingHandler()],
-        # )
+            # alternativly you can use this utiltiy function
+            # faf.utils.create_logger(
+            #     faf.__name__,
+            #     [logging.StreamHandler(), faf.utils.TextPaletteLoggingHandler()],
+            # )
 
-        global addin
-        addin = faf.FusionAddin()
-        ws = faf.Workspace(parent=addin, id="FusionSolidEnvironment")
-        tab = faf.Tab(parent=ws, id="SolidTab")
-        panel = faf.Panel(parent=tab, id="SolidCreatePanel")
-        control = faf.Control(parent=panel, isPromoted=True)
-        cmd = faf.AddinCommand(parent=control, onExecute=say_hi, name="my command")
+            global addin
+            addin = faf.FusionAddin()
+            ws = faf.Workspace(parent=addin, id="FusionSolidEnvironment")
+            tab = faf.Tab(parent=ws, id="SolidTab")
+            panel = faf.Panel(parent=tab, id="SolidCreatePanel")
+            control = faf.Control(parent=panel, isPromoted=True)
+            cmd = faf.AddinCommand(parent=control, onExecute=say_hi, name="my command")
+        except:
+            adsk.core.Application.get().userInterface.messageBox(
+                "Failed:\n{}".format(traceback.format_exc())
+            )
 
 
     def stop(context):
