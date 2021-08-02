@@ -16,19 +16,22 @@ code is executed from the main-file of your addin.
 contains each of the shown examples in a seperate branch.
 
 
-Simplest possible addin
------------------------
+Simple addin
+------------
 
-Creating a very simple addin/command at the default location 
+The code below creates a very simple addin/command at the default location 
 (Design workspace, Tools tab, Addin panel, button controlled).
-The Workspace, Panel and Button are not explicitly defined and therefore the default 
+The used workspace, panel and button are not explicitly defined and therefore the default 
 values are used.
-The next example will demonstrate how to specify the exact position of the Control
+The next example will demonstrate how to specify the exact position of the control
 which activates the command of your addin.
 Note that the created button is not promoted by default and that a random
 name will be used by default.
 
-When clicking 
+Instead of creating a execute command event handler we pass a function to the 
+``AddinCommand`` class. This function will be executed by the framework as the notify
+function of the commend event handler.
+This concept will be demonstrated in more detail in another example.
 
 .. code-block:: python 
 
@@ -64,11 +67,11 @@ When clicking
 Specify position of the addin
 -----------------------------
 
-To define the exact position of the command control in the Userinterface you can 
+To define the exact position of the command control in the userinterface you can 
 use the wrapper classes as shown below.
-By providing the Id of the already exisiting native design workspace, solid tab and solid panel
+By providing the Id of the already exisiting native Design Workspace, Solid Tab and Solid Panel
 the control will be positioned correspondingly.
-This time we set ``isPromoted=True`` so the control will appear in the Panel.
+We set ``isPromoted=True`` so the control will appear in the Panel.
 
 .. code-block:: python 
 
@@ -97,7 +100,7 @@ This time we set ``isPromoted=True`` so the control will appear in the Panel.
         addin.stop()
 
 
-Alternativly to the the notation above you can also use the following code which
+Aa an alternativ to the the notation above you can also use the following code which
 internally results in exactly the same wrapper classes being instantiated.
 This "dotted" style of creating the UI elements can be used in evry other example
 as well as long as you dont need to add more than one child to a parent UI element.
@@ -131,8 +134,8 @@ as well as long as you dont need to add more than one child to a parent UI eleme
     def stop(context):
         cmd.addin.stop()
 
-Addin at a very custom position
--------------------------------
+Command at a very custom position
+---------------------------------
 In the example above we positioned the control into an already existing panel.
 Using the framework it is also very simple to position the command at a custom
 panel or even into a custom tab.
@@ -166,7 +169,6 @@ image.
         try:
             global addin
             addin = faf.FusionAddin()
-            # its not possible to create a custom workspace so the Design Workspace is used
             ws = faf.Workspace(parent=addin, id="FusionSolidEnvironment")
             # passing the "random" as an id will generate an UUID, it would be also possible
             # to use a custom id like "MySuperCustomId1234"
@@ -184,24 +186,24 @@ image.
         addin.stop()
 
 
-Addin with many connected handlers
-----------------------------------
+Command with multiple connected handlers
+----------------------------------------
 In the previous examples we only used the execute event handler to simulate a 
 very basic addin.
 All other event handlers that can be connected to Fusions `Command
 <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-0550963a-ff63-4183-b0a7-a1bf0c99f821>`_ 
 class are also supported by the framework.
-You can pass the corresponding notify-function as an argument to the ```faf.AddinCommand`` class.
+You can pass the corresponding notify-function as an argument to the ``faf.AddinCommand`` class.
 Use the name of the event as attribute name. Optionally you can add an "on"-prefix 
 to the attribute name.
-`AddincComman(onExecute=my_func)` is the same as `AddinCommand(execute=my_func)`
+``AddincComman(onExecute=my_func)`` is the same as ``AddinCommand(execute=my_func)``.
 
 In the example below we use a subset of the possible event handlers to demonstrate
 the usage of functions instead of command handlers.
 
 As in the first example the addin will be positioned at the default position (Addin Panel).
 
-.. code-block python
+.. code-block:: python
 
     import adsk.core, adsk.fusion, adsk.cam, traceback
     from .fusion_addin_framework import fusion_addin_framework as faf
@@ -266,7 +268,7 @@ Instead of a button you can also use a checkbox to activate your command.
 You onyl need to specify ``control_type='checkbox'`` at the instantiation of the 
 Control wrapper.
 
-.. code-block python
+.. code-block:: python
 
     import adsk.core, adsk.fusion, adsk.cam, traceback
     from .fusion_addin_framework import fusion_addin_framework as faf
@@ -306,10 +308,15 @@ Control wrapper.
 
 Addin with multiple controls
 ----------------------------
-In some cases you might want to activate your command with multiple controls from
+In some cases you might want to activate your command with different controls from
 different locations in the UI.
+You can achieve this by providing a list of parental controls to the ``faf.AddinCommand``
+class.
+All controls will share the same image and name.
+The example belwo results in two buttons (in the addin panel and solid panel) which
+both activate the same command.
 
-.. code-block python
+.. code-block:: python
 
     import adsk.core, adsk.fusion, adsk.cam, traceback
     from .fusion_addin_framework import fusion_addin_framework as faf
@@ -349,12 +356,12 @@ different locations in the UI.
 Accessing attributes
 --------------------
 The examples above did set all attributes at initialization of the wrapper class.
-For the most properties it is also possible to set or at least access them after 
-initialization.
-With the wrapper instances you can acess and set **all** attributes that the corresponding
-wrapped instance owns.   
+With the instantiated wrapper instances you can acess and set **all** attributes 
+that the corresponding wrapped instance owns.
+These attributes are not documented in the reference of this framework but can be
+looked up in the API documentation of the wrapped class.   
 
-.. code-block python
+.. code-block:: python
 
     import adsk.core, adsk.fusion, adsk.cam, traceback
     from .fusion_addin_framework import fusion_addin_framework as faf
@@ -436,7 +443,9 @@ framework.
 Dropdown follow the same parent-child relationship as the wrapper classes do.
 The only addition is that a Dropdown can be a child of another dropdown instance.
 
-.. code-block python
+In this exampled we use the "dotted" notation to create 4 nested dropdowns.
+
+.. code-block:: python
 
     import adsk.core, adsk.fusion, adsk.cam, traceback
     from .fusion_addin_framework import fusion_addin_framework as faf
@@ -481,11 +490,13 @@ Using the module logger
 -----------------------
 The frameworks contains its own logger which logs different informations about the 
 creation of commands and the execution of handlers.
-These information can be very useful when you are debugging your addin.
+These information can be very useful if you are debugging your addin.
 The example below shows how to use the logger.
+Additionaly the framework provides a logging handler which outputs the logged data
+to Fusions integrated text pallette.
 
 
-.. code-block python
+.. code-block:: python
 
     import adsk.core, adsk.fusion, adsk.cam, traceback
     from .fusion_addin_framework import fusion_addin_framework as faf
@@ -524,5 +535,3 @@ The example below shows how to use the logger.
 
     def stop(context):
         addin.stop()
-
-
