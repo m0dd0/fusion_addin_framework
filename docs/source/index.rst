@@ -1,11 +1,8 @@
-Introduction
-============
-
 .. toctree::
    :hidden:
 
-   self
-   tutorial
+   intro
+   examples
    reference
    indices
 

@@ -10,6 +10,7 @@ docs/_build/*
 docs/build/*
 !docs/build/.gitkeep
 !docs/_build/.gitkeep
+docs/source/_autosummary
 
 
 # Distribution / packaging
