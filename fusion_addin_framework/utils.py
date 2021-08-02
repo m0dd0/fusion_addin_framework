@@ -5,6 +5,7 @@ import logging
 import json
 import enum
 import math
+import traceback
 
 import adsk.core, adsk.fusion
 
@@ -75,6 +76,7 @@ def ui_ids_dict():
     """Dumps the ids of the fusion user interface element to a hierachical dict.
 
     To dump the dict to a file use
+
     .. code-block:: python
 
         with open(Path(__file__).absolute().parent / "ui_ids.json", "w+") as f:
@@ -386,3 +388,22 @@ def make_comp_invisible(comp: adsk.fusion.Component):
             visible_occs.append(occ)
 
     return (active_lightbulbs, visible_occs)
+
+
+def unmute_errors(to_ui=True):
+    # TODO test
+    def decorator(func):
+        def wrapped(*args, **kwargs):
+            try:
+                val = func(*args, **kwargs)
+            except:
+                msg = "Failed:\n{}".format(traceback.format_exc())
+                if to_ui:
+                    adsk.core.Application.get().userInterface.messageBox(msg)
+                else:
+                    print(msg)
+            return val
+
+        return wrapped
+
+    return decorator
