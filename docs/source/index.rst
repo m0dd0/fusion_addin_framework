@@ -1,7 +1,7 @@
 .. toctree::
    :hidden:
 
-   intro
+   general
    examples
    reference
    indices
