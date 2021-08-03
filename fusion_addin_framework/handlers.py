@@ -191,6 +191,7 @@ handler_type_mapping = {
     "select": _SelectionEventHandler,
     "unselect": _SelectionEventHandler,
     "validateInputs": _ValidateInputsEventHandler,
+    "commandCreated": None,
 }
 
 
@@ -218,13 +219,6 @@ class _CommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
         """
         super().__init__()
 
-        self.addin = addin
-        self.cmd_name = cmd_name
-        self.event_name = "commandCreated"
-        self.action = handler_dict.pop(self.event_name, do_nothing)
-
-        _handlers.append(self)
-
         self.handler_dict = {}
         # sanitize the dict to allow on-prefix
         allowed_prefix = "on"
@@ -240,6 +234,13 @@ class _CommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
                 logging.getLogger(__name__).warning(msgs.unknown_event_name(event_name))
             else:
                 self.handler_dict[event_name] = handler_callable
+
+        self.addin = addin
+        self.cmd_name = cmd_name
+        self.event_name = "commandCreated"
+        self.action = self.handler_dict.pop(self.event_name, do_nothing)
+
+        _handlers.append(self)
 
     def notify(self, args: adsk.core.CommandCreatedEventArgs):
         cmd = args.command

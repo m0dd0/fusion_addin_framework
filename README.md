@@ -39,9 +39,77 @@ In the main-file of your addin (`<YourAddinName>.py`) you can then use
 to import the framework and access its classes.
 
 ## Examples
-The use of the framework and its advantages can be demonstrated with some examples.
+The use of the framework and its advantages can be demonstrated with a example.
 More examples can be found in the [documentation](https://fusion-addin-framework.readthedocs.io/en/latest/).
 
+The code below creates a button in the Solid Panel by using wrapper classes.
+Instead of using event handlers the notify function of the execute-event is passed
+to the `AddinCommand` class.
 ```python
 
+import adsk.core, adsk.fusion, adsk.cam, traceback
+
+from .fusion_addin_framework import fusion_addin_framework as faf
+
+
+# specify position of addin
+addin = None
+
+
+def say_hi(event_args: adsk.core.CommandEventArgs):
+    adsk.core.Application.get().userInterface.messageBox("hi")
+
+
+def run(context):
+    global addin
+    addin = faf.FusionAddin()
+    ws = faf.Workspace(parent=addin, id="FusionSolidEnvironment")
+    tab = faf.Tab(parent=ws, id="SolidTab")
+    panel = faf.Panel(parent=tab, id="SolidCreatePanel")
+    control = faf.Control(parent=panel, isPromoted=True)
+    cmd = faf.AddinCommand(parent=control, onExecute=say_hi, name="my command")
+
+
+def stop(context):
+    addin.stop()
+```
+
+The wrapper classes can also be used to create a button in a custom panel and tab:
+
+```python
+import adsk.core, adsk.fusion, adsk.cam, traceback
+
+from .fusion_addin_framework import fusion_addin_framework as faf
+
+
+# Addin at a very custom position
+addin = None
+
+
+def say_hi(event_args: adsk.core.CommandEventArgs):
+    adsk.core.Application.get().userInterface.messageBox("hi")
+
+
+def run(context):
+    try:
+        global addin
+        addin = faf.FusionAddin()
+        ws = faf.Workspace(parent=addin, id="FusionSolidEnvironment")
+        # passing the "random" as an id will generate an UUID, it would be also possible
+        # to use a custom id like "MySuperCustomId1234"
+        tab = faf.Tab(parent=ws, id="random", name="my tab")
+        panel = faf.Panel(parent=tab, id="random", name="my panel")
+        control = faf.Control(parent=panel, isPromoted=True, isPromotedByDefault=True)
+        cmd = faf.AddinCommand(
+            parent=control, onExecute=say_hi, name="my command", resourceFolder="cubes"
+        )
+    except:
+        adsk.core.Application.get().userInterface.messageBox(
+            "Failed:\n{}".format(traceback.format_exc())
+        )
+
+
+
+def stop(context):
+    addin.stop()
 ```
