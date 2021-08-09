@@ -3,8 +3,7 @@
 Examples
 ========
 
-The usage of this framework should be easy to understand by having a look at 
-the examples below.
+The usage of this framework should be easy to understand by studying the examples below.
 
 All the given examples assume that you cloned the `fusion_addin_framework
 <https://github.com/m0dd0/fusion_addin_framework>`_ 
@@ -104,7 +103,7 @@ We set ``isPromoted=True`` so the control will appear in the Panel.
         addin.stop()
 
 
-Aa an alternativ to the the notation above you can also use the following code which
+As an alternative to the the notation above you can also use the following code which
 internally results in exactly the same wrapper classes being instantiated.
 This "dotted" style of creating the UI elements can be used in evry other example
 as well as long as you dont need to add more than one child to a parent UI element.
@@ -143,13 +142,15 @@ as well as long as you dont need to add more than one child to a parent UI eleme
     def stop(context):
         cmd.addin.stop()
 
+.. _hirachy_example:
+
 Command at a very custom position
 ---------------------------------
 In the example above we positioned the control into an already existing panel.
-Using the framework it is also very simple to position the command at a custom
+Using the framework it is very simple to position the command control into a custom
 panel or even into a custom tab.
 
-To create a custom tab or panel you only need to pass a unique id to the corresponding
+To create a custom tab or panel you only need to pass a new unique id to the corresponding
 wrapper class. 
 If you pass "random" as id, a random id will be genreated and used.
 In this example mostly the default values are used. However you can specify every 
@@ -196,6 +197,7 @@ image.
     def stop(context):
         addin.stop()
 
+.. _handler_example:
 
 Command with multiple connected handlers
 ----------------------------------------
@@ -203,7 +205,7 @@ In the previous examples we only used the execute event handler to simulate a
 very basic addin.
 All other event handlers that can be connected to Fusions `Command
 <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-0550963a-ff63-4183-b0a7-a1bf0c99f821>`_ 
-class are also supported by the framework.
+class are supported by the framework as well.
 You can pass the corresponding notify-function as an argument to the ``faf.AddinCommand`` class.
 Use the name of the event as attribute name. Optionally you can add an "on"-prefix 
 to the attribute name.
@@ -361,7 +363,7 @@ both activate the same command.
 
 Accessing attributes
 --------------------
-The examples above did set all attributes at initialization of the wrapper class.
+The examples above set all attributes at initialization of the wrapper class.
 With the instantiated wrapper instances you can acess and set **all** attributes 
 that the corresponding wrapped instance owns.
 These attributes are not documented in the reference of this framework but can be
@@ -451,8 +453,8 @@ Addin with dropdowns
 --------------------
 The creation and use of (arbitrarily deeply nested) dropdowns is also supported by the 
 framework.
-Dropdown follow the same parent-child relationship as the wrapper classes do.
-The only addition is that a Dropdown can be a child of another dropdown instance.
+A Dropdown follow the same parent-child relationship as the other wrapper classes do.
+The only difference is that a dropdown can be a child of another dropdown instance.
 
 In this exampled we use the "dotted" notation to create 4 nested dropdowns.
 
@@ -494,8 +496,8 @@ In this exampled we use the "dotted" notation to create 4 nested dropdowns.
 
 Using the module logger
 -----------------------
-The frameworks contains its own logger which logs different informations about the 
-creation of commands and the execution of handlers.
+The frameworks contains its own logger which logs different informations on the 
+creation of addins/commands and the execution of handlers.
 These information can be very useful if you are debugging your addin.
 The example below shows how to use the logger.
 Additionaly the framework provides a logging handler which outputs the logged data

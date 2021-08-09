@@ -1,6 +1,6 @@
 """This modules contains utility functions realted to the Fusion360 API."""
 
-from typing import Iterable
+from typing import Iterable, Dict
 import logging
 import json
 import enum
@@ -72,7 +72,7 @@ class TextPaletteLoggingHandler(logging.StreamHandler):
         # adsk.doEvents() # doesnt seem to be necessary
 
 
-def ui_ids_dict():
+def ui_ids_dict() -> Dict:
     """Dumps the ids of the fusion user interface element to a hierachical dict.
 
     To dump the dict to a file use
@@ -81,6 +81,9 @@ def ui_ids_dict():
 
         with open(Path(__file__).absolute().parent / "ui_ids.json", "w+") as f:
             json.dump(ui_ids_dict(), f, indent=4)
+
+    Returns:
+        Dict: A dictionairy which represents the full user interface.
     """
 
     def get_controls(parent):

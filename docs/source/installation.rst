@@ -1,8 +1,9 @@
 .. _installation:
 
 Installation
-------------
-The easiest and recommended way to use this framework is to **clone  
+============
+
+The recommended way to use this framework is to **clone  
 the framework into the same directory where your addin code is located** 
 (or use it as a git submodule) and use relative imports.
 In this case your folder structure should look like this:
