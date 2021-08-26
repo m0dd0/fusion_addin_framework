@@ -384,6 +384,47 @@ def view_extent_by_rectangle(horizontal: float, vertical: float):
     )
 
 
+def set_camera(
+    plane="xy",
+    horizontal_borders=(0, 10),
+    vertical_borders=(0, 10),
+    smooth_transition=False,
+):
+
+    horizontal_extent = horizontal_borders[1] - horizontal_borders[0]
+    vertical_extent = vertical_borders[1] - vertical_borders[0]
+
+    horizontal_center = (horizontal_borders[1] - horizontal_borders[0]) / 2
+    vertical_center = (vertical_borders[1] - vertical_borders[0]) / 2
+
+    # being to close leads to wrong appearance in orthographic mode
+    eye_distance = max(horizontal_extent, vertical_extent) * 10
+
+    if plane == "xz" or plane == "front":
+        target = (horizontal_center, 0, vertical_center)
+        eye = (horizontal_center, eye_distance, vertical_center)
+        up_vector = (0, 1, 0)
+    if plane == "xy" or plane == "top":
+        target = (horizontal_center, vertical_center, 0)
+        eye = (horizontal_center, vertical_center, eye_distance)
+        up_vector = (0, 0, 1)
+    elif plane == "yz" or plane == "right":
+        target = (0, horizontal_center, vertical_center)
+        eye = (eye_distance, horizontal_center, vertical_center)
+        up_vector = (1, 0, 0)
+    else:
+        raise ValueError("Provided invalid plane.")
+
+    camera = adsk.core.Application.get().activeViewport.camera
+
+    camera.target = adsk.core.Point3D.create(*target)
+    camera.eye = adsk.core.Point3D.create(*eye)
+    camera.upVector = adsk.core.Vector3D.create(*up_vector)
+    camera.isSmoothTransition = smooth_transition
+    camera.viewExtents = view_extent_by_rectangle(horizontal_extent, vertical_extent)
+    adsk.core.Application.get().activeViewport.camera = camera
+
+
 def make_comp_invisible(comp: adsk.fusion.Component):
     libghtbulbs = [
         "isBodiesFolderLightBulbOn",
