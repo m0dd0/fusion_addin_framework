@@ -93,7 +93,6 @@ html_theme_options = {
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = []
 
-
 autodoc_mock_imports = ["adsk"]
 
 autodoc_member_order = "bysource"
