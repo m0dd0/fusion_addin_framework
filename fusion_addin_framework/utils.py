@@ -1,6 +1,6 @@
 """This modules contains utility functions realted to the Fusion360 API."""
 
-from typing import Iterable
+from typing import Iterable, Dict, List, Union
 import logging
 import json
 import enum
@@ -72,7 +72,7 @@ class TextPaletteLoggingHandler(logging.StreamHandler):
         # adsk.doEvents() # doesnt seem to be necessary
 
 
-def ui_ids_dict():
+def ui_ids_dict() -> Dict:
     """Dumps the ids of the fusion user interface element to a hierachical dict.
 
     To dump the dict to a file use
@@ -81,6 +81,9 @@ def ui_ids_dict():
 
         with open(Path(__file__).absolute().parent / "ui_ids.json", "w+") as f:
             json.dump(ui_ids_dict(), f, indent=4)
+
+    Returns:
+        Dict: A dictionairy which represents the full user interface.
     """
 
     def get_controls(parent):
@@ -160,17 +163,23 @@ def ui_ids_dict():
 
 @enum.unique
 class InputIdsBase(enum.Enum):
+    """A Enum subclass which values are of type <name>_input_type.
+
+    <name> is the name you name the value of the instance
+    """
+
     def _generate_next_value_(
         name, start, count, last_values
     ):  # pylint:disable=no-self-argument,unused-argument
         return name + "_input_id"
 
 
-def get_values(current_inputs):
-    """[summary]
+def get_values(current_inputs: adsk.core.CommandInputs) -> Dict:
+    """Extracts the command values from the given CommandInputs collections and maps
+    them to the id of their command.
 
     Args:
-        current_inputs ([type]): [description]
+        current_inputs (adsk.core.CommandInputs): [description]
 
     Returns:
         [type]: [description]
@@ -226,12 +235,14 @@ def get_values(current_inputs):
                 item for item in command_input.listItems if item.isSelected
             ]
 
-        input_values[command_input.id + "_input"] = command_input
+        input_values[command_input.id] = command_input
 
     return input_values
 
 
-def change_material(obj, material_name):
+def change_material(
+    obj: adsk.fusion.Occurrence, material_name: str
+) -> adsk.core.Material:
     material = (
         adsk.core.Application.get()
         .materialLibraries.itemByName("Fusion 360 Appearance Library")
@@ -241,24 +252,26 @@ def change_material(obj, material_name):
     return material
 
 
-def clear_collection(collection):
-    """[summary]
+def clear_collection(collection: adsk.core.ObjectCollection):
+    """Safely clears a collection.
 
     Args:
-        collection ([type]): [description]
+        collection (adsk.core.ObjectCollection): The collection to clear.
     """
     while collection.count > 0:
         collection.item(0).deleteMe()
 
 
-def orient_bounding_box(bounding_box):
-    """[summary]
+def orient_bounding_box(
+    bounding_box: adsk.core.BoundingBox3D,
+) -> adsk.core.OrientedBoundingBox3D:
+    """Converts a bounding box into an oriented bounding box.
 
     Args:
-        bounding_box ([type]): [description]
+        bounding_box (adsk.core.BoundingBox3D): The unoriented bounding box
 
     Returns:
-        [type]: [description]
+        adsk.core.OrientedBoundingBox3D: The oriented bounding box.
     """
     # do not use numpy to have no third party dependencies on apper
     diagonal = [
@@ -283,14 +296,16 @@ def orient_bounding_box(bounding_box):
 
 
 def delete_all_graphics():
-    """[summary]"""
+    """Deletes all custom grpahics in the viewport."""
     des = adsk.fusion.Design.cast(adsk.core.Application.get().activeProduct)
     for comp in des.allComponents:
         clear_collection(comp.customGraphicsGroup)
     adsk.core.Application.get().activeViewport.refresh()
 
 
-def create_cube(center, side_length):
+def create_cube(
+    center: List[Union[float, int]], side_length: float
+) -> adsk.fusion.BRepBody:
     return adsk.fusion.TemporaryBRepManager.get().createBox(
         adsk.core.OrientedBoundingBox3D.create(
             adsk.core.Point3D.create(*center),
