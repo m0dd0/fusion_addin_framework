@@ -394,11 +394,11 @@ def set_camera(
     horizontal_extent = horizontal_borders[1] - horizontal_borders[0]
     vertical_extent = vertical_borders[1] - vertical_borders[0]
 
-    horizontal_center = (horizontal_borders[1] - horizontal_borders[0]) / 2
-    vertical_center = (vertical_borders[1] - vertical_borders[0]) / 2
+    horizontal_center = horizontal_borders[0] + horizontal_extent / 2
+    vertical_center = vertical_borders[0] + vertical_extent / 2
 
     # being to close leads to wrong appearance in orthographic mode
-    eye_distance = 10  # max(horizontal_extent, vertical_extent) * 10
+    eye_distance = max(horizontal_extent, vertical_extent) * 2
 
     # for some weird reason the camera will result in a very strange optic
     # if the eye is exactly on a axis with the target
