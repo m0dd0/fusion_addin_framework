@@ -398,20 +398,26 @@ def set_camera(
     vertical_center = (vertical_borders[1] - vertical_borders[0]) / 2
 
     # being to close leads to wrong appearance in orthographic mode
-    eye_distance = max(horizontal_extent, vertical_extent) * 10
+    eye_distance = 10  # max(horizontal_extent, vertical_extent) * 10
+
+    # for some weird reason the camera will result in a very strange optic
+    # if the eye is exactly on a axis with the target
+    # therefore a little factor needs to be added to the eye coordinates
+    # or maybe not --> try this first if errors occur
+    # eye_factor = 1
 
     if plane == "xz" or plane == "front":
         target = (horizontal_center, 0, vertical_center)
         eye = (horizontal_center, eye_distance, vertical_center)
-        up_vector = (0, 1, 0)
+        up_vector = (0, 0, 1)
     if plane == "xy" or plane == "top":
         target = (horizontal_center, vertical_center, 0)
         eye = (horizontal_center, vertical_center, eye_distance)
-        up_vector = (0, 0, 1)
+        up_vector = (0, 1, 0)
     elif plane == "yz" or plane == "right":
         target = (0, horizontal_center, vertical_center)
         eye = (eye_distance, horizontal_center, vertical_center)
-        up_vector = (1, 0, 0)
+        up_vector = (0, 0, 1)
     else:
         raise ValueError("Provided invalid plane.")
 
