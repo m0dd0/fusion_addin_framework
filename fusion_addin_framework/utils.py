@@ -6,6 +6,9 @@ import json
 import enum
 import math
 import traceback
+import time
+import threading
+from functools import partial
 
 import adsk.core, adsk.fusion
 
@@ -469,3 +472,43 @@ def unmute_errors(to_ui=True):
         return wrapped
 
     return decorator
+
+
+class PeriodicExecuter(threading.Thread):
+    def __init__(self, interval, func, args=[], kwargs={}):
+        self.interval = interval
+        self.func = partial(func, *args, **kwargs)
+
+        self.thread_active = True
+        threading.Thread.__init__(self)
+        self.daemon = True
+
+        self.start_time = time.perf_counter()
+        self.running = False
+
+        super().start()  # start the thread itself (not the 'timer')
+
+    def run(self):
+        elapsed_time = 0
+        while self.thread_active:
+            current_time = time.perf_counter()
+            if self.running:
+                elapsed_time = current_time - self.start_time
+                if elapsed_time > self.interval:
+                    self.func()
+                    self.start_time = current_time
+            else:
+                self.start_time = current_time - elapsed_time
+
+    def pause(self):
+        self.running = False
+
+    def start(self):
+        self.running = True
+
+    def reset(self):
+        self.start_time = time.perf_counter()
+
+    def kill(self):
+        self.thread_active = False
+        self.join()
