@@ -18,7 +18,7 @@ from . import messages as msgs
 
 # keep all handlers referenced
 _handlers = []
-
+_custom_events_and_handlers = []
 
 # doesnt make live much easier so generic class is not used
 # from abc import ABC
@@ -75,6 +75,27 @@ def _notify_routine(addin, cmd_name: str, event_name: str, action: Callable, arg
         logging.getLogger(__name__).error(msg)
         if addin.debugToUi:
             adsk.core.Application.get().userInterface.messageBox(msg)
+
+
+class _CustomEventHandler(adsk.core.CustomEventHandler):
+    def __init__(self, addin, cmd_name, event, action):
+        super().__init__()
+
+        self.addin = addin
+        self.cmd_name = cmd_name
+        self.event = event
+        self.action = action
+
+        _custom_events_and_handlers.append((event, self))
+
+    def notify(self, args: adsk.core.CommandEventArgs):
+        _notify_routine(
+            self.addin,
+            self.cmd_name,
+            self.event.eventId + " (custom event)",
+            self.action,
+            args,
+        )
 
 
 class _InputChangedHandler(adsk.core.InputChangedEventHandler):

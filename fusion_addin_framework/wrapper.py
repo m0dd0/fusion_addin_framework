@@ -8,7 +8,7 @@ by these wrapper classes."""
 import logging
 from pathlib import Path
 from abc import ABC
-from typing import Union, Callable, List, Any
+from typing import Union, Callable, List, Any, Dict
 from collections import defaultdict
 from uuid import uuid4
 
@@ -162,6 +162,10 @@ class FusionAddin:
         main file of your addin to ensure proper cleanup.
         If you dont call it, strange thigs can happen the next time you run the addin.
         """
+        for event, handler in handlers._custom_events_and_handlers:
+            event.remove(handler)
+            adsk.core.Application.get().unregisterCustomEvent(event.eventId)
+
         for level in reversed(sorted(list(self._registered_elements.keys()))):
             elems = self._registered_elements.pop(level)
             for elem in elems:
@@ -807,6 +811,7 @@ class AddinCommand(_FusionWrapper):
         isVisible: bool = True,
         isChecked: bool = True,  # only checkbox
         listControlDisplayType: int = adsk.core.ListControlDisplayTypes.RadioButtonlistType,  # only list
+        customEventHandlers: Dict[str, Callable] = None,
         **eventHandlers: Callable,
     ):
         """Wraps around Fusions `CommandDefinition
@@ -905,6 +910,9 @@ class AddinCommand(_FusionWrapper):
         else:
             parent_list = self._parent
 
+        if customEventHandlers is None:
+            customEventHandlers = {}
+
         id = dflts.eval_id(id)
         name = dflts.eval_name(name, __class__)
         resourceFolder = dflts.eval_image(resourceFolder)
@@ -965,6 +973,14 @@ class AddinCommand(_FusionWrapper):
                     self.addin, name, eventHandlers
                 )
             )
+
+            # register custom events
+            for event_id, handler_notify in customEventHandlers.items():
+                custom_event = adsk.core.Application.get().registerCustomEvent(event_id)
+                custom_handler = handlers._CustomEventHandler(
+                    self.addin, name, custom_event, handler_notify
+                )
+                custom_event.add(custom_handler)
 
             self.addin.registerElement(self, self.uiLevel)
 

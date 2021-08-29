@@ -4,6 +4,8 @@ from collections import defaultdict
 from time import perf_counter
 import traceback
 from typing import List, Callable
+from uuid import uuid4
+from datetime import datetime
 
 import adsk.fusion, adsk.core
 
@@ -1170,3 +1172,21 @@ def test_dropdown_properties():
         dd.addin.stop()
         raise test_exception
     return dd.addin
+
+
+def test_custom_events():
+    try:
+        custom_event_id = uuid4()
+        cmd = faf.AddinCommand(
+            customEventHandlers={
+                custom_event_id: lambda args: adsk.core.Application.get().userInterface.messageBox(
+                    args.additionalInfo
+                )
+            }
+        )
+
+        faf.utils.PeriodicExecutor()
+    except Exception as test_exception:
+        cmd.addin.stop()
+        raise test_exception
+    return cmd.addin
