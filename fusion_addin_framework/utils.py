@@ -475,7 +475,12 @@ def unmute_errors(to_ui=True):
 
 
 class PeriodicExecuter(threading.Thread):
-    def __init__(self, interval, func, args=[], kwargs={}):
+    def __init__(self, interval, func, args=None, kwargs=None):
+        if args is None:
+            args = []
+        if kwargs is None:
+            kwargs = {}
+
         self.interval = interval
         self.func = partial(func, *args, **kwargs)
 

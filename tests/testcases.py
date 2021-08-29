@@ -6,6 +6,8 @@ import traceback
 from typing import List, Callable
 from uuid import uuid4
 from datetime import datetime
+import random
+import time
 
 import adsk.fusion, adsk.core
 
@@ -1176,7 +1178,7 @@ def test_dropdown_properties():
 
 def test_custom_events():
     try:
-        custom_event_id = uuid4()
+        custom_event_id = str(uuid4())
         cmd = faf.AddinCommand(
             customEventHandlers={
                 custom_event_id: lambda args: adsk.core.Application.get().userInterface.messageBox(
@@ -1185,7 +1187,15 @@ def test_custom_events():
             }
         )
 
-        faf.utils.PeriodicExecutor()
+        thread = faf.utils.PeriodicExecuter(
+            5,
+            lambda: adsk.core.Application.get().fireCustomEvent(
+                custom_event_id, str(random.randint(0, 100))
+            ),
+        )
+        thread.start()
+        # time.sleep(20)
+        # thread.kill()
     except Exception as test_exception:
         cmd.addin.stop()
         raise test_exception

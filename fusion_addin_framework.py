@@ -39,8 +39,8 @@ def run(context):  # pylint:disable=unused-argument
         ]
 
         global addins
-        results, addins = testcases.execute_cases(all_testcases)
-        # results, addins = testcases.execute_cases([testcases.test_dropdown_properties])
+        # results, addins = testcases.execute_cases(all_testcases)
+        results, addins = testcases.execute_cases([testcases.test_custom_events])
 
         print("### RESULTS ###")
         pprint(dict(results))
