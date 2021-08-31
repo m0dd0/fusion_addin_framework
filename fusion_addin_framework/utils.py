@@ -9,6 +9,7 @@ import traceback
 import time
 import threading
 from functools import partial
+import os
 
 import adsk.core, adsk.fusion
 
@@ -517,3 +518,32 @@ class PeriodicExecuter(threading.Thread):
     def kill(self):
         self.thread_active = False
         self.join()
+
+
+def get_json_from_file(path, default_value=None):
+    if default_value is None:
+        default_value = {}
+
+    if not os.path.exists(os.path.dirname(path)):
+        os.makedirs(os.path.dirname(path))
+    if not os.path.exists(path):
+        with open(path, "w+") as f:
+            json.dump(default_value, f)  # do not add indent !!!
+    with open(path, "r+") as f:
+        json_data = json.load(f)
+    return json_data
+
+
+def make_ordinal(n):
+    """Convert an integer into its ordinal representation.
+
+    make_ordinal(0)   => '0th'
+    make_ordinal(3)   => '3rd'
+    make_ordinal(122) => '122nd'
+    make_ordinal(213) => '213th'
+    """
+    n = int(n)
+    suffix = ["th", "st", "nd", "rd", "th"][min(n % 10, 4)]
+    if 11 <= (n % 100) <= 13:
+        suffix = "th"
+    return str(n) + suffix
