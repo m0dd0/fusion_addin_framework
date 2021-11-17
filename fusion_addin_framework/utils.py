@@ -547,3 +547,19 @@ def make_ordinal(n):
     if 11 <= (n % 100) <= 13:
         suffix = "th"
     return str(n) + suffix
+
+class AppObjects:
+    def __init__(self):
+        self._app = adsk.core.Application.cast(adsk.core.Application.get())
+
+    @property
+    def app(self):
+        return self._app
+
+    @property
+    def rootComponent(self):
+        return self._app.activeDocument.rootComponent
+
+    @property
+    def userInterface(self):
+        return self._app.userInterface
