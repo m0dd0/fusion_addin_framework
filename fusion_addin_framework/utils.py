@@ -564,3 +564,7 @@ class AppObjects:
     @property
     def userInterface(self):
         return self._app.userInterface
+
+    @property
+    def design(self):
+        return self._app.activeDocument.design
