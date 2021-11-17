@@ -548,6 +548,7 @@ def make_ordinal(n):
         suffix = "th"
     return str(n) + suffix
 
+
 class AppObjects:
     def __init__(self):
         self._app = adsk.core.Application.cast(adsk.core.Application.get())
@@ -558,7 +559,7 @@ class AppObjects:
 
     @property
     def rootComponent(self):
-        return self._app.activeDocument.rootComponent
+        return self._app.activeDocument.design.rootComponent
 
     @property
     def userInterface(self):
