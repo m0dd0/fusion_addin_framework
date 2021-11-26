@@ -10,6 +10,7 @@ import time
 import threading
 from functools import partial
 import os
+from pathlib import Path
 
 import adsk.core, adsk.fusion
 
@@ -76,7 +77,7 @@ class TextPaletteLoggingHandler(logging.StreamHandler):
         # adsk.doEvents() # doesnt seem to be necessary
 
 
-def ui_ids_dict() -> Dict:
+def ui_ids_dict(out_file_path=None) -> Dict:
     """Dumps the ids of the fusion user interface element to a hierachical dict.
 
     To dump the dict to a file use
@@ -161,6 +162,10 @@ def ui_ids_dict() -> Dict:
     ui_dict["workspaces"] = get_workspaces(ui)
     ui_dict["toolbars"] = get_toolbars(ui)
     ui_dict["pallets"] = get_palettes(ui)
+
+    if out_file_path is not None:
+        with open(Path(out_file_path), "w+") as f:
+            json.dump(ui_dict, f, indent=4)
 
     return ui_dict
 
@@ -551,6 +556,10 @@ def make_ordinal(n):
 
 class AppObjects:
     def __init__(self):
+        self._app = None
+        self.reload_app()
+
+    def reload_app(self):
         self._app = adsk.core.Application.cast(adsk.core.Application.get())
 
     @property
@@ -568,3 +577,7 @@ class AppObjects:
     @property
     def design(self):
         return self._app.activeDocument.design
+
+    @property
+    def commandDefinitions(self):
+        return self._app.userInterface.commandDefinitions
