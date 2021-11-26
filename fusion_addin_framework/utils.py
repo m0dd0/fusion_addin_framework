@@ -581,3 +581,11 @@ class AppObjects:
     @property
     def commandDefinitions(self):
         return self._app.userInterface.commandDefinitions
+
+    @property
+    def workspaces(self):
+        return self._app.userInterface.workspaces
+
+    @property
+    def activeViewport(self):
+        return self._app.activeViewport
