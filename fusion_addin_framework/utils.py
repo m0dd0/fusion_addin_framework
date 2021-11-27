@@ -589,3 +589,75 @@ class AppObjects:
     @property
     def activeViewport(self):
         return self._app.activeViewport
+
+
+def get_doc(fusion_path, tolerance_search=False, raise_exception=True):
+    app = adsk.core.Application.get()
+
+    project_name = fusion_path.pop(0)
+    doc_name = fusion_path.pop(-1)
+    folders = fusion_path
+
+    for project in app.data.dataProjects:
+        if project.name == project_name:
+            app.data.activeProject = project
+            break
+
+    folder = project.rootFolder
+    for sub_folder in folders:
+        try:
+            folder = folder.dataFolders.itemByName(sub_folder)
+        except Exception as e:
+            if raise_exception:
+                raise FileNotFoundError(
+                    f"There is no file with the provided fusion path {fusion_path}"
+                )
+            else:
+                return None
+
+    if tolerance_search:
+        for doc in folder.dataFiles:
+            if doc_name.strip().lower() in doc.name.strip().lower():
+                return doc
+    else:
+        for doc in folder.dataFiles:
+            if doc.name == doc_name:
+                return doc
+
+    if raise_exception:
+        raise FileNotFoundError(
+            f"There is no file with the provided fusion path {fusion_path}"
+        )
+    else:
+        return None
+
+
+def create_new_doc(fusion_path, create_folders=True, description="", tag=""):
+    app = adsk.core.Application.get()
+
+    project_name = fusion_path.pop(0)
+    doc_name = fusion_path.pop(-1)
+    folders = fusion_path
+
+    new_doc = app.documents.add(adsk.core.DocumentTypes.FusionDesignDocumentType)
+
+    for project in app.data.dataProjects:
+        if project.name == project_name:
+            app.data.activeProject = project
+            break
+
+    folder = project.rootFolder
+    for sub_folder in folders:
+        try:
+            folder = folder.dataFolders.itemByName(sub_folder)
+        except Exception as e:
+            if create_folders:
+                folder = folder.dataFolder.add(sub_folder)
+            else:
+                FileNotFoundError(
+                    f"There is no file with the provided fusion path {fusion_path}"
+                )
+
+    new_doc.saveAs(doc_name, folder, description, tag)
+
+    return new_doc
