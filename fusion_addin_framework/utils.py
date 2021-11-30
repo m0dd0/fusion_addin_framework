@@ -591,11 +591,11 @@ class AppObjects:
         return self._app.activeViewport
 
 
-def get_data_folder(fusion_path, create_folders=False):
+def get_data_folder(fusion_path, create_folders=False) -> adsk.core.DataFolder:
     app = adsk.core.Application.get()
 
-    project_name = fusion_path.pop(0)
-    folders = fusion_path
+    project_name = fusion_path[0]
+    folders = fusion_path[1:]
 
     project = None
     for p in app.data.dataProjects:
@@ -620,9 +620,11 @@ def get_data_folder(fusion_path, create_folders=False):
     return folder
 
 
-def get_doc(fusion_path, tolerance_search=False, raise_exception=True):
-    doc_name = fusion_path.pop(-1)
-    folder = get_data_folder(fusion_path)
+def get_doc(
+    fusion_path, tolerance_search=False, raise_exception=True
+) -> adsk.core.DataFile:
+    doc_name = fusion_path[-1]
+    folder = get_data_folder(fusion_path[:-1])
 
     if tolerance_search:
         for doc in folder.dataFiles:
@@ -639,3 +641,13 @@ def get_doc(fusion_path, tolerance_search=False, raise_exception=True):
         )
     else:
         return None
+
+
+def execute_from_cmd(target_func, cmd, execution_queue):
+    execution_queue.put(target_func)
+    cmd.doExecute()
+
+
+def execute_with_custom_event(target_func, event_id, execution_queue):
+    execution_queue.put(target_func)
+    adsk.core.Application.get().fireCustomEvent(event_id)
