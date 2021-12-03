@@ -613,7 +613,7 @@ def get_data_folder(fusion_path, create_folders=False) -> adsk.core.DataFolder:
             if create_folders:
                 folder = folder.dataFolder.add(sub_folder)
             else:
-                FileNotFoundError(
+                raise FileNotFoundError(
                     f"There is no file with the provided fusion path {fusion_path}"
                 )
 
