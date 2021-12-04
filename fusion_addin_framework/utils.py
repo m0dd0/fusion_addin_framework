@@ -651,3 +651,23 @@ def execute_from_cmd(target_func, cmd, execution_queue):
 def execute_with_custom_event(target_func, event_id, execution_queue):
     execution_queue.put(target_func)
     adsk.core.Application.get().fireCustomEvent(event_id)
+
+
+def items_by_attribute(collection, attribute_name, attribute_value):
+    found_items = []
+    for item in collection:
+        if getattr(item, attribute_name) == attribute_value:
+            found_items.append(item)
+    return found_items
+
+
+def item_by_attribute(collection, attribute_name, attribute_value):
+    items = items_by_attribute(collection, attribute_name, attribute_value)
+    if len(items) > 1:
+        raise ValueError(
+            f"There are multiple elemnts in the colletction which meet the condition {attribute_name}={attribute_value}."
+        )
+    if len(items) == 0:
+        return None
+    else:
+        return items[0]
