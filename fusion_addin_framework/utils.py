@@ -607,9 +607,8 @@ def get_data_folder(fusion_path, create_folders=False) -> adsk.core.DataFolder:
 
     folder = project.rootFolder
     for sub_folder in folders:
-        try:
-            folder = folder.dataFolders.itemByName(sub_folder)
-        except Exception as e:
+        folder = folder.dataFolders.itemByName(sub_folder)
+        if folder is None:
             if create_folders:
                 folder = folder.dataFolder.add(sub_folder)
             else:
