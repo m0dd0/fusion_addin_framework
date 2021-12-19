@@ -481,7 +481,7 @@ def unmute_errors(to_ui=True):
 
 
 class PeriodicExecuter(threading.Thread):
-    def __init__(self, interval, func, args=None, kwargs=None, wait_for_func=False):
+    def __init__(self, interval, func, args=None, kwargs=None, wait_for_func=False, initial_execution=False):
         if args is None:
             args = []
         if kwargs is None:
@@ -498,6 +498,8 @@ class PeriodicExecuter(threading.Thread):
 
         self.start_time = time.perf_counter()
         self.running = False
+
+        self._initial_execution = initial_execution
 
         super().start()  # start the thread itself (not the 'timer')
 
@@ -519,6 +521,9 @@ class PeriodicExecuter(threading.Thread):
         self.running = False
 
     def start(self):
+        if self._initial_execution:
+            self.func()
+            self._initial_execution = False
         self.running = True
 
     def reset(self):
