@@ -1043,3 +1043,16 @@ class AddinCommand(_FusionWrapper):
                 super().__setattr__(name, value)
         else:
             super().__setattr__(name, value)
+
+class Palette(_FusionWrapper):
+    def __init__(self, parent, id="random", name="random", htmlFileURL = "https://github.com/m0dd0/fusion_addin_framework", isVisible=False, showCloseButton=True, isResizable=True, width=200, height=200, useNewWebBrowser=True):
+        super().__init__(parent, FusionAddin)
+
+        id = dflts.eval_id(id)
+        name = dflts.eval_name(name)
+
+        self._in_fusion = adsk.core.Application.get().userInterface.pallettes.add(id, name, htmlFileURL, False, showCloseButton,isResizable, width, height,useNewWebBrowser)
+        self._in_fusion.
+
+        self._in_fusion.isVisible = isVisible
+

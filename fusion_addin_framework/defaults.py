@@ -48,6 +48,10 @@ random_names = {
         "dominant dropdown",
         "dummy dropdown",
     ],
+    "Palette": ["pale palette",
+        "painful palette",
+        "pacifisitc palette",
+        "pacific palette",],
 }
 
 # for some ui entities default ids are provided so no alway a newpanel/tab gets

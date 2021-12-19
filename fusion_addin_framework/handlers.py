@@ -285,3 +285,16 @@ class _CommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
                 _handlers.append(handler)
 
         _notify_routine(self.addin, self.cmd_name, self.event_name, self.action, args)
+
+
+class _HTMLEventHandler(adsk.core.HTMLEventHandler):
+    def __init__(self, addin, cmd_name, event_name, action):
+        super().__init__()
+
+        self.addin = addin
+        self.cmd_name = cmd_name
+        self.event_name = event_name
+        self.action = action
+
+    def notify(self, args):
+        _notify_routine(self.addin, self.cmd_name, self.event_name, self.action, args)
