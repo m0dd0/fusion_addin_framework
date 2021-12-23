@@ -11,6 +11,7 @@ import threading
 from functools import partial
 import os
 from pathlib import Path
+import re
 
 import adsk.core, adsk.fusion
 
@@ -689,41 +690,51 @@ def item_by_attribute(collection, attribute_name, attribute_value):
 
 
 def set_camera_viewcube(view: str):
-    view = view.lower()
-
-    cam = adsk.core.Application.get().activeViewport.camera
-    cam.isFitView = True
-    cam.target = adsk.core.Point3D.create(0, 0, 0)
-
     side_eyes = {
         "back": adsk.core.Vector3D.create(0, 1, 0),
         "front": adsk.core.Vector3D.create(0, -1, 0),
         "right": adsk.core.Vector3D.create(1, 0, 0),
-        "left": adsk.core.Point3D.create(-1, 0, 0),
+        "left": adsk.core.Vector3D.create(-1, 0, 0),
         "top": adsk.core.Vector3D.create(0, 0, 1),
         "bottom": adsk.core.Vector3D.create(0, 0, -1),
     }
 
-    i_vectors = 0
-    eye = adsk.core.Vector3D.create(0, 0, 0)
-    for side, vector in side_eyes.items():
-        if side in view:
-            eye.add(vector)
-            i_vectors += 1
+    # input validaion to prevent hard to fix bugsx
+    if isinstance(view, str):
+        view = view.lower()
+        legal_words = "|".join(side_eyes.keys())
+        if not re.fullmatch(f"({legal_words})+", view):
+            raise ValueError("Invalid view argument.")
+        view = re.findall(legal_words, view)  # convert to list
 
-    if i_vectors == 0 or i_vectors > 3:
+    if len(view) > len(set(view)):
         raise ValueError("Invalid view argument.")
 
-    # if i_vectors == 1:
-    #     if eye.z == 0:
-    #         up_vector = adsk.core.Vector3D.create(0, 0, 1)
-    #     else:
-    #         up_vector = adsk.core.Vector3D.create(0, 1, 0)
+    cam = adsk.core.Application.get().activeViewport.camera
+    cam.isFitView = True
+    cam.isSmoothTransition = False
+    # prevent bug by not setting to exactly 0
+    cam.target = adsk.core.Point3D.create(0.00001, 0.00001, 0.00001)
 
-    # else:
-    #     up_vector = adsk.core.Vector3D.create(0, 0, 1)
+    eye = adsk.core.Vector3D.create(0, 0, 0)
+    i_vectors = 0
+    for side in view:
+        eye.add(side_eyes[side])
+        i_vectors += 1
 
-    eye.normailze()
+    if eye.length < 0.9:
+        raise ValueError("Invalid view argument.")
+
+    up_vector = adsk.core.Vector3D.create(0, 0, 1)
+    if i_vectors == 1:
+        if eye.z == 0:
+            up_vector = adsk.core.Vector3D.create(0, 0, 1)
+        else:
+            up_vector = adsk.core.Vector3D.create(0, 1, 0)
+
+    cam.upVector = up_vector
+
+    eye.normalize()
     eye = eye.asPoint()
     cam.eye = eye
 
