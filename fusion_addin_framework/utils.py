@@ -481,7 +481,15 @@ def unmute_errors(to_ui=True):
 
 
 class PeriodicExecuter(threading.Thread):
-    def __init__(self, interval, func, args=None, kwargs=None, wait_for_func=False, initial_execution=False):
+    def __init__(
+        self,
+        interval,
+        func,
+        args=None,
+        kwargs=None,
+        wait_for_func=False,
+        initial_execution=False,
+    ):
         if args is None:
             args = []
         if kwargs is None:
@@ -678,3 +686,45 @@ def item_by_attribute(collection, attribute_name, attribute_value):
         return None
     else:
         return items[0]
+
+
+def set_camera_viewcube(view: str):
+    view = view.lower()
+
+    cam = adsk.core.Application.get().activeViewport.camera
+    cam.isFitView = True
+    cam.target = adsk.core.Point3D.create(0, 0, 0)
+
+    side_eyes = {
+        "back": adsk.core.Vector3D.create(0, 1, 0),
+        "front": adsk.core.Vector3D.create(0, -1, 0),
+        "right": adsk.core.Vector3D.create(1, 0, 0),
+        "left": adsk.core.Point3D.create(-1, 0, 0),
+        "top": adsk.core.Vector3D.create(0, 0, 1),
+        "bottom": adsk.core.Vector3D.create(0, 0, -1),
+    }
+
+    i_vectors = 0
+    eye = adsk.core.Vector3D.create(0, 0, 0)
+    for side, vector in side_eyes.items():
+        if side in view:
+            eye.add(vector)
+            i_vectors += 1
+
+    if i_vectors == 0 or i_vectors > 3:
+        raise ValueError("Invalid view argument.")
+
+    # if i_vectors == 1:
+    #     if eye.z == 0:
+    #         up_vector = adsk.core.Vector3D.create(0, 0, 1)
+    #     else:
+    #         up_vector = adsk.core.Vector3D.create(0, 1, 0)
+
+    # else:
+    #     up_vector = adsk.core.Vector3D.create(0, 0, 1)
+
+    eye.normailze()
+    eye = eye.asPoint()
+    cam.eye = eye
+
+    adsk.core.Application.get().activeViewport.camera = cam
