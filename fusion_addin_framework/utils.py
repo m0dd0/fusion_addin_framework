@@ -713,7 +713,6 @@ def set_camera_viewcube(view: str, cam = None):
     if cam is None:
         cam = adsk.core.Application.get().activeViewport.camera
     cam.isFitView = True
-    cam.isSmoothTransition = False
     # prevent bug by not setting to exactly 0
     cam.target = adsk.core.Point3D.create(0.00001, 0.00001, 0.00001)
 
