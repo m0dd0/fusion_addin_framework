@@ -738,4 +738,9 @@ def set_camera_viewcube(view: str):
     eye = eye.asPoint()
     cam.eye = eye
 
-    adsk.core.Application.get().activeViewport.camera = cam
+    return cam
+
+def camera_zoom(factor):
+    cam = adsk.core.Application.get().activeViewport.camera
+    cam.viewExtents = cam.viewExtents / factor**2
+    return cam 
