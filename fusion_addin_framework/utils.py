@@ -689,7 +689,7 @@ def item_by_attribute(collection, attribute_name, attribute_value):
         return items[0]
 
 
-def set_camera_viewcube(view: str):
+def set_camera_viewcube(view: str, cam = None):
     side_eyes = {
         "back": adsk.core.Vector3D.create(0, 1, 0),
         "front": adsk.core.Vector3D.create(0, -1, 0),
@@ -710,7 +710,8 @@ def set_camera_viewcube(view: str):
     if len(view) > len(set(view)):
         raise ValueError("Invalid view argument.")
 
-    cam = adsk.core.Application.get().activeViewport.camera
+    if cam is None:
+        cam = adsk.core.Application.get().activeViewport.camera
     cam.isFitView = True
     cam.isSmoothTransition = False
     # prevent bug by not setting to exactly 0
@@ -740,7 +741,8 @@ def set_camera_viewcube(view: str):
 
     return cam
 
-def camera_zoom(factor):
-    cam = adsk.core.Application.get().activeViewport.camera
+def camera_zoom(factor, cam=None):
+    if cam is None:
+        cam = adsk.core.Application.get().activeViewport.camera
     cam.viewExtents = cam.viewExtents / factor**2
     return cam 
