@@ -1,21 +1,20 @@
 """This modules contains utility functions realted to the Fusion360 API."""
 
-from typing import Iterable, Dict, List, Union
+from typing import Any, Callable, Iterable, Dict, List, Union, Tuple
 import logging
 import json
 import enum
 import math
 import traceback
 import time
-import threading
-from functools import partial
+import sched
 import os
 from pathlib import Path
 import re
 
 import adsk.core, adsk.fusion
 
-
+### LOGGING ###
 def create_logger(
     name: str,
     handlers: Iterable[logging.Handler],
@@ -78,6 +77,7 @@ class TextPaletteLoggingHandler(logging.StreamHandler):
         # adsk.doEvents() # doesnt seem to be necessary
 
 
+### MISC ###
 def ui_ids_dict(out_file_path=None) -> Dict:
     """Dumps the ids of the fusion user interface element to a hierachical dict.
 
@@ -184,15 +184,18 @@ class InputIdsBase(enum.Enum):
         return name + "_input_id"
 
 
-def get_values(current_inputs: adsk.core.CommandInputs) -> Dict:
+def get_values(current_inputs: adsk.core.CommandInputs) -> Dict[str, Any]:
     """Extracts the command values from the given CommandInputs collections and maps
     them to the id of their command.
 
     Args:
-        current_inputs (adsk.core.CommandInputs): [description]
+        current_inputs (adsk.core.CommandInputs): A (arbitrary) command inputs group.
+            In most cases this should be the inputGroup of the currentlly active command
+            recieved in the inputChanged event.
 
     Returns:
-        [type]: [description]
+        Dict[str, Any]: The values of the current command inputs mapped by their id. If multiple values
+            can be selected a corresponding list is returned.
     """
     # value types have no special super class (like SliderCommandInput)
     # for consistency for all types lists are used
@@ -250,15 +253,20 @@ def get_values(current_inputs: adsk.core.CommandInputs) -> Dict:
     return input_values
 
 
-def change_material(
-    obj: adsk.fusion.Occurrence, material_name: str
-) -> adsk.core.Material:
+def get_appearance(material_name: str) -> adsk.core.Appearance:
+    """Gets the appearance with the passed name from the Fusion 360 Appearance Library.
+
+    Args:
+        material_name (str): The name of the apperance to fetch.
+
+    Returns:
+        adsk.core.Appearnce: The appearance.
+    """
     material = (
         adsk.core.Application.get()
         .materialLibraries.itemByName("Fusion 360 Appearance Library")
         .appearances.itemByName(material_name)
     )
-    obj.appearance = material
     return material
 
 
@@ -306,7 +314,7 @@ def orient_bounding_box(
 
 
 def delete_all_graphics():
-    """Deletes all custom grpahics in the viewport."""
+    """Deletes all custom grpahics in the design."""
     des = adsk.fusion.Design.cast(adsk.core.Application.get().activeProduct)
     for comp in des.allComponents:
         clear_collection(comp.customGraphicsGroup)
@@ -314,8 +322,17 @@ def delete_all_graphics():
 
 
 def create_cube(
-    center: List[Union[float, int]], side_length: float
+    center: Tuple[Union[float, int]], side_length: float
 ) -> adsk.fusion.BRepBody:
+    """Creates a simple cube using the TemporaryBRepManager.
+
+    Args:
+        center (Tuple[Union[float, int]]): A (x,y,z)-tuple containing the cubes center coordinates.
+        side_length (float): The side length of the cube.
+
+    Returns:
+        adsk.fusion.BRepBody: The transient instance of the created cube.
+    """
     return adsk.fusion.TemporaryBRepManager.get().createBox(
         adsk.core.OrientedBoundingBox3D.create(
             adsk.core.Point3D.create(*center),
@@ -328,7 +345,18 @@ def create_cube(
     )
 
 
-def new_comp(name=None, parent=None):
+def new_component(
+    name: str = None, parent: adsk.fusion.Component = None
+) -> adsk.fusion.Component:
+    """Creates a new component.
+
+    Args:
+        name (str, optional): The name if the component. Defaults to the default name ("Component_xx").
+        parent (adsk.fusion.Component, optional): A parent component. Defaults to thr root component.
+
+    Returns:
+        adsk.fusion.Component: The created component.
+    """
     if parent is None:
         parent = adsk.fusion.Design.cast(
             adsk.core.Application.get().activeProduct
@@ -339,15 +367,32 @@ def new_comp(name=None, parent=None):
     return comp
 
 
-def delete_comp(comp):
+def delete_component(component: adsk.fusion.Component):
+    """Deletes a component by deleting all its occurrences in the design.
+
+    Args:
+        component (adsk.fusion.Component): The component to delete.
+    """
     for occ in adsk.fusion.Design.cast(
         adsk.core.Application.get().activeProduct
-    ).rootComponent.allOccurrencesByComponent(comp):
+    ).rootComponent.allOccurrencesByComponent(component):
         occ.deleteMe()
 
 
-def get_json_attr(obj, group_name, attr_name):
-    return json.loads(obj.attributes.itemByName(group_name, attr_name).value)
+def get_json_attribute(
+    object: adsk.core.Base, group_name: str, attribute_name: str
+) -> Dict[str, Any]:
+    """Gets the json loaded attributes of a object.
+
+    Args:
+        object (adsk.core.Base): The of the object in which attributs is looked for the attribute.
+        group_name (str): The attribute group name of the wanted attribute.
+        attribute_name (str): The name of the atribute.
+
+    Returns:
+        Dict[str, Any]: The json loaded attribute values.
+    """
+    return json.loads(object.attributes.itemByName(group_name, attribute_name).value)
 
 
 def view_extents_by_measure(measure: float, is_horizontal_measure: bool = True):
@@ -373,7 +418,7 @@ def view_extents_by_measure(measure: float, is_horizontal_measure: bool = True):
         factor = 1
 
     radius = factor * measure * 0.5
-    extent = math.pi * (radius ** 2)
+    extent = math.pi * (radius**2)
     return extent
 
 
@@ -394,12 +439,28 @@ def view_extent_by_rectangle(horizontal: float, vertical: float):
     )
 
 
-def set_camera(
+def set_camera_viewarea(
     plane="xy",
     horizontal_borders=(0, 10),
     vertical_borders=(0, 10),
     smooth_transition=False,
-):
+    camera=None,
+) -> adsk.core.Camera:
+    """_summary_
+
+    Args:
+        plane (str, optional): _description_. Defaults to "xy".
+        horizontal_borders (tuple, optional): _description_. Defaults to (0, 10).
+        vertical_borders (tuple, optional): _description_. Defaults to (0, 10).
+        smooth_transition (bool, optional): _description_. Defaults to False.
+        camera (_type_, optional): _description_. Defaults to None.
+
+    Raises:
+        ValueError: _description_
+
+    Returns:
+        adsk.core.Camera: _description_
+    """
 
     horizontal_extent = horizontal_borders[1] - horizontal_borders[0]
     vertical_extent = vertical_borders[1] - vertical_borders[0]
@@ -431,14 +492,16 @@ def set_camera(
     else:
         raise ValueError("Provided invalid plane.")
 
-    camera = adsk.core.Application.get().activeViewport.camera
+    if camera is None:
+        camera = adsk.core.Application.get().activeViewport.camera
 
     camera.target = adsk.core.Point3D.create(*target)
     camera.eye = adsk.core.Point3D.create(*eye)
     camera.upVector = adsk.core.Vector3D.create(*up_vector)
     camera.isSmoothTransition = smooth_transition
     camera.viewExtents = view_extent_by_rectangle(horizontal_extent, vertical_extent)
-    adsk.core.Application.get().activeViewport.camera = camera
+
+    return camera
 
 
 def make_comp_invisible(comp: adsk.fusion.Component):
@@ -462,84 +525,91 @@ def make_comp_invisible(comp: adsk.fusion.Component):
     return (active_lightbulbs, visible_occs)
 
 
-def unmute_errors(to_ui=True):
-    # TODO test
-    def decorator(func):
-        def wrapped(*args, **kwargs):
-            try:
-                val = func(*args, **kwargs)
-            except:
-                msg = "Failed:\n{}".format(traceback.format_exc())
-                if to_ui:
-                    adsk.core.Application.get().userInterface.messageBox(msg)
-                else:
-                    print(msg)
-            return val
-
-        return wrapped
-
-    return decorator
-
-
-class PeriodicExecuter(threading.Thread):
+class PeriodicExecuter:  # (threading.Thread):
     def __init__(
         self,
-        interval,
-        func,
-        args=None,
-        kwargs=None,
-        wait_for_func=False,
-        initial_execution=False,
+        interval: int,
+        action: Callable,
+        wait_for_action: bool = False,
+        scheduler: sched.scheduler = None,
+        # initial_execution: bool = False,
     ):
-        if args is None:
-            args = []
-        if kwargs is None:
-            kwargs = {}
+        """Creates an executer which executes the passed action periodically.
 
+        Args:
+            interval (int): The time in milliseconds to wait between calls of action.
+            action (Callable): The function to execute periodically. Must not accept any
+                arguments.
+            wait_for_action (bool, optional): Determines if the time which is needed to
+                execute the action is included in the delay time or not. Defaults to False.
+            # initial_execution (bool, optional): Determines if the action is . Defaults to False.
+        """
         self.interval = interval
-        self.func = partial(func, *args, **kwargs)
+        # self.initial_execution = initial_execution
+        self.wait_for_func = wait_for_action
+        self.action = action
 
-        self.wait_for_func = wait_for_func
+        self._initial_delay = 0
 
-        self.thread_active = True
-        threading.Thread.__init__(self)
-        self.daemon = True
+        self.scheduler = sched.scheduler(time.time, time.sleep)
+        # self.thread_active = True
+        # threading.Thread.__init__(self)
+        # self.daemon = True
 
-        self.start_time = time.perf_counter()
-        self.running = False
+        # self.start_time = time.perf_counter()
+        # self.running = False
 
-        self.initial_execution = initial_execution
+        # super().start()  # start the thread itself (not the 'timer')
 
-        super().start()  # start the thread itself (not the 'timer')
+    def _scheduled_action(self):
+        if self.wait_for_func:
+            self.action()
+            self._next_action = self.scheduler.enter(
+                self.interval, self._scheduled_action
+            )
+        else:
+            self._next_action = self.scheduler.enter(
+                self.interval, self._scheduled_action
+            )
+            self.action()
 
-    def run(self):
-        elapsed_time = 0
-        while self.thread_active:
-            current_time = time.perf_counter()
-            if self.running:
-                elapsed_time = current_time - self.start_time
-                if elapsed_time > self.interval:
-                    self.func()
-                    if self.wait_for_func:
-                        current_time = time.perf_counter()
-                    self.start_time = current_time
-            else:
-                self.start_time = current_time - elapsed_time
-
-    def pause(self):
-        self.running = False
+    # def run(self):
+    #     elapsed_time = 0
+    #     while self.thread_active:
+    #         current_time = time.perf_counter()
+    #         if self.running:
+    #             elapsed_time = current_time - self.start_time
+    #             if elapsed_time > self.interval:
+    #                 self.func()
+    #                 if self.wait_for_func:
+    #                     current_time = time.perf_counter()
+    #                 self.start_time = current_time
+    #         else:
+    #             self.start_time = current_time - elapsed_time
 
     def start(self):
-        if self.initial_execution:
-            self.func()
-        self.running = True
+        """Starts the periodic execution of the action."""
+        self.scheduler.enter(self._initial_delay, self._scheduled_action)
+        # if self.initial_execution:
+        #     self.func()
+        # self.running = True
+
+    def pause(self):
+        """Pauses the periodic execution. This will NOT reset the delay time. So if half
+        of the delay is already passed, only half of the delay will be executed after the
+        executor is started again."""
+        self._initial_delay = self._next_action["time"] - self.scheduler.timefunc()
+        self.scheduler.cancel(self._next_action)
+        # self.running = False
 
     def reset(self):
-        self.start_time = time.perf_counter()
-
-    def kill(self):
-        self.thread_active = False
-        self.join()
+        """Resets the delay time to its maximum again indepent of the state of the executer."""
+        # self.start_time = time.perf_counter()
+        # pass
+        self.scheduler.cancel(self._next_action)
+        self._initial_delay = self.interval
+        self.start()
+        # TODO check for paused
 
 
 def get_json_from_file(path, default_value=None):
@@ -689,7 +759,28 @@ def item_by_attribute(collection, attribute_name, attribute_value):
         return items[0]
 
 
-def set_camera_viewcube(view: str, cam = None):
+def set_camera_viewcube(
+    view: Tuple[str], camera: adsk.core.Camera = None
+) -> adsk.core.Camera:
+    """Creates a camera which is oriented in the same way as a click on a edge or corner
+    of the viewcube would do. The camera is builfd from the passed camera or the currently
+    active viewport camera if no camera got passed. Modifies the "eye", "target", "upVector" and "isFitView"
+    properties of the camera.
+
+    Args:
+        view (Tuple[str]): A Tuple containing one, two, or three unique keywords from
+            {"back", "front", "right", "left", "top", "bottom"} describing the face, edge
+            or corner of the viewcube
+        cam (adsk.core.Camera, optional): The camera which gets modified to have the
+            viewcube view. Defaults to None.
+
+    Raises:
+        ValueError: If the view arguments does not refer to a valid viewcue position.
+            E.g.: ("top", "bottom"), or ("top", "top", "right") would be invalid.
+
+    Returns:
+        adsk.core.Camera: [description]
+    """
     side_eyes = {
         "back": adsk.core.Vector3D.create(0, 1, 0),
         "front": adsk.core.Vector3D.create(0, -1, 0),
@@ -700,21 +791,21 @@ def set_camera_viewcube(view: str, cam = None):
     }
 
     # input validaion to prevent hard to fix bugsx
-    if isinstance(view, str):
-        view = view.lower()
-        legal_words = "|".join(side_eyes.keys())
-        if not re.fullmatch(f"({legal_words})+", view):
-            raise ValueError("Invalid view argument.")
-        view = re.findall(legal_words, view)  # convert to list
+    # if isinstance(view, str):
+    #     view = view.lower()
+    #     legal_words = "|".join(side_eyes.keys())
+    #     if not re.fullmatch(f"({legal_words})+", view):
+    #         raise ValueError("Invalid view argument.")
+    #     view = re.findall(legal_words, view)  # convert to list
 
     if len(view) > len(set(view)):
         raise ValueError("Invalid view argument.")
 
-    if cam is None:
-        cam = adsk.core.Application.get().activeViewport.camera
-    cam.isFitView = True
+    if camera is None:
+        camera = adsk.core.Application.get().activeViewport.camera
+    camera.isFitView = True
     # prevent bug by not setting to exactly 0
-    cam.target = adsk.core.Point3D.create(0.00001, 0.00001, 0.00001)
+    camera.target = adsk.core.Point3D.create(0.00001, 0.00001, 0.00001)
 
     eye = adsk.core.Vector3D.create(0, 0, 0)
     i_vectors = 0
@@ -732,16 +823,17 @@ def set_camera_viewcube(view: str, cam = None):
         else:
             up_vector = adsk.core.Vector3D.create(0, 1, 0)
 
-    cam.upVector = up_vector
+    camera.upVector = up_vector
 
     eye.normalize()
     eye = eye.asPoint()
-    cam.eye = eye
+    camera.eye = eye
 
-    return cam
+    return camera
+
 
 def camera_zoom(factor, cam=None):
     if cam is None:
         cam = adsk.core.Application.get().activeViewport.camera
     cam.viewExtents = cam.viewExtents / factor**2
-    return cam 
+    return cam
