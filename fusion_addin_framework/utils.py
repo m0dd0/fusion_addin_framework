@@ -818,14 +818,13 @@ def make_ordinal(n: int) -> str:
     return str(n) + suffix
 
 
-class PeriodicExecuter:  # (threading.Thread):
+class PeriodicExecuter:
     def __init__(
         self,
         interval: int,
         action: Callable,
         wait_for_action: bool = False,
-        scheduler: sched.scheduler = None,
-        # initial_execution: bool = False,
+        initial_execution: bool = False,
     ):
         """Creates an executer which executes the passed action periodically.
 
@@ -835,71 +834,50 @@ class PeriodicExecuter:  # (threading.Thread):
                 arguments.
             wait_for_action (bool, optional): Determines if the time which is needed to
                 execute the action is included in the delay time or not. Defaults to False.
-            # initial_execution (bool, optional): Determines if the action is . Defaults to False.
+            initial_execution (bool, optional): Determines whether the first execution is
+                executed directly after the first start call or if the interval time is waited.
         """
         self.interval = interval
-        # self.initial_execution = initial_execution
         self.wait_for_func = wait_for_action
         self.action = action
 
-        self._initial_delay = 0
+        self._initial_delay = 0 if initial_execution else self.interval
+        self._running = False
+        self._next_action = None
 
-        self.scheduler = sched.scheduler(time.time, time.sleep)
-        # self.thread_active = True
-        # threading.Thread.__init__(self)
-        # self.daemon = True
-
-        # self.start_time = time.perf_counter()
-        # self.running = False
-
-        # super().start()  # start the thread itself (not the 'timer')
+        self._scheduler = sched.scheduler(time.time, time.sleep)
 
     def _scheduled_action(self):
         if self.wait_for_func:
             self.action()
-            self._next_action = self.scheduler.enter(
+            self._next_action = self._scheduler.enter(
                 self.interval, self._scheduled_action
             )
         else:
-            self._next_action = self.scheduler.enter(
+            self._next_action = self._scheduler.enter(
                 self.interval, self._scheduled_action
             )
             self.action()
 
-    # def run(self):
-    #     elapsed_time = 0
-    #     while self.thread_active:
-    #         current_time = time.perf_counter()
-    #         if self.running:
-    #             elapsed_time = current_time - self.start_time
-    #             if elapsed_time > self.interval:
-    #                 self.func()
-    #                 if self.wait_for_func:
-    #                     current_time = time.perf_counter()
-    #                 self.start_time = current_time
-    #         else:
-    #             self.start_time = current_time - elapsed_time
-
     def start(self):
         """Starts the periodic execution of the action."""
-        self.scheduler.enter(self._initial_delay, self._scheduled_action)
-        # if self.initial_execution:
-        #     self.func()
-        # self.running = True
+        if self._running:
+            return
+        self._scheduler.enter(self._initial_delay, self._scheduled_action)
+        self._running = True
 
     def pause(self):
         """Pauses the periodic execution. This will NOT reset the delay time. So if half
         of the delay is already passed, only half of the delay will be executed after the
         executor is started again."""
-        self._initial_delay = self._next_action["time"] - self.scheduler.timefunc()
-        self.scheduler.cancel(self._next_action)
-        # self.running = False
+        if not self._running:
+            return
+        self._initial_delay = self._next_action["time"] - self._scheduler.timefunc()
+        self._scheduler.cancel(self._next_action)
+        self._next_action = None
+        self._running = False
 
     def reset(self):
-        """Resets the delay time to its maximum again indepent of the state of the executer."""
-        # self.start_time = time.perf_counter()
-        # pass
-        self.scheduler.cancel(self._next_action)
-        self._initial_delay = self.interval
-        self.start()
-        # TODO check for paused
+        """Resets the delay time to its maximum/interval time again indepent of the state of the executer."""
+        self._scheduler.cancel(self._next_action)
+        self._scheduler.enter(self.interval, self._scheduled_action)
