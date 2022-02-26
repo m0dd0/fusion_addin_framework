@@ -5,12 +5,10 @@ import logging
 import json
 import enum
 import math
-import traceback
 import time
 import sched
 import os
 from pathlib import Path
-import re
 
 import adsk.core, adsk.fusion
 
@@ -274,7 +272,21 @@ def clear_collection(collection: adsk.core.ObjectCollection):
         collection.item(0).deleteMe()
 
 
-def items_by_attribute(collection, attribute_name, attribute_value):
+def items_by_attribute(
+    collection: adsk.core.ObjectCollection, attribute_name: str, attribute_value: Any
+) -> List[Any]:
+    """Returns all objects of a collections whose attribute with the given name have the
+    given value.
+
+    Args:
+        collection (adsk.core.ObjectCollection): The object collection to query.
+        attribute_name (str): The name of the attribute for comparison.
+        attribute_value (Any): The value of the attribute for comparison.
+
+    Returns:
+        List[Any]: The found objects which met the attribute condition.
+    """
+
     found_items = []
     for item in collection:
         if getattr(item, attribute_name) == attribute_value:
@@ -282,20 +294,26 @@ def items_by_attribute(collection, attribute_name, attribute_value):
     return found_items
 
 
-def item_by_attribute(collection, attribute_name, attribute_value):
-    items = items_by_attribute(collection, attribute_name, attribute_value)
-    if len(items) > 1:
-        raise ValueError(
-            f"There are multiple elemnts in the colletction which meet the condition {attribute_name}={attribute_value}."
-        )
-    if len(items) == 0:
-        return None
-    else:
-        return items[0]
-
-
 ### HUB REALTED ###
-def get_data_folder(fusion_path, create_folders=False) -> adsk.core.DataFolder:
+def get_data_folder(
+    fusion_path: List[str], create_folders=False
+) -> adsk.core.DataFolder:
+    """Searches the data hub for a data folder at the given "fusion path". A "fusion path" is
+    a list in the form [<project_name>,<folder>,<subfolder>,<subfolder>,...] which describes
+    the position of the data folder.
+
+    Args:
+        fusion_path (List[str]): The path of the fusion data folder in the form [<project_name>,<folder>,<subfolder>,<subfolder>,...].
+        create_folders (bool, optional): Indicates if new folders should be created if a folder
+            in the "fusion path" doesnt exist. Defaults to False.
+
+    Raises:
+        FileNotFoundError: If create_folders is set to False and a folder in the passed
+            "fusion path" doesnt exist.
+
+    Returns:
+        adsk.core.DataFolder: The queried data folder.
+    """
     app = adsk.core.Application.get()
 
     project_name = fusion_path[0]
@@ -324,8 +342,21 @@ def get_data_folder(fusion_path, create_folders=False) -> adsk.core.DataFolder:
 
 
 def get_doc(
-    fusion_path, tolerance_search=False, raise_exception=True
+    fusion_path: List[str], tolerance_search=False, raise_exception=True
 ) -> adsk.core.DataFile:
+    """Searches the data hub for a document folder at the given "fusion path". A "fusion path" is
+    a list in the form [<project_name>,<folder>,<subfolder>,<subfolder>,...,<file_name>] which describes
+    the position of the file.
+
+    Args:
+        fusion_path (List[str]): The path of the fusion document in the form [<project_name>,<folder>,<subfolder>,<subfolder>,...,<file_name>].
+        tolerance_search (bool, optional): If set to true file name is treated as not case
+            sensitive and any whitespaces are ignored in the search. Defaults to False.
+        raise_exception (bool, optional):  Defaults to True.
+
+    Returns:
+        adsk.core.DataFile: The queried fusion document.
+    """
     doc_name = fusion_path[-1]
     folder = get_data_folder(fusion_path[:-1])
 
@@ -338,12 +369,9 @@ def get_doc(
             if doc.name == doc_name:
                 return doc
 
-    if raise_exception:
-        raise FileNotFoundError(
-            f"There is no file with the provided fusion path {fusion_path}"
-        )
-    else:
-        return None
+    raise FileNotFoundError(
+        f"There is no file with the provided fusion path {fusion_path}"
+    )
 
 
 ### CAMERA ###
@@ -468,15 +496,15 @@ def set_camera_viewcube(
         view (Tuple[str]): A Tuple containing one, two, or three unique keywords from
             {"back", "front", "right", "left", "top", "bottom"} describing the face, edge
             or corner of the viewcube
-        cam (adsk.core.Camera, optional): The camera which gets modified to have the
-            viewcube view. Defaults to None.
+        camera (adsk.core.Camera, optional): A camera instance which gets adapted.
+            Defaults to the currently active camera.
 
     Raises:
         ValueError: If the view arguments does not refer to a valid viewcue position.
             E.g.: ("top", "bottom"), or ("top", "top", "right") would be invalid.
 
     Returns:
-        adsk.core.Camera: [description]
+        adsk.core.Camera: The adjusted camera.
     """
     side_eyes = {
         "back": adsk.core.Vector3D.create(0, 1, 0),
@@ -529,11 +557,22 @@ def set_camera_viewcube(
     return camera
 
 
-def camera_zoom(factor, cam=None):
-    if cam is None:
-        cam = adsk.core.Application.get().activeViewport.camera
-    cam.viewExtents = cam.viewExtents / factor**2
-    return cam
+def camera_zoom(factor: int, camera: adsk.core.Camera = None) -> adsk.core.Camera:
+    """Adjusts the cameras viewWxtents by zooming. A zoom factor of n results in the viewport
+    being zoomed in to show only 1/n th area of the previous area.
+
+    Args:
+        factor (int): The zoom factor
+        camera (adsk.core.Camera, optional):A camera instance which gets adapted.
+            Defaults to the currently active camera.
+
+    Returns:
+        adsk.core.Camera: The adjusted camera.
+    """
+    if camera is None:
+        camera = adsk.core.Application.get().activeViewport.camera
+    camera.viewExtents = camera.viewExtents / factor**2
+    return camera
 
 
 ### MISC ###
@@ -729,7 +768,21 @@ def get_json_attribute(
 
 
 ### PYTHON ONLY ###
-def get_json_from_file(path, default_value=None):
+def get_json_from_file(
+    path: Union[str, Path], default_value: Union[Dict, List] = None
+) -> Union[Dict, List]:
+    """Gets the json decoded data from the file if the file exists and creates the file if
+    its not exists. IF its not existing the default value is returned.
+
+    Args:
+        path (Union[str, Path]): The file path of the json file.
+        default_value (Union[Dict, List], optional): The value which gets inserted into the
+            newly created file and is returned in case the file doesnt exist. Defaults to None.
+
+    Returns:
+        Union[Dict, List]: The json decoded content of the file or the default value if the
+            file hasnt existed yet.
+    """
     if default_value is None:
         default_value = {}
 
@@ -743,13 +796,20 @@ def get_json_from_file(path, default_value=None):
     return json_data
 
 
-def make_ordinal(n):
+def make_ordinal(n: int) -> str:
     """Convert an integer into its ordinal representation.
 
     make_ordinal(0)   => '0th'
     make_ordinal(3)   => '3rd'
     make_ordinal(122) => '122nd'
     make_ordinal(213) => '213th'
+
+
+    Args:
+        n (int): The integer to convert.
+
+    Returns:
+        str: The resulting string.
     """
     n = int(n)
     suffix = ["th", "st", "nd", "rd", "th"][min(n % 10, 4)]
