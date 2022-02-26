@@ -1,5 +1,7 @@
 """This modules contains utility functions realted to the Fusion360 API."""
 
+# to avoid import error due to type hints if adsk.core not available
+from __future__ import annotations
 from typing import Any, Callable, Iterable, Dict, List, Union, Tuple
 import logging
 import json
@@ -10,7 +12,11 @@ import sched
 import os
 from pathlib import Path
 
-import adsk.core, adsk.fusion
+try:
+    import adsk.core, adsk.fusion
+except:
+    # for iusage of python only utils in test process etc
+    pass
 
 ### LOGGING ###
 def create_logger(
@@ -863,7 +869,7 @@ class PeriodicExecuter:
         """Starts the periodic execution of the action."""
         if self._running:
             return
-        self._scheduler.enter(self._initial_delay, self._scheduled_action)
+        self._scheduler.enter(self._initial_delay, 0, self._scheduled_action)
         self._running = True
 
     def pause(self):
@@ -880,4 +886,4 @@ class PeriodicExecuter:
     def reset(self):
         """Resets the delay time to its maximum/interval time again indepent of the state of the executer."""
         self._scheduler.cancel(self._next_action)
-        self._scheduler.enter(self.interval, self._scheduled_action)
+        self._scheduler.enter(self.interval, 0, self._scheduled_action)
