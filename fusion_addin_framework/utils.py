@@ -848,42 +848,38 @@ class PeriodicExecuter:
         self.action = action
 
         self._initial_delay = 0 if initial_execution else self.interval
-        self._running = False
-        self._next_action = None
+        self._start_delay = self._initial_delay
 
         self._scheduler = sched.scheduler(time.time, time.sleep)
 
     def _scheduled_action(self):
         if self.wait_for_func:
             self.action()
-            self._next_action = self._scheduler.enter(
-                self.interval, self._scheduled_action
-            )
+            self._scheduler.enter(self.interval, self._scheduled_action)
         else:
-            self._next_action = self._scheduler.enter(
-                self.interval, self._scheduled_action
-            )
+            self._scheduler.enter(self.interval, self._scheduled_action)
             self.action()
 
     def start(self):
         """Starts the periodic execution of the action."""
-        if self._running:
-            return
-        self._scheduler.enter(self._initial_delay, 0, self._scheduled_action)
-        self._running = True
+        if len(self._scheduler.queue) == 0:
+            self._scheduler.enter(self._start_delay, 0, self._scheduled_action)
 
     def pause(self):
         """Pauses the periodic execution. This will NOT reset the delay time. So if half
         of the delay is already passed, only half of the delay will be executed after the
         executor is started again."""
-        if not self._running:
-            return
-        self._initial_delay = self._next_action["time"] - self._scheduler.timefunc()
-        self._scheduler.cancel(self._next_action)
-        self._next_action = None
-        self._running = False
+        if len(self._scheduler.queue) > 0:
+            self._start_delay = (
+                self._scheduler.queue[0]["time"] - self._scheduler.timefunc()
+            )
+            self._scheduler.cancel(self._scheduler.queue[0])
+        assert len(self._scheduler.queue) == 0
 
     def reset(self):
         """Resets the delay time to its maximum/interval time again indepent of the state of the executer."""
-        self._scheduler.cancel(self._next_action)
-        self._scheduler.enter(self.interval, 0, self._scheduled_action)
+        self._start_delay = self._initial_delay
+        if len(self._scheduler.queue) > 0:
+            self._scheduler.cancel(self._scheduler.queue[0])
+            assert len(self._scheduler.queue) == 0
+            self.start()
