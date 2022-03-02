@@ -8,7 +8,7 @@ import json
 import enum
 import math
 import time
-import sched
+import threading
 import os
 from pathlib import Path
 
@@ -848,38 +848,39 @@ class PeriodicExecuter:
         self.action = action
 
         self._initial_delay = 0 if initial_execution else self.interval
+        self._next_execution = None
         self._start_delay = self._initial_delay
 
-        self._scheduler = sched.scheduler(time.time, time.sleep)
+    def _new_timer(self, delta):
+        self._next_execution = time.time() + delta
+        self._timer = threading.Timer(delta, self._scheduled_action)
+        self._timer.start()
+
+    def _cancel_timer(self):
+        if self._timer is not None:
+            self._timer.cancel()
+            self._timer = None
+            self._next_execution = None
 
     def _scheduled_action(self):
         if self.wait_for_func:
             self.action()
-            self._scheduler.enter(self.interval, self._scheduled_action)
+            self._new_timer(self.interval)
         else:
-            self._scheduler.enter(self.interval, self._scheduled_action)
+            self._new_timer(self.interval)
             self.action()
 
     def start(self):
         """Starts the periodic execution of the action."""
-        if len(self._scheduler.queue) == 0:
-            self._scheduler.enter(self._start_delay, 0, self._scheduled_action)
+        self._new_timer(self._start_delay)
 
     def pause(self):
         """Pauses the periodic execution. This will NOT reset the delay time. So if half
         of the delay is already passed, only half of the delay will be executed after the
         executor is started again."""
-        if len(self._scheduler.queue) > 0:
-            self._start_delay = (
-                self._scheduler.queue[0]["time"] - self._scheduler.timefunc()
-            )
-            self._scheduler.cancel(self._scheduler.queue[0])
-        assert len(self._scheduler.queue) == 0
+        self._start_delay = self._next_execution - time.time()
+        self._cancel_timer()
 
     def reset(self):
         """Resets the delay time to its maximum/interval time again indepent of the state of the executer."""
-        self._start_delay = self._initial_delay
-        if len(self._scheduler.queue) > 0:
-            self._scheduler.cancel(self._scheduler.queue[0])
-            assert len(self._scheduler.queue) == 0
-            self.start()
+        self._cancel_timer()
