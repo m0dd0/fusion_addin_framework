@@ -824,6 +824,20 @@ def make_ordinal(n: int) -> str:
     return str(n) + suffix
 
 
+class AnnotatedTimer(threading.Timer):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._execution_timestamp = None
+
+    def start(self):
+        self._exection_timestamp = time.perf_counter() + self.interval
+        super().start()
+
+    @property
+    def execution_timestamp(self):
+        return self._exection_timestamp
+
+
 class PeriodicExecuter:
     def __init__(
         self,
@@ -848,19 +862,18 @@ class PeriodicExecuter:
         self.action = action
 
         self._initial_delay = 0 if initial_execution else self.interval
-        self._next_execution = None
         self._start_delay = self._initial_delay
 
+        self._timer = None
+
     def _new_timer(self, delta):
-        self._next_execution = time.time() + delta
-        self._timer = threading.Timer(delta, self._scheduled_action)
+        self._timer = AnnotatedTimer(delta, self._scheduled_action)
         self._timer.start()
 
     def _cancel_timer(self):
-        if self._timer is not None:
-            self._timer.cancel()
-            self._timer = None
-            self._next_execution = None
+        self._timer.cancel()
+        self._timer = None
+        self._next_execution = None
 
     def _scheduled_action(self):
         if self.wait_for_func:
@@ -872,15 +885,20 @@ class PeriodicExecuter:
 
     def start(self):
         """Starts the periodic execution of the action."""
-        self._new_timer(self._start_delay)
+        if self._timer is None:
+            self._new_timer(self._start_delay)
 
     def pause(self):
         """Pauses the periodic execution. This will NOT reset the delay time. So if half
         of the delay is already passed, only half of the delay will be executed after the
         executor is started again."""
-        self._start_delay = self._next_execution - time.time()
-        self._cancel_timer()
+        if self._timer is not None:  # only if we are currently running / not paused
+            self._start_delay = self._timer.execution_timestamp - time.time()
+            self._cancel_timer()
 
     def reset(self):
         """Resets the delay time to its maximum/interval time again indepent of the state of the executer."""
-        self._cancel_timer()
+        self._start_delay = self._initial_delay
+        if self._timer is not None:  # only if we are currently running / not paused
+            self._cancel_timer()
+            self.start()
