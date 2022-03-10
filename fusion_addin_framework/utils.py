@@ -12,11 +12,7 @@ import threading
 import os
 from pathlib import Path
 
-try:
-    import adsk.core, adsk.fusion
-except:
-    # for iusage of python only utils in test process etc
-    pass
+import adsk.core, adsk.fusion
 
 ### LOGGING ###
 def create_logger(
