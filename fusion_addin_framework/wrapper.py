@@ -1128,7 +1128,9 @@ class AddinCommand(_FusionWrapper):
         )
         thread_event.add(thread_event_handler)
 
-    def _thread_event_handler(self, evenArgs: adsk.core.CustomEventArgs):
+    def _thread_event_handler(
+        self, eventArgs: adsk.core.CustomEventArgs  # pylint:disable=unused-argument
+    ):
         """The generic handler function used in the thread event.
         Executes all actions which got stored in the corresponding queue.
 
@@ -1222,6 +1224,86 @@ class AddinCommandBase(AddinCommand):
         listControlDisplayType: int = adsk.core.ListControlDisplayTypes.RadioButtonlistType,
         customEventHandlers: Dict[str, Callable] = None,
     ):
+        """Wraps around Fusions `CommandDefinition
+        <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-5e5a72e2-0869-4f85-936f-eab4ebd4aced>`_
+        object and its `ControlDefintion
+        <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-f4282920-9484-49db-bcdd-b46f6506543d>`_
+        attribute.
+        Besides the documented attributes and methods on this page all
+        attributes and methods of the wrapped classes can be accessed with the same
+        attribute and method names as in the wrapped classes.
+        The atributes of the commandDefintion object will be looked up first.
+
+        This class does NOT wrap around Fusions `Command
+        <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-0550963a-ff63-4183-b0a7-a1bf0c99f821>`_
+        class.
+        (Thats why its called 'AddinCommand' and not 'Command' only.)
+
+        If an Id of an existing CommandDefintion is provided, all parameters except
+        `parent` and `id` will be ignored.
+
+        This class also encapsulates the concepts of the `event handlers
+        <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID->`_
+        of the Fusion API.
+        Using this class you do not need to connect a handler to the `created event
+        <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-895ee146-8697-4ba0-98e7-4f72b74edb4f>`_
+        of the commandDefintion.
+        Instead of connecting handlers, you simply overwrite the corresponding methods which
+        are exactly named as the events available. Also the same argument will get passed to
+        the overwritten methods.
+
+        See the example section for some use cases.
+        Checking out the examples should make the concept od using function-arguments
+        instead of handlers understandable in no time.
+
+        Args:
+            parent (Union[Control, List[Control]], optional): The parent Control
+                this command is connected to. You can also pass a list of controls.
+                In this case the same command/functionality getx connected to multiple
+                controls. If a list of controls is passed you must ensure that all
+                controls are of the same controlType and that all of them are in
+                distinct panels. Defaults to a ComanndControl with the default
+                properties.
+            id (str, optional): The unique id of the commandDefintion with respect
+                to all other existing commandDefintions. Defaults to a random id.
+            name (str, optional): The visible name of the command as seen in the
+                user interface. This will also be set as the name of the controlDefintione
+                attribute. Defaults to a random name.
+            resourceFolder (Union[str, Path], optional): Directory that contains
+                any additional files associated with this command. These are
+                typically the image files that will be used for a button and the
+                HTML files for a tool clip or helps and tips. Alternatively you
+                can provide the name of one of the available default images.
+                Defaults to "lightbulb".
+            tooltip (str, optional): The tooltip string. This is always shown
+                for commands. If the tooltip description and/or tool clip are also
+                specified then the tooltip will progressively display more information
+                as the user hovers the mouse over the control. Defaults to "".
+            toolClipFileName (Union[str, Path], optional): The full filename of
+                the image file (PNG) used for the tool clip. The tooltip is always
+                shown but as the user hovers over the control it will progressively
+                display the tool clip along with the tooltip text. Alternatively you
+                can provide the name of one of the available default images.
+                Defaults to None (no toolclip image is used).
+            isEnabled (bool, optional): Sets if this ControlDefinition is enabled
+                or not. This has the effect of enabling and disabling any
+                associated (parental) controls. Defaults to True.
+            isVisible (bool, optional): Sets if this ControlDefinition is visible
+                or not. This has the effect of making any associated (parental)
+                controls visible or invisible in the user interface. Defaults to True.
+            isChecked (bool, optional): Will be ignored if controlType of the parental
+                Control is not 'checkbox'. Sets whether the check box of the parental
+                controlDefintions is checked. Changing this will result in changing
+                any associated (parental) controls and will execute the associated
+                command. Defaults to True.
+            listControlDisplayType (int, optional): Will be ignored if the controlType
+                of the paerntal Control is not 'list'. Sets how the parental list
+                control will be displayed; as a standard list, a list of check boxes,
+                or a list of radio buttons. Possible Values can be found in
+                the `ListControlDisplayType
+                <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-3b2f79e4-2b1b-4bc9-8632-d3b6fe1fc421>`_
+                enumerator. Defaults to RadioButtonListType (1).
+        """
         eventHandlers = self._get_handler_dict()
 
         super().__init__(
@@ -1240,18 +1322,11 @@ class AddinCommandBase(AddinCommand):
         )
 
     def _get_handler_dict(self) -> Dict[str, Callable]:
-        """Helper functions which checks whether
-
-        Args:
-            name (str): _description_
-            passed_event_handlers (Dict[str, Callable]): _description_
-
-        Raises:
-            ValueError: _description_
-            ValueError: _description_
+        """Helper functions which converts the overwritten handler methods into a {event_name: Calllable}
+        mapping.
 
         Returns:
-            Dict[str, Callable]: _description_
+            Dict[str, Callable]: The event handler mapping.
         """
         common_methods = AddinCommand.__dict__.keys() & self.__class__.__dict__.keys()
         overwridden_methods = [
@@ -1262,12 +1337,78 @@ class AddinCommandBase(AddinCommand):
 
         event_handlers = {meth.name: meth for meth in overwridden_methods}
 
-        self._validate_handler_dict()
+        self._validate_handler_dict(event_handlers)
 
         return event_handlers
 
-    def activate(self, eventArgs):
-        pass
+    def activate(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
 
-    def deactivate(self, eventArgs):
-        pass
+    def deactivate(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def destroy(self, eventArgs: adsk.core.CommandCreatedEventArgs):
+        raise NotImplementedError()
+
+    def execute(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def executePreview(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def inputChanged(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def keyDown(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def keyUp(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def mouseClick(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def mouseDoubleClick(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def mouseDown(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def mouseDrag(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def mouseDragBegin(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def mouseDragEnd(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def mouseMove(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def mouseUp(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def mouseWheel(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def preSelect(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def preSelectEnd(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def preSelectMouseMove(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def select(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def unselect(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def validateInputs(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def commandCreated(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
