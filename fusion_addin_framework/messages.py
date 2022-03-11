@@ -40,14 +40,6 @@ def handler_error(handler_type, command_name, traceback):
     return msg
 
 
-def doubled_callbacks(event_name):
-    msg = (
-        f"Two or more callback functions for the {event_name} event were provided. "
-        + "Only the last one will get used."
-    )
-    return msg
-
-
 def unknown_event_name(event_name):
     msg = (
         f"There is no event called '{event_name}'. The passed handler will be ignored."
