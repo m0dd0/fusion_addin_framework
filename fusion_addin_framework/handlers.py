@@ -17,8 +17,8 @@ from . import messages as msgs
 # from .wrapper import FusionAddin
 
 # keep all handlers referenced
-_handlers = []
-_custom_events_and_handlers = []
+handlers = []
+custom_events_and_handlers = []
 
 # doesnt make live much easier so generic class is not used
 # from abc import ABC
@@ -83,7 +83,7 @@ def _notify_routine(
             adsk.core.Application.get().userInterface.messageBox(msg)
 
 
-class _CustomEventHandler(adsk.core.CustomEventHandler):
+class CustomEventHandler_(adsk.core.CustomEventHandler):
     def __init__(self, addin, cmd_name, event, action):
         super().__init__()
 
@@ -92,7 +92,7 @@ class _CustomEventHandler(adsk.core.CustomEventHandler):
         self.event = event
         self.action = action
 
-        _custom_events_and_handlers.append((event, self))
+        custom_events_and_handlers.append((event, self))
 
     def notify(self, eventArgs: adsk.core.CommandEventArgs):
         _notify_routine(
@@ -104,7 +104,7 @@ class _CustomEventHandler(adsk.core.CustomEventHandler):
         )
 
 
-class _InputChangedHandler(adsk.core.InputChangedEventHandler):
+class InputChangedHandler_(adsk.core.InputChangedEventHandler):
     def __init__(self, addin, cmd_name: str, event_name: str, action: Callable):
         """Generic version of a InputChangedHandler class.
 
@@ -130,7 +130,7 @@ class _InputChangedHandler(adsk.core.InputChangedEventHandler):
         )
 
 
-class _CommandEventHandler(adsk.core.CommandEventHandler):
+class CommandEventHandler_(adsk.core.CommandEventHandler):
     def __init__(self, addin, cmd_name, event_name, action):
         super().__init__()
 
@@ -145,7 +145,7 @@ class _CommandEventHandler(adsk.core.CommandEventHandler):
         )
 
 
-class _ValidateInputsEventHandler(adsk.core.ValidateInputsEventHandler):
+class ValidateInputsEventHandler_(adsk.core.ValidateInputsEventHandler):
     def __init__(self, addin, cmd_name, event_name, action):
         super().__init__()
 
@@ -160,7 +160,7 @@ class _ValidateInputsEventHandler(adsk.core.ValidateInputsEventHandler):
         )
 
 
-class _SelectionEventHandler(adsk.core.SelectionEventHandler):
+class SelectionEventHandler_(adsk.core.SelectionEventHandler):
     def __init__(self, addin, cmd_name, event_name, action):
         super().__init__()
 
@@ -175,7 +175,7 @@ class _SelectionEventHandler(adsk.core.SelectionEventHandler):
         )
 
 
-class _MouseEventHandler(adsk.core.MouseEventHandler):
+class MouseEventHandler_(adsk.core.MouseEventHandler):
     def __init__(self, addin, cmd_name, event_name, action):
         super().__init__()
 
@@ -190,7 +190,7 @@ class _MouseEventHandler(adsk.core.MouseEventHandler):
         )
 
 
-class _KeyboardEvenHandler(adsk.core.KeyboardEventHandler):
+class KeyboardEvenHandler_(adsk.core.KeyboardEventHandler):
     def __init__(self, addin, cmd_name, event_name, action):
         super().__init__()
 
@@ -207,29 +207,29 @@ class _KeyboardEvenHandler(adsk.core.KeyboardEventHandler):
 
 # maps each available event of the commad to thier associated handler type
 handler_type_mapping = {
-    "activate": _CommandEventHandler,
-    "deactivate": _CommandEventHandler,
-    "destroy": _CommandEventHandler,
-    "execute": _CommandEventHandler,
-    "executePreview": _CommandEventHandler,
-    "inputChanged": _InputChangedHandler,
-    "keyDown": _KeyboardEvenHandler,
-    "keyUp": _KeyboardEvenHandler,
-    "mouseClick": _MouseEventHandler,
-    "mouseDoubleClick": _MouseEventHandler,
-    "mouseDown": _MouseEventHandler,
-    "mouseDrag": _MouseEventHandler,
-    "mouseDragBegin": _MouseEventHandler,
-    "mouseDragEnd": _MouseEventHandler,
-    "mouseMove": _MouseEventHandler,
-    "mouseUp": _MouseEventHandler,
-    "mouseWheel": _MouseEventHandler,
-    "preSelect": _SelectionEventHandler,
-    "preSelectEnd": _SelectionEventHandler,
-    "preSelectMouseMove": _SelectionEventHandler,
-    "select": _SelectionEventHandler,
-    "unselect": _SelectionEventHandler,
-    "validateInputs": _ValidateInputsEventHandler,
+    "activate": CommandEventHandler_,
+    "deactivate": CommandEventHandler_,
+    "destroy": CommandEventHandler_,
+    "execute": CommandEventHandler_,
+    "executePreview": CommandEventHandler_,
+    "inputChanged": InputChangedHandler_,
+    "keyDown": KeyboardEvenHandler_,
+    "keyUp": KeyboardEvenHandler_,
+    "mouseClick": MouseEventHandler_,
+    "mouseDoubleClick": MouseEventHandler_,
+    "mouseDown": MouseEventHandler_,
+    "mouseDrag": MouseEventHandler_,
+    "mouseDragBegin": MouseEventHandler_,
+    "mouseDragEnd": MouseEventHandler_,
+    "mouseMove": MouseEventHandler_,
+    "mouseUp": MouseEventHandler_,
+    "mouseWheel": MouseEventHandler_,
+    "preSelect": SelectionEventHandler_,
+    "preSelectEnd": SelectionEventHandler_,
+    "preSelectMouseMove": SelectionEventHandler_,
+    "select": SelectionEventHandler_,
+    "unselect": SelectionEventHandler_,
+    "validateInputs": ValidateInputsEventHandler_,
     "commandCreated": None,
 }
 
@@ -238,7 +238,7 @@ def do_nothing(*args, **kwargs):  # pylint:disable=unused-argument
     pass
 
 
-class _CommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
+class CommandCreatedHandler_(adsk.core.CommandCreatedEventHandler):
     def __init__(
         self,
         addin,
@@ -265,7 +265,7 @@ class _CommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
         self.event_name = "commandCreated"
         self.action = self.handler_dict.pop(self.event_name, do_nothing)
 
-        _handlers.append(self)
+        handlers.append(self)
 
     def notify(self, eventArgs: adsk.core.CommandCreatedEventArgs):
         cmd = eventArgs.command
@@ -286,7 +286,7 @@ class _CommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
                     handler_callable,
                 )
                 getattr(cmd, event_name).add(handler)
-                _handlers.append(handler)
+                handlers.append(handler)
 
         _notify_routine(
             self.addin, self.cmd_name, self.event_name, self.action, eventArgs
