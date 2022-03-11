@@ -258,21 +258,7 @@ class _CommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
         """
         super().__init__()
 
-        self.handler_dict = {}
-        # sanitize the dict to allow on-prefix
-        allowed_prefix = "on"
-        for event_name, handler_callable in handler_dict.items():
-            if event_name.lower().startswith(allowed_prefix):
-                event_name = event_name[len(allowed_prefix) :]
-            event_name = event_name[0].lower() + event_name[1:]
-            if event_name in self.handler_dict:
-                logging.getLogger(__name__).warning(msgs.doubled_callbacks(event_name))
-            if event_name not in handler_type_mapping:
-                # raising an (custom) error would result in a silent error and crash
-                # the further adding of handlers so use logging instead
-                logging.getLogger(__name__).warning(msgs.unknown_event_name(event_name))
-            else:
-                self.handler_dict[event_name] = handler_callable
+        self.handler_dict = handler_dict
 
         self.addin = addin
         self.cmd_name = cmd_name
@@ -290,7 +276,7 @@ class _CommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
             handler_class = handler_type_mapping.get(event_name)
             if handler_class is None:
                 # shouldnt happened
-                # just in case sanitation in init hasnt worked properly
+                # just in case sanitation in AddinCommand hasnt worked properly
                 logging.getLogger(__name__).warning(msgs.unknown_event_name(event_name))
             else:
                 handler = handler_class(

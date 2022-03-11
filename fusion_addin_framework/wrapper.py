@@ -6,6 +6,7 @@ by these wrapper classes."""
 # pylint:disable=unsubscriptable-object
 # pylint:disable=invalid-name
 
+from ast import Call
 import logging
 from pathlib import Path
 from abc import ABC
@@ -814,7 +815,31 @@ class AddinCommand(_FusionWrapper):
         isChecked: bool = True,  # only checkbox
         listControlDisplayType: int = adsk.core.ListControlDisplayTypes.RadioButtonlistType,  # only list
         customEventHandlers: Dict[str, Callable] = None,
-        **eventHandlers: Callable,
+        **eventHandlers: Callable
+        # onActivate: Callable = None,
+        # onDeactivate: Callable = None,
+        # onDestroy: Callable = None,
+        # onExecute: Callable = None,
+        # onExecutePreview: Callable = None,
+        # onInputChanged: Callable = None,
+        # onKeyDown: Callable = None,
+        # onKeyUp: Callable = None,
+        # onMouseClick: Callable = None,
+        # onMouseDoubleClick: Callable = None,
+        # onMouseDown: Callable = None,
+        # onMouseDrag: Callable = None,
+        # onMouseDragBegin: Callable = None,
+        # onMouseDragEnd: Callable = None,
+        # onMouseMove: Callable = None,
+        # onMouseUp: Callable = None,
+        # onMouseWheel: Callable = None,
+        # onPreSelect: Callable = None,
+        # onPeSelectEnd: Callable = None,
+        # onPreSelectMouseMove: Callable = None,
+        # onSelect: Callable = None,
+        # onUnselect: Callable = None,
+        # onValidateInputs: Callable = None,
+        # onCommandCreated: Callable = None,
     ):
         """Wraps around Fusions `CommandDefinition
         <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-5e5a72e2-0869-4f85-936f-eab4ebd4aced>`_
@@ -904,9 +929,17 @@ class AddinCommand(_FusionWrapper):
                 the `ListControlDisplayType
                 <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-3b2f79e4-2b1b-4bc9-8632-d3b6fe1fc421>`_
                 enumerator. Defaults to RadioButtonListType (1).
+            **eventHandlers (Callable, optional): The notify functions of the command handlers.
+                all of these arguments are in the form "onEventName". You can either pass
+                Callables to this command construcotor or override the corresponding methods
+                of this class (named in the same pattern). You should not mix both patterns.
+                Available events which can be passed or overridden are: {onActivate,
+                onDeactivate, onDestroy, onExecute, onExecutePreview, onInputChanged,
+                onKeyDown, onKeyUp, onMouseClick, onMouseDoubleClick, onMouseDown,
+                onMouseDrag, onMouseDragBegin, onMouseDragEnd, onMouseMove, onMouseUp,
+                onMouseWheel, onPreSelect, onPeSelectEnd, onPreSelectMouseMove,
+                onSelect, onUnselect, onValidateInputs, onCommandCreated}.
         """
-        # TODO use submethods to increses readbility
-
         super().__init__(parent, Control)
 
         if not isinstance(self._parent, list):
@@ -922,95 +955,147 @@ class AddinCommand(_FusionWrapper):
         resourceFolder = dflts.eval_image(resourceFolder)
         toolClipFileName = dflts.eval_image(toolClipFileName, "32x32.png")
 
+        self._thread_event_id = f"{id}_custom_thread_event"
+        self._thread_event_queue = Queue()
+
+        
         self._in_fusion = (
             adsk.core.Application.get().userInterface.commandDefinitions.itemById(id)
         )
-
         if self._in_fusion:
             logging.getLogger(__name__).info(msgs.using_exisiting(__class__, id))
-
         else:
-            # create definition depending on the parent(s) control type
-            parent_control_type = parent_list[
-                0
-            ].commandDefinition.controlDefinition.objectType
-
-            if parent_control_type == adsk.core.ButtonControlDefinition.classType():
-                self._in_fusion = adsk.core.Application.get().userInterface.commandDefinitions.addButtonDefinition(
-                    id,
-                    name,
-                    tooltip,
-                    resourceFolder,
-                )
-            elif parent_control_type == adsk.core.CheckBoxControlDefinition.classType():
-                self._in_fusion = adsk.core.Application.get().userInterface.commandDefinitions.addCheckBoxDefinition(
-                    id,
-                    name,
-                    tooltip,
-                    isChecked,
-                )
-            elif parent_control_type == adsk.core.ListControlDefinition.classType():
-                self._in_fusion = adsk.core.Application.get().userInterface.commandDefinitions.addListDefinition(
-                    id,
-                    name,
-                    listControlDisplayType,
-                    resourceFolder,
-                )
-            else:
-                raise ValueError(msgs.invalid_control_type(parent_control_type))
-
-            if toolClipFileName is not None:
-                self._in_fusion.toolClipFilename = toolClipFileName
-            self._in_fusion.tooltip = tooltip
-            self._in_fusion.resourceFolder = resourceFolder
-            self._in_fusion.controlDefinition.isEnabled = isEnabled
-            self._in_fusion.controlDefinition.isVisible = isVisible
-            self._in_fusion.controlDefinition.name = name
-
-            # maybe move handler dict sanitation here
-            # not done yet because handler type mapping in handlers.py
-            # move when reconnecting handlers is implemented
-
-            # ! if there is some error (typo) etc. fusion will break instantanious !
-            self._in_fusion.commandCreated.add(
-                handlers._CommandCreatedHandler(  # pylint:disable=protected-access
-                    self.addin, name, eventHandlers
-                )
+            self._create_command_definition(
+                id,
+                name,
+                tooltip,
+                resourceFolder,
+                toolClipFileName,
+                parent_list,
+                isChecked,
+                isEnabled,
+                isVisible,
+                listControlDisplayType,
             )
-
-            # create own custom event used in decorator
-            self._cmd_custom_event_id = str(uuid4())
-            self._custom_event_queue = Queue()
-            cmd_custom_event = adsk.core.Application.get().registerCustomEvent(
-                self._cmd_custom_event_id
-            )
-            cmd_custom_handler = handlers._CustomEventHandler(
-                self.addin, name, cmd_custom_event, self._custom_event_handler
-            )
-            cmd_custom_event.add(cmd_custom_handler)
-
-            # register custom events
-            for event_id, handler_notify in customEventHandlers.items():
-                custom_event = adsk.core.Application.get().registerCustomEvent(event_id)
-                custom_handler = handlers._CustomEventHandler(
-                    self.addin, name, custom_event, handler_notify
-                )
-                custom_event.add(custom_handler)
-
-            self.addin.registerElement(self, self.uiLevel)
+            self._add_handlers(name, eventHandlers)
+            self._add_custom_handlers(name, customEventHandlers)
+            self._add_thread_handler(name)
 
         for p in parent_list:
             p._create_control(self._in_fusion)  # pylint:disable=protected-access
 
+        self.addin.registerElement(self, self.uiLevel)
         logging.getLogger(__name__).info(msgs.created_new(__class__, id))
 
-    def _custom_event_handler(self):
-        while not self._custom_event_queue.empty():
-            self._custom_event_queue.get()()
+    def _create_command_definition(
+        self,
+        id,
+        name,
+        tooltip,
+        resourceFolder,
+        toolClipFileName,
+        parent_list,
+        isChecked,
+        isEnabled,
+        isVisible,
+        listControlDisplayType,
+    ):
+        # create definition depending on the parent(s) control type
+        parent_control_type = parent_list[
+            0
+        ].commandDefinition.controlDefinition.objectType
+
+        if parent_control_type == adsk.core.ButtonControlDefinition.classType():
+            self._in_fusion = adsk.core.Application.get().userInterface.commandDefinitions.addButtonDefinition(
+                id,
+                name,
+                tooltip,
+                resourceFolder,
+            )
+        elif parent_control_type == adsk.core.CheckBoxControlDefinition.classType():
+            self._in_fusion = adsk.core.Application.get().userInterface.commandDefinitions.addCheckBoxDefinition(
+                id,
+                name,
+                tooltip,
+                isChecked,
+            )
+        elif parent_control_type == adsk.core.ListControlDefinition.classType():
+            self._in_fusion = adsk.core.Application.get().userInterface.commandDefinitions.addListDefinition(
+                id,
+                name,
+                listControlDisplayType,
+                resourceFolder,
+            )
+        else:
+            raise ValueError(msgs.invalid_control_type(parent_control_type))
+
+        if toolClipFileName is not None:
+            self._in_fusion.toolClipFilename = toolClipFileName
+        self._in_fusion.tooltip = tooltip
+        self._in_fusion.resourceFolder = resourceFolder
+        self._in_fusion.controlDefinition.isEnabled = isEnabled
+        self._in_fusion.controlDefinition.isVisible = isVisible
+        self._in_fusion.controlDefinition.name = name
+
+    def _get_handler_dict(self, passed_event_handlers):
+        common_methods = AddinCommand.__dict__.keys() & self.__class__.__dict__.keys()
+        overwridden_methods = [
+            m
+            for m in common_methods
+            if AddinCommand.__dict__[m] != self.__class__.__dict__[m]
+        ]
+        if len(overwridden_methods)>0 and len(passed_event_handlers)>0:
+            raise ValueError(msgs.)
+
+        if len(overwridden_methods) > 0:
+            event_handlers = {meth.name: meth for meth in overwridden_methods}
+
+        if len(passed_event_handlers) > 0:
+            event_handlers = passed_event_handlers
+
+        if len(event_handlers.keys() - handlers.handler_type_mapping.keys()) != 0:
+            raise ValueError(msgs.unknown_event_name()) 
+
+    def _add_handlers(self, name, eventHandlers):
+        # maybe move handler dict sanitation here
+        # not done yet because handler type mapping in handlers.py
+        # move when reconnecting handlers is implemented
+
+        # ! if there is some error (typo) etc. fusion will break instantanious !
+        self._in_fusion.commandCreated.add(
+            handlers._CommandCreatedHandler(  # pylint:disable=protected-access
+                self.addin, name, eventHandlers
+            )
+        )
+
+    def _add_custom_handlers(self, name, customEventHandlers):
+        # register custom events
+        for event_id, handler_notify in customEventHandlers.items():
+            custom_event = adsk.core.Application.get().registerCustomEvent(event_id)
+            custom_handler = handlers._CustomEventHandler(
+                self.addin, name, custom_event, handler_notify
+            )
+            custom_event.add(custom_handler)
+
+    def _add_thread_handler(self, name):
+        # create own custom event used for simplified execution of actions from outside fusion
+        thread_event = adsk.core.Application.get().registerCustomEvent(
+            self._thread_event_id
+        )
+        thread_event_handler = (
+            handlers._CustomEventHandler(  # pylint:disable=protected-access
+                self.addin, name, thread_event, self._thread_event_handler
+            )
+        )
+        thread_event.add(thread_event_handler)
+
+    def _thread_event_handler(self):
+        while not self._thread_event_queue.empty():
+            self._thread_event_queue.get()()
 
     def execute_from_event(self, action: Callable):
-        self._custom_event_queue.put(action)
-        adsk.core.Application.get().fireCustomEvent(self._cmd_custom_event_id)
+        self._thread_event_queue.put(action)
+        adsk.core.Application.get().fireCustomEvent(self._thread_event_id)
 
     # def event_handler(self, to_decorate: Callable):
     #     def wrapped():
@@ -1073,3 +1158,14 @@ class AddinCommand(_FusionWrapper):
                 super().__setattr__(name, value)
         else:
             super().__setattr__(name, value)
+
+    def onActivate(self, eventArgs: adsk.core.EventArgs):
+        pass
+
+    def onDeactivate(self):
+        pass
+
+    def onDestroy(self):
+        pass
+
+        # ....
