@@ -949,14 +949,12 @@ class AddinCommand(_FusionWrapper):
         if customEventHandlers is None:
             customEventHandlers = {}
 
+        self._validate_handler_dict(eventHandlers)
+
         id = dflts.eval_id(id)
         name = dflts.eval_name(name, __class__)
         resourceFolder = dflts.eval_image(resourceFolder)
         toolClipFileName = dflts.eval_image(toolClipFileName, "32x32.png")
-
-        # get the final used event handlers mapped to the name of the event (as in the docs)
-        # checks for overwridden methods etc.
-        eventHandlers = self._get_handler_dict(name, eventHandlers)
 
         # attributes for the thread event
         self._thread_event_id = f"{id}_custom_thread_event"
@@ -1336,8 +1334,6 @@ class AddinCommandBase(AddinCommand):
         ]
 
         event_handlers = {meth.name: meth for meth in overwridden_methods}
-
-        self._validate_handler_dict(event_handlers)
 
         return event_handlers
 
