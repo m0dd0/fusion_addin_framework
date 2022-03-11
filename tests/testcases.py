@@ -1200,3 +1200,26 @@ def test_custom_events():
         cmd.addin.stop()
         raise test_exception
     return cmd.addin
+
+
+# def test_thread_event_utility():
+#     pass
+
+# class MyCommand(faf.AddinCommandBase):
+#     def execute(self, eventArgs):
+#         print("execute")
+
+#     def commandCreated(self, eventArgs: adsk.core.CommandEventArgs):
+#         print("commandCreated")
+
+#     def inputChanged(self, eventArgs: adsk.core.CommandEventArgs):
+#         print("input changed")
+
+
+# def test_subclass_pattern():
+#     try:
+#         cmd = MyCommand()
+#     except Exception as test_exception:
+#         cmd.addin.stop()
+#         raise test_exception
+#     return cmd.addin
