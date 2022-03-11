@@ -4,10 +4,12 @@ by these wrapper classes."""
 
 # pylint:disable=redefined-builtin
 # pylint:disable=unsubscriptable-object
+# pylint:disable=invalid-name
 
 import logging
 from pathlib import Path
 from abc import ABC
+from queue import Queue
 from typing import Union, Callable, List, Any, Dict
 from collections import defaultdict
 from uuid import uuid4
@@ -903,6 +905,8 @@ class AddinCommand(_FusionWrapper):
                 <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-3b2f79e4-2b1b-4bc9-8632-d3b6fe1fc421>`_
                 enumerator. Defaults to RadioButtonListType (1).
         """
+        # TODO use submethods to increses readbility
+
         super().__init__(parent, Control)
 
         if not isinstance(self._parent, list):
@@ -974,6 +978,17 @@ class AddinCommand(_FusionWrapper):
                 )
             )
 
+            # create own custom event used in decorator
+            self._cmd_custom_event_id = str(uuid4())
+            self._custom_event_queue = Queue()
+            cmd_custom_event = adsk.core.Application.get().registerCustomEvent(
+                self._cmd_custom_event_id
+            )
+            cmd_custom_handler = handlers._CustomEventHandler(
+                self.addin, name, cmd_custom_event, self._custom_event_handler
+            )
+            cmd_custom_event.add(cmd_custom_handler)
+
             # register custom events
             for event_id, handler_notify in customEventHandlers.items():
                 custom_event = adsk.core.Application.get().registerCustomEvent(event_id)
@@ -988,6 +1003,21 @@ class AddinCommand(_FusionWrapper):
             p._create_control(self._in_fusion)  # pylint:disable=protected-access
 
         logging.getLogger(__name__).info(msgs.created_new(__class__, id))
+
+    def _custom_event_handler(self):
+        while not self._custom_event_queue.empty():
+            self._custom_event_queue.get()()
+
+    def execute_from_event(self, action: Callable):
+        self._custom_event_queue.put(action)
+        adsk.core.Application.get().fireCustomEvent(self._cmd_custom_event_id)
+
+    # def event_handler(self, to_decorate: Callable):
+    #     def wrapped():
+    #         self._custom_event_queue.put(to_decorate)
+    #         adsk.core.Application.get().fireCustomEvent(self._cmd_custom_event_id)
+
+    #     return wrapped
 
     def addParentControl(self, parentControl):
         """Adds an additional control for acticvating this command.
