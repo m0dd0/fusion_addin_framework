@@ -1165,8 +1165,25 @@ def test_custom_events():
     return cmd.addin
 
 
-# def test_thread_event_utility():
-#     pass
+def test_thread_event_utility():
+    try:
+        custom_event_id = str(uuid4())
+        cmd = faf.AddinCommand()
+
+        thread = faf.utils.PeriodicExecuter(
+            20,
+            lambda: cmd.execute_from_event(
+                lambda: adsk.core.Application.get().userInterface.messageBox(
+                    str(random.randint(0, 100))
+                )
+            ),
+        )
+        thread.start()
+    except Exception as test_exception:
+        cmd.addin.stop()
+        raise test_exception
+    return cmd.addin
+
 
 class MyCommand(faf.AddinCommandBase):
     def execute(self, eventArgs):

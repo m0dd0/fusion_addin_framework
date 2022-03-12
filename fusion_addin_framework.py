@@ -40,7 +40,7 @@ def run(context):  # pylint:disable=unused-argument
 
         global addins
         # results, addins = testcases.execute_cases(all_testcases)
-        results, addins = testcases.execute_cases([testcases.test_subclass_pattern])
+        results, addins = testcases.execute_cases([testcases.test_thread_event_utility])
 
         print("### RESULTS ###")
         pprint(dict(results))
