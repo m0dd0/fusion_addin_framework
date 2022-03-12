@@ -39,8 +39,8 @@ def run(context):  # pylint:disable=unused-argument
         ]
 
         global addins
-        results, addins = testcases.execute_cases(all_testcases)
-        # results, addins = testcases.execute_cases([testcases.test_custom_events])
+        # results, addins = testcases.execute_cases(all_testcases)
+        results, addins = testcases.execute_cases([testcases.test_subclass_pattern])
 
         print("### RESULTS ###")
         pprint(dict(results))
@@ -60,7 +60,7 @@ def stop(context):  # pylint:disable=unused-argument
         app = adsk.core.Application.get()
         ui = app.userInterface
 
-        global addins
+        # global addins
 
         for addin in reversed(addins):
             if addin is not None:

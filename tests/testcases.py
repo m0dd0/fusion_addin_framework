@@ -928,8 +928,8 @@ def test_all_handlers_checkbox():
 def test_error_handlers_passed_buttton():
     raised = False
     try:
-        cmd = faf.AddinCommand(asdasd=lambda args: print("error"))
-    except Exception as exception:
+        faf.AddinCommand(asdasd=lambda args: print("error"))
+    except Exception:
         # cmd.addin.stop()
         raised = True
     if not raised:
@@ -940,7 +940,7 @@ def test_error_handlers_passed_buttton():
 def test_error_in_handler():
     def raise_error(args):
         print("start")
-        raise ValueError
+        raise ValueError()
         print("end")
 
     try:
@@ -1168,21 +1168,21 @@ def test_custom_events():
 # def test_thread_event_utility():
 #     pass
 
-# class MyCommand(faf.AddinCommandBase):
-#     def execute(self, eventArgs):
-#         print("execute")
+class MyCommand(faf.AddinCommandBase):
+    def execute(self, eventArgs):
+        print("execute")
 
-#     def commandCreated(self, eventArgs: adsk.core.CommandEventArgs):
-#         print("commandCreated")
+    def commandCreated(self, eventArgs: adsk.core.CommandEventArgs):
+        print("commandCreated")
 
-#     def inputChanged(self, eventArgs: adsk.core.CommandEventArgs):
-#         print("input changed")
+    def inputChanged(self, eventArgs: adsk.core.CommandEventArgs):
+        print("input changed")
 
 
-# def test_subclass_pattern():
-#     try:
-#         cmd = MyCommand()
-#     except Exception as test_exception:
-#         cmd.addin.stop()
-#         raise test_exception
-#     return cmd.addin
+def test_subclass_pattern():
+    try:
+        cmd = MyCommand()
+    except Exception as test_exception:
+        cmd.addin.stop()
+        raise test_exception
+    return cmd.addin

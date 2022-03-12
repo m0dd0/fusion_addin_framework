@@ -1326,14 +1326,19 @@ class AddinCommandBase(AddinCommand):
         Returns:
             Dict[str, Callable]: The event handler mapping.
         """
-        common_methods = AddinCommand.__dict__.keys() & self.__class__.__dict__.keys()
+        common_methods = (
+            AddinCommandBase.__dict__.keys() & self.__class__.__dict__.keys()
+        )
         overwridden_methods = [
             m
             for m in common_methods
-            if AddinCommand.__dict__[m] != self.__class__.__dict__[m]
+            if AddinCommandBase.__dict__[m] != self.__class__.__dict__[m]
+        ]
+        overwridden_methods = [
+            m for m in overwridden_methods if m in handlers.handler_type_mapping.keys()
         ]
 
-        event_handlers = {meth.name: meth for meth in overwridden_methods}
+        event_handlers = {meth: getattr(self, meth) for meth in overwridden_methods}
 
         return event_handlers
 
