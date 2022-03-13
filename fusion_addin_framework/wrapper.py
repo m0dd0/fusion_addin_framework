@@ -21,8 +21,9 @@ from . import defaults as dflts
 from . import handlers
 
 
-# will stop also addins instaces from other addins do use only for debugging
 _addins = []
+
+
 # def stop_all():
 #     for a in _addins:
 #         a.stop()
