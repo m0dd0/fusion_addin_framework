@@ -2,6 +2,8 @@
 # pylint:disable=unspecified-encoding
 # to avoid import error due to type hints if adsk.core not available
 from __future__ import annotations
+from ast import Call
+from queue import Queue
 from typing import Any, Callable, Iterable, Dict, List, Union, Tuple
 import logging
 import json
@@ -11,8 +13,13 @@ import time
 import threading
 import os
 from pathlib import Path
+from uuid import uuid4
+from functools import wraps
 
 import adsk.core, adsk.fusion
+
+from . import handlers
+
 
 ### LOGGING ###
 def create_logger(
@@ -897,7 +904,87 @@ class PeriodicExecuter:
             self.start()
 
 
-# def create_custom_event(id, action):
-#     pass
+# region
+_thread_event_id = None
+_thread_event_queue = Queue()
 
-# def execute_as_event(to_excute: Callable):
+
+def create_custom_event(
+    event_id: str, action: Call, debug_to_ui=False
+) -> adsk.core.CustomEvent:
+    """Creates and registers a custom event. The event is not associated with any command.
+    The custom event gets removed and cleaned up when calling the addin.stop() method.
+    If you dont instantiate a addin you need to clean up / unregister the event manually.
+
+    Args:
+        event_id (str): The id of the event.
+        action (Call): The action which gets executed from the handler.
+        debug_to_ui (bool, optional): Whether any errors appearing during execution
+                of the action are displayed in messageBox. Defaults to False.
+
+    Returns:
+        adsk.core.CustomEvent: The created CustomEvent.
+    """
+    custom_event = adsk.core.Application.get().registerCustomEvent(event_id)
+    custom_handler = handlers.GenericCustomEventHandler(
+        action, custom_event, debug_to_ui
+    )
+    custom_event.add(custom_handler)
+    return custom_event
+
+
+def _generic_thread_event_action(
+    event_args: adsk.core.EventArgs,  # pylint:disable=unused-argument
+):
+    """The generic handler function used in the thread event.
+    Executes all actions which got stored in the corresponding queue.
+
+    Args:
+        event_args (adsk.core.CustomEventArgs): The eventArgs which get passed to the handler
+            notify by Fusion. However they are ignored.
+    """
+    while not _thread_event_queue.empty():
+        _thread_event_queue.get()()
+
+
+def execute_as_event(to_excute: Callable, debug_to_ui: bool = False):
+    """Utility function which allows you to execute the passed Callable from witihn a
+    custom event. This is needed when you want to trigger some Fusion related actions
+    from a thread or other external non Fusion stimuli. The passed Callable must not accept any
+    arguments.
+
+    Args:
+        to_execute (Callable): The argument free action to execute.
+        debug_to_ui (bool, optional): Whether any errors appearing during execution
+                of the action are displayed in messageBox. Defaults to False.
+    """
+    global _thread_event_id
+    if _thread_event_id is None:
+        _thread_event_id = f"utility thread event {str(uuid4())}"
+        create_custom_event(_thread_event_id, _generic_thread_event_action, debug_to_ui)
+
+    _thread_event_queue.put(to_excute)
+    adsk.core.Application.get().fireCustomEvent(_thread_event_id)
+
+
+def execute_as_event_deco(debug_to_ui: bool = False):
+    """Utility decorator which allows you to execute the passed Callable from witihn a
+    custom event. This is needed when you want to trigger some Fusion related actions
+    from a thread or other external non Fusion stimuli. The passed Callable must not accept any
+    arguments.
+
+    Args:
+        debug_to_ui (bool, optional): Whether any errors appearing during execution
+    """
+
+    def decorator(to_decorate: Callable):
+        @wraps
+        def decorated():
+            execute_as_event(to_decorate, debug_to_ui)
+
+        return decorated
+
+    return decorator
+
+
+# endregion
