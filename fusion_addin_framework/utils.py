@@ -1,5 +1,5 @@
 """This modules contains utility functions realted to the Fusion360 API."""
-
+# pylint:disable=unspecified-encoding
 # to avoid import error due to type hints if adsk.core not available
 from __future__ import annotations
 from typing import Any, Callable, Iterable, Dict, List, Union, Tuple
@@ -343,9 +343,7 @@ def get_data_folder(
     return folder
 
 
-def get_doc(
-    fusion_path: List[str], tolerance_search=False, raise_exception=True
-) -> adsk.core.DataFile:
+def get_doc(fusion_path: List[str], tolerance_search=False) -> adsk.core.DataFile:
     """Searches the data hub for a document folder at the given "fusion path". A "fusion path" is
     a list in the form [<project_name>,<folder>,<subfolder>,<subfolder>,...,<file_name>] which describes
     the position of the file.
@@ -354,7 +352,6 @@ def get_doc(
         fusion_path (List[str]): The path of the fusion document in the form [<project_name>,<folder>,<subfolder>,<subfolder>,...,<file_name>].
         tolerance_search (bool, optional): If set to true file name is treated as not case
             sensitive and any whitespaces are ignored in the search. Defaults to False.
-        raise_exception (bool, optional):  Defaults to True.
 
     Returns:
         adsk.core.DataFile: The queried fusion document.
@@ -754,19 +751,20 @@ def create_cube(
 
 
 def get_json_attribute(
-    object: adsk.core.Base, group_name: str, attribute_name: str
+    object_: adsk.core.Base, group_name: str, attribute_name: str
 ) -> Dict[str, Any]:
     """Gets the json loaded attributes of a object.
 
     Args:
-        object (adsk.core.Base): The of the object in which attributs is looked for the attribute.
+        object_ (adsk.core.Base): The of the object in which attributs is looked for the attribute.
+            (Trailing underscore to avoid redeining build in).
         group_name (str): The attribute group name of the wanted attribute.
         attribute_name (str): The name of the atribute.
 
     Returns:
         Dict[str, Any]: The json loaded attribute values.
     """
-    return json.loads(object.attributes.itemByName(group_name, attribute_name).value)
+    return json.loads(object_.attributes.itemByName(group_name, attribute_name).value)
 
 
 ### PYTHON ONLY ###
@@ -826,12 +824,12 @@ class AnnotatedTimer(threading.Timer):
         self._execution_timestamp = None
 
     def start(self):
-        self._exection_timestamp = time.perf_counter() + self.interval
+        self._execution_timestamp = time.perf_counter() + self.interval
         super().start()
 
     @property
     def execution_timestamp(self):
-        return self._exection_timestamp
+        return self._execution_timestamp
 
 
 class PeriodicExecuter:
@@ -869,7 +867,6 @@ class PeriodicExecuter:
     def _cancel_timer(self):
         self._timer.cancel()
         self._timer = None
-        self._next_execution = None
 
     def _scheduled_action(self):
         if self.wait_for_func:
@@ -898,3 +895,9 @@ class PeriodicExecuter:
         if self._timer is not None:  # only if we are currently running / not paused
             self._cancel_timer()
             self.start()
+
+
+# def create_custom_event(id, action):
+#     pass
+
+# def execute_as_event(to_excute: Callable):
