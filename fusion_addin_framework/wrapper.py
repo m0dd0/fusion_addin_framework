@@ -176,6 +176,8 @@ class FusionAddin:
                     # element is probably already deleted
                     pass
 
+        _addins.remove(self)
+
     def registerElement(self, elem: _FusionWrapper, level: int = 0):
         """Registers an instance of a :class:`._FusionWrapper` to the addin.
 

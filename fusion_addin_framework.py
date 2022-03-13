@@ -19,7 +19,9 @@ from . import fusion_addin_framework as faf
 # if a single testfunction is testes the addin.stop method is called at leaving addin
 # if multiple testfunctions are provided we stop the addin immideately after the test
 # which created it got executed.
-TESTCASES = testcases.ALL_CASES
+# TESTCASES = testcases.ALL_CASES
+TESTCASES = [testcases.test_subclass_pattern]
+
 
 addin = None
 
@@ -40,8 +42,8 @@ def run(context):  # pylint:disable=unused-argument
             "started fusion_addin_framework testing addin"
         )
 
-        results = defaultdict()
-        for case in testcases.ALL_CASES:
+        results = defaultdict(dict)
+        for case in TESTCASES:
             try:
                 print(f"{f' {case.__name__} ':{'#'}^{60}}")
                 start = perf_counter()
@@ -55,11 +57,12 @@ def run(context):  # pylint:disable=unused-argument
             try:
                 if len(TESTCASES) > 1:
                     addin.stop()
+                    addin = None
             except:
                 pass
 
         print("### RESULTS ###")
-        pprint(dict(results))
+        pprint(dict(results), width=200)
         if all([r["passed"] for r in results.values()]):
             print("### PASSED ###")
         else:

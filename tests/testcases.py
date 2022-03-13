@@ -895,15 +895,19 @@ def test_all_handlers_checkbox():
 
 
 def test_error_handlers_passed_buttton():
-    raised = False
+    cmd = None
     try:
-        faf.AddinCommand(asdasd=lambda args: print("error"))
-    except Exception:
-        # cmd.addin.stop()
-        raised = True
-    if not raised:
-        raise ValueError()
-    return None  # cmd.addin
+        raised = False
+        try:
+            cmd = faf.AddinCommand(asdasd=lambda args: print("error"))
+        except Exception:
+            raised = True
+        if not raised:
+            raise ValueError("Invalid handler name not detected by addin.")
+    except Exception as test_exception:
+        cmd.addin.stop()
+        raise test_exception
+    return cmd.addin
 
 
 def test_error_in_handler():
@@ -913,9 +917,7 @@ def test_error_in_handler():
         print("end")
 
     try:
-        cmd = faf.AddinCommand(
-            execute=raise_error,  # print("onExecute", args),
-        )
+        cmd = faf.AddinCommand(execute=raise_error)
         cmd.addin.debugToUi = False
         assert cmd.addin.debugToUi == False
     except Exception as test_exception:
@@ -1194,7 +1196,8 @@ ALL_CASES = [
     test_checkbox_command_properties,
     test_all_handlers_buttton,
     test_all_handlers_checkbox,
-    test_error_handlers_passed_buttton,
+    # onyl testabel as single test as addin gets instantiated but does not return reference and therefore cant be deleted later
+    # test_error_handlers_passed_buttton,
     test_error_in_handler,
     test_multiple_controls,
     test_multiple_controls_2,
