@@ -1,48 +1,11 @@
-""" """
+"""Testcases """
 
-from collections import defaultdict
-from time import perf_counter
-import traceback
-from typing import List, Callable
 from uuid import uuid4
-from datetime import datetime
 import random
-import time
 
 import adsk.fusion, adsk.core
 
 from .. import fusion_addin_framework as faf
-
-
-def execute_cases(cases: List[Callable]):
-    """Executes the passed functions in a controlled environment and logs some
-        data about their axacution.
-
-    Args:
-        cases (List[Callable]): A list of the testfuctions to execute.
-
-    Returns:
-        dict: A dictionairy with the test resulte mapped to the function name.
-        list: A list of addins which where created durin the execution of the tests.
-    """
-    results = defaultdict(dict)
-    addins = []
-    for case in cases:
-        try:
-            print(f"{f' {case.__name__} ':{'#'}^{60}}")
-            start = perf_counter()
-            addin = case()
-            addins.append(addin)
-            results[case.__name__]["elapsed_time"] = perf_counter() - start
-            results[case.__name__]["passed"] = True
-        except:
-            results[case.__name__]["elapsed_time"] = -1
-            results[case.__name__]["passed"] = False
-            print(traceback.format_exc())
-
-    return results, addins
-
-    ### Testcases ###
 
 
 def test_hello_world_button_normal():
@@ -151,6 +114,7 @@ def test_checkbox_defaults():
     return checkbox.addin
 
 
+# region
 # def test_list_normal():
 #     try:
 #         addin = faf.FusionAddin()
@@ -201,6 +165,7 @@ def test_checkbox_defaults():
 #         list_ctrl.addin.stop()
 #         raise test_exception
 #     return list_ctrl.addin
+# endregion
 
 
 def test_standard_attrs_button():
@@ -362,6 +327,7 @@ def test_very_custom_checkbox():
     return addin
 
 
+# region
 # def test_very_custom_list():
 #     try:
 #         addin = faf.FusionAddin(debugToUi=True)
@@ -414,6 +380,7 @@ def test_very_custom_checkbox():
 #         addin.stop()
 #         raise test_exception
 #     return addin
+# endregion
 
 
 def test_addin_properties():
@@ -636,6 +603,7 @@ def test_checkbox_properties():
     return addin
 
 
+# region
 # def test_list_properties():
 #     try:
 #         addin = faf.FusionAddin()
@@ -680,6 +648,7 @@ def test_checkbox_properties():
 #         addin.stop()
 #         raise test_exception
 #     return addin
+# endregion
 
 
 def test_button_command_properties():
@@ -1203,3 +1172,40 @@ def test_subclass_pattern():
         cmd.addin.stop()
         raise test_exception
     return cmd.addin
+
+
+ALL_CASES = [
+    test_hello_world_button_normal,
+    test_hello_world_button_dotted,
+    test_hello_world_button_defaults,
+    test_checkbox_normal,
+    test_checkbox_dotted,
+    test_checkbox_defaults,
+    test_standard_attrs_button,
+    test_very_custom_button,
+    test_very_custom_checkbox,
+    test_addin_properties,
+    test_workspace_properties,
+    test_tab_properties,
+    test_panel_properties,
+    test_button_properties,
+    test_checkbox_properties,
+    test_button_command_properties,
+    test_checkbox_command_properties,
+    test_all_handlers_buttton,
+    test_all_handlers_checkbox,
+    test_error_handlers_passed_buttton,
+    test_error_in_handler,
+    test_multiple_controls,
+    test_multiple_controls_2,
+    test_multiple_controls_3,
+    test_multiple_controls_different_type,
+    test_dropdown_normal,
+    test_dropdown_default,
+    test_dropdown_dotted,
+    test_dropdown_nested,
+    test_dropdown_properties,
+    test_custom_events,
+    test_thread_event_utility,
+    # test_subclass_pattern,
+]
