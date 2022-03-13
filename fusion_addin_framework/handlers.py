@@ -2,6 +2,7 @@
 This module contains code to create a abstraction layer on the handler concept of 
 the Fusion API. This module is utilized by the Command Wrapper.
 """
+# pylint:disable=invalid-name
 
 import logging
 import traceback

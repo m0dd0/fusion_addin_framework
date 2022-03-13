@@ -22,7 +22,7 @@ from . import handlers
 
 
 # will stop also addins instaces from other addins do use only for debugging
-# _addins = []
+_addins = []
 # def stop_all():
 #     for a in _addins:
 #         a.stop()
@@ -139,9 +139,9 @@ class FusionAddin:
         self._registered_elements = defaultdict(list)
 
         # addin instances from other addins are also dtected so dont use
-        # if len(_addins) > 0:
-        #     logging.getLogger(__name__).warning(msgs.addin_exists())
-        # _addins.append(self)
+        if len(_addins) > 0:
+            raise ValueError(msgs.addin_exists())
+        _addins.append(self)
 
     def workspace(self, *args, **kwargs):
         """Creates a :class:`.Workspace` as a child of this Adddin.

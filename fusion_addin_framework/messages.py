@@ -27,6 +27,13 @@ def invalid_control_type(control_type_name):
     return msg
 
 
+def addin_exists():
+    msg = (
+        "It is not allowed to create multiple addin instances in a single Fusion Addin."
+    )
+    return msg
+
+
 ### HANDLERS ###
 
 
