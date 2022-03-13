@@ -815,7 +815,7 @@ class AddinCommand(_FusionWrapper):
         isVisible: bool = True,
         isChecked: bool = True,  # only checkbox
         listControlDisplayType: int = adsk.core.ListControlDisplayTypes.RadioButtonlistType,  # only list
-        customEventHandlers: Dict[str, Callable] = None,
+        # customEventHandlers: Dict[str, Callable] = None,
         **eventHandlers: Callable
         # activate: Callable = None,
         # deactivate: Callable = None,
@@ -949,8 +949,8 @@ class AddinCommand(_FusionWrapper):
         else:
             parent_list = self._parent
 
-        if customEventHandlers is None:
-            customEventHandlers = {}
+        # if customEventHandlers is None:
+        #     customEventHandlers = {}
 
         self._validate_handler_dict(eventHandlers)
 
@@ -983,7 +983,7 @@ class AddinCommand(_FusionWrapper):
                 listControlDisplayType,
             )
             self._add_handlers(name, eventHandlers)
-            self._add_custom_handlers(name, customEventHandlers)
+            # self._add_custom_handlers(name, customEventHandlers)
             self._add_thread_handler(name)
 
         # (re)create the controls with this new commandDefinition
@@ -1097,62 +1097,20 @@ class AddinCommand(_FusionWrapper):
             handlers.CommandCreatedHandler_(self.addin, name, eventHandlers)
         )
 
-    def _add_custom_handlers(self, name: str, customEventHandlers: Dict[str, Callable]):
-        """Registers the passed customEvents to the appülication. Note that in general
-        this is not related to the command and the events are not asscociated to command.
+    # def _add_custom_handlers(self, name: str, customEventHandlers: Dict[str, Callable]):
+    #     """Registers the passed customEvents to the appülication. Note that in general
+    #     this is not related to the command and the events are not asscociated to command.
 
-        Args:
-            name (str): The name of thr command (needed for logging).
-            customEventHandlers (Dict[str, Callable]): A {event_id:handler_notify} mapping.
-        """
-        for event_id, handler_notify in customEventHandlers.items():
-            custom_event = adsk.core.Application.get().registerCustomEvent(event_id)
-            custom_handler = handlers.CustomEventHandler_(
-                self.addin, name, custom_event, handler_notify
-            )
-            custom_event.add(custom_handler)
-
-    def _add_thread_handler(self, name: str):
-        """Adds a additional custom event handler which is managed by this wrapper instance.
-        This custom event can be used to easily execute a arbitrary action within Fusion
-        which got triggered from external THread or process. The event_id of this event
-        is a privaate attribute of the class.
-
-        Args:
-            name (str): The name of thr command (needed for logging).
-        """
-        thread_event = adsk.core.Application.get().registerCustomEvent(
-            self._thread_event_id
-        )
-        thread_event_handler = handlers.CustomEventHandler_(
-            self.addin, name, thread_event, self._thread_event_handler
-        )
-        thread_event.add(thread_event_handler)
-
-    def _thread_event_handler(
-        self, eventArgs: adsk.core.CustomEventArgs  # pylint:disable=unused-argument
-    ):
-        """The generic handler function used in the thread event.
-        Executes all actions which got stored in the corresponding queue.
-
-        Args:
-            evenArgs (adsk.core.CustomEventArgs): The eventArgs which get passed to the handler
-                notify by Fusion. However they are ignored.
-        """
-        while not self._thread_event_queue.empty():
-            self._thread_event_queue.get()()
-
-    def execute_from_event(self, action: Callable):
-        """Utility methods which allows you to execute the passed Callable from witihn a
-        custom event. This is needed when you want to trigger some Fusion related actions
-        from a thread or other external non Fusion stimuli. The passed Callable must not accept any
-        arguments.
-
-        Args:
-            action (Callable): The argument free action to execute.
-        """
-        self._thread_event_queue.put(action)
-        adsk.core.Application.get().fireCustomEvent(self._thread_event_id)
+    #     Args:
+    #         name (str): The name of thr command (needed for logging).
+    #         customEventHandlers (Dict[str, Callable]): A {event_id:handler_notify} mapping.
+    #     """
+    #     for event_id, handler_notify in customEventHandlers.items():
+    #         custom_event = adsk.core.Application.get().registerCustomEvent(event_id)
+    #         custom_handler = handlers.CustomEventHandler_(
+    #             self.addin, name, custom_event, handler_notify
+    #         )
+    #         custom_event.add(custom_handler)
 
     def addParentControl(self, parentControl):
         """Adds an additional control for acticvating this command.
