@@ -1116,11 +1116,23 @@ def test_custom_event():
         addin = faf.FusionAddin()
         faf.utils.create_custom_event(
             event_id,
-            lambda a: adsk.core.Application.get().userInterface.messageBox(
+            lambda event_arg: adsk.core.Application.get().userInterface.messageBox(
                 str(random.randint(0, 100))
             ),
         )
         adsk.core.Application.get().fireCustomEvent(event_id)
+    except Exception as test_exception:
+        addin.stop()
+        raise test_exception
+    return addin
+
+
+def test_execute_as_event():
+    try:
+        addin = faf.FusionAddin()
+        faf.utils.execute_as_event(
+            lambda: adsk.core.Application.get().userInterface.messageBox("42")
+        )
     except Exception as test_exception:
         addin.stop()
         raise test_exception
@@ -1140,6 +1152,40 @@ def test_thread_event_utility():
         )
         thread.start()
     except Exception as test_exception:
+        try:
+            thread.pause()
+        except:
+            pass
+        addin.stop()
+        raise test_exception
+    return addin
+
+
+@faf.utils.execute_as_event_deco()
+def decorated_action(show="42"):
+    adsk.core.Application.get().userInterface.messageBox(show)
+
+
+def test_execute_as_event_decorator():
+    try:
+        addin = faf.FusionAddin()
+        decorated_action("42")
+    except Exception as test_exception:
+        addin.stop()
+        raise test_exception
+    return addin
+
+
+def test_thread_event_decorator():
+    try:
+        addin = faf.FusionAddin()
+        thread = faf.utils.PeriodicExecuter(5, decorated_action)
+        thread.start()
+    except Exception as test_exception:
+        try:
+            thread.pause()
+        except:
+            pass
         addin.stop()
         raise test_exception
     return addin
@@ -1200,4 +1246,5 @@ ALL_CASES = [
     test_custom_event,
     # test_thread_event_utility,
     test_subclass_pattern,
+    # TODO
 ]

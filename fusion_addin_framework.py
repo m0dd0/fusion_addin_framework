@@ -20,7 +20,7 @@ from . import fusion_addin_framework as faf
 # if multiple testfunctions are provided we stop the addin immideately after the test
 # which created it got executed.
 # TESTCASES = testcases.ALL_CASES
-TESTCASES = [testcases.test_custom_event]
+TESTCASES = [testcases.test_thread_event_decorator]
 
 
 addin = None

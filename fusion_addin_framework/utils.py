@@ -993,7 +993,7 @@ def execute_as_event(to_execute: Callable, debug_to_ui: bool = False):
     """
     global _thread_event_id
     if _thread_event_id is None:
-        _thread_event_id = f"utility thread event {str(uuid4())}"
+        _thread_event_id = f"utility_thread_event_{str(uuid4())}"
         create_custom_event(_thread_event_id, _generic_thread_event_action, debug_to_ui)
 
     _thread_event_queue.put(to_execute)
@@ -1003,17 +1003,19 @@ def execute_as_event(to_execute: Callable, debug_to_ui: bool = False):
 def execute_as_event_deco(debug_to_ui: bool = False):
     """Utility decorator which allows you to execute the passed Callable from witihn a
     custom event. This is needed when you want to trigger some Fusion related actions
-    from a thread or other external non Fusion stimuli. The passed Callable must not accept any
-    arguments.
+    from a thread or other external non Fusion stimuli. You can also decorate functions
+    which receive arguments (in contrast to the execute_as_event utility function).
 
     Args:
         debug_to_ui (bool, optional): Whether any errors appearing during execution
     """
 
     def decorator(to_decorate: Callable):
-        @wraps
-        def decorated():
-            execute_as_event(to_decorate, debug_to_ui)
+        @wraps(to_decorate)
+        def decorated(*args, **kwargs):
+            execute_as_event(
+                lambda: to_decorate(*args, **kwargs), debug_to_ui=debug_to_ui
+            )
 
         return decorated
 
