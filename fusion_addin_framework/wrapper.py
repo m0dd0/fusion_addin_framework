@@ -1181,7 +1181,6 @@ class AddinCommandBase(AddinCommand):
         isVisible: bool = True,
         isChecked: bool = True,
         listControlDisplayType: int = adsk.core.ListControlDisplayTypes.RadioButtonlistType,
-        customEventHandlers: Dict[str, Callable] = None,
     ):
         """Wraps around Fusions `CommandDefinition
         <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-5e5a72e2-0869-4f85-936f-eab4ebd4aced>`_
@@ -1276,7 +1275,6 @@ class AddinCommandBase(AddinCommand):
             isVisible,
             isChecked,
             listControlDisplayType,
-            customEventHandlers,
             **eventHandlers,
         )
 

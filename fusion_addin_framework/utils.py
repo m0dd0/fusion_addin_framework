@@ -22,6 +22,7 @@ from . import handlers
 
 
 ### LOGGING ###
+# region
 def create_logger(
     name: str,
     handlers: Iterable[logging.Handler],
@@ -84,7 +85,11 @@ class TextPaletteLoggingHandler(logging.StreamHandler):
         # adsk.doEvents() # doesnt seem to be necessary
 
 
+# endregion
+
+
 ### FRAMEWORK RELATED ###
+# region
 @enum.unique
 class InputIdsBase(enum.Enum):
     """A Enum subclass which values are of type <name>_input_type.
@@ -206,7 +211,11 @@ class AppObjects:
         return self._app.activeViewport
 
 
+# endregion
+
+
 ### COMPONENT RELATED ###
+# region
 def new_component(
     name: str = None, parent: adsk.fusion.Component = None
 ) -> adsk.fusion.Component:
@@ -270,7 +279,11 @@ def make_comp_invisible(comp: adsk.fusion.Component):
     return (active_lightbulbs, visible_occs)
 
 
+# endregion
+
+
 ### COLLECTION RELATED ###
+# region
 def clear_collection(collection: adsk.core.ObjectCollection):
     """Safely clears a collection.
 
@@ -303,7 +316,11 @@ def items_by_attribute(
     return found_items
 
 
+# endregion
+
+
 ### HUB REALTED ###
+# region
 def get_data_folder(
     fusion_path: List[str], create_folders=False
 ) -> adsk.core.DataFolder:
@@ -380,7 +397,11 @@ def get_doc(fusion_path: List[str], tolerance_search=False) -> adsk.core.DataFil
     )
 
 
+# endregion
+
+
 ### CAMERA ###
+# region
 def view_extents_by_measure(measure: float, is_horizontal_measure: bool = True):
     """Returns the viewExtents parameter so the given model measure fits exactly
     into the viewport.
@@ -581,7 +602,11 @@ def camera_zoom(factor: int, camera: adsk.core.Camera = None) -> adsk.core.Camer
     return camera
 
 
+# endregion
+
+
 ### MISC ###
+# region
 def ui_ids_dict(out_file_path=None) -> Dict:
     """Dumps the ids of the fusion user interface element to a hierachical dict.
 
@@ -774,7 +799,11 @@ def get_json_attribute(
     return json.loads(object_.attributes.itemByName(group_name, attribute_name).value)
 
 
+# endregion
+
+
 ### PYTHON ONLY ###
+# region
 def get_json_from_file(
     path: Union[str, Path], default_value: Union[Dict, List] = None
 ) -> Union[Dict, List]:
@@ -904,6 +933,9 @@ class PeriodicExecuter:
             self.start()
 
 
+# endregion
+
+### THREAD / CUSTOM EVENT ###
 # region
 _thread_event_id = None
 _thread_event_queue = Queue()
@@ -918,7 +950,8 @@ def create_custom_event(
 
     Args:
         event_id (str): The id of the event.
-        action (Call): The action which gets executed from the handler.
+        action (Call): The action which gets executed from the handler. Must accept one argument
+            for eventArgs which might get passed.
         debug_to_ui (bool, optional): Whether any errors appearing during execution
                 of the action are displayed in messageBox. Defaults to False.
 
@@ -947,7 +980,7 @@ def _generic_thread_event_action(
         _thread_event_queue.get()()
 
 
-def execute_as_event(to_excute: Callable, debug_to_ui: bool = False):
+def execute_as_event(to_execute: Callable, debug_to_ui: bool = False):
     """Utility function which allows you to execute the passed Callable from witihn a
     custom event. This is needed when you want to trigger some Fusion related actions
     from a thread or other external non Fusion stimuli. The passed Callable must not accept any
@@ -963,7 +996,7 @@ def execute_as_event(to_excute: Callable, debug_to_ui: bool = False):
         _thread_event_id = f"utility thread event {str(uuid4())}"
         create_custom_event(_thread_event_id, _generic_thread_event_action, debug_to_ui)
 
-    _thread_event_queue.put(to_excute)
+    _thread_event_queue.put(to_execute)
     adsk.core.Application.get().fireCustomEvent(_thread_event_id)
 
 

@@ -1110,40 +1110,29 @@ def test_dropdown_properties():
     return dd.addin
 
 
-def test_custom_events():
+def test_custom_event():
+    event_id = str(uuid4())
     try:
-        custom_event_id = str(uuid4())
-        cmd = faf.AddinCommand(
-            customEventHandlers={
-                custom_event_id: lambda args: adsk.core.Application.get().userInterface.messageBox(
-                    args.additionalInfo
-                )
-            }
-        )
-
-        thread = faf.utils.PeriodicExecuter(
-            20,
-            lambda: adsk.core.Application.get().fireCustomEvent(
-                custom_event_id, str(random.randint(0, 100))
+        addin = faf.FusionAddin()
+        faf.utils.create_custom_event(
+            event_id,
+            lambda a: adsk.core.Application.get().userInterface.messageBox(
+                str(random.randint(0, 100))
             ),
         )
-        thread.start()
-        # time.sleep(20)
-        # thread.kill()
+        adsk.core.Application.get().fireCustomEvent(event_id)
     except Exception as test_exception:
-        cmd.addin.stop()
+        addin.stop()
         raise test_exception
-    return cmd.addin
+    return addin
 
 
 def test_thread_event_utility():
     try:
-        custom_event_id = str(uuid4())
-        cmd = faf.AddinCommand()
-
+        addin = faf.FusionAddin()
         thread = faf.utils.PeriodicExecuter(
-            20,
-            lambda: cmd.execute_from_event(
+            5,
+            lambda: faf.utils.execute_as_event(
                 lambda: adsk.core.Application.get().userInterface.messageBox(
                     str(random.randint(0, 100))
                 )
@@ -1151,9 +1140,9 @@ def test_thread_event_utility():
         )
         thread.start()
     except Exception as test_exception:
-        cmd.addin.stop()
+        addin.stop()
         raise test_exception
-    return cmd.addin
+    return addin
 
 
 class MyCommand(faf.AddinCommandBase):
@@ -1208,7 +1197,7 @@ ALL_CASES = [
     test_dropdown_dotted,
     test_dropdown_nested,
     test_dropdown_properties,
-    test_custom_events,
-    test_thread_event_utility,
-    # test_subclass_pattern,
+    test_custom_event,
+    # test_thread_event_utility,
+    test_subclass_pattern,
 ]
