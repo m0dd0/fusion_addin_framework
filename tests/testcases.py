@@ -1244,7 +1244,10 @@ ALL_CASES = [
     test_dropdown_nested,
     test_dropdown_properties,
     test_custom_event,
+    test_execute_as_event,
     # test_thread_event_utility,
+    test_execute_as_event_decorator,
+    # test_thread_event_decorator,
     test_subclass_pattern,
     # TODO
 ]
