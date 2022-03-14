@@ -27,6 +27,13 @@ def invalid_control_type(control_type_name):
     return msg
 
 
+def addin_exists():
+    msg = (
+        "It is not allowed to create multiple addin instances in a single Fusion Addin."
+    )
+    return msg
+
+
 ### HANDLERS ###
 
 
@@ -37,14 +44,6 @@ def starting_handler(handler_type, cmd_name):
 
 def handler_error(handler_type, command_name, traceback):
     msg = f"Error in {handler_type} of {command_name} command:\n{traceback}"
-    return msg
-
-
-def doubled_callbacks(event_name):
-    msg = (
-        f"Two or more callback functions for the {event_name} event were provided. "
-        + "Only the last one will get used."
-    )
     return msg
 
 

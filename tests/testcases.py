@@ -1,48 +1,11 @@
-""" """
+"""Testcases """
 
-from collections import defaultdict
-from time import perf_counter
-import traceback
-from typing import List, Callable
 from uuid import uuid4
-from datetime import datetime
 import random
-import time
 
 import adsk.fusion, adsk.core
 
 from .. import fusion_addin_framework as faf
-
-
-def execute_cases(cases: List[Callable]):
-    """Executes the passed functions in a controlled environment and logs some
-        data about their axacution.
-
-    Args:
-        cases (List[Callable]): A list of the testfuctions to execute.
-
-    Returns:
-        dict: A dictionairy with the test resulte mapped to the function name.
-        list: A list of addins which where created durin the execution of the tests.
-    """
-    results = defaultdict(dict)
-    addins = []
-    for case in cases:
-        try:
-            print(f"{f' {case.__name__} ':{'#'}^{60}}")
-            start = perf_counter()
-            addin = case()
-            addins.append(addin)
-            results[case.__name__]["elapsed_time"] = perf_counter() - start
-            results[case.__name__]["passed"] = True
-        except:
-            results[case.__name__]["elapsed_time"] = -1
-            results[case.__name__]["passed"] = False
-            print(traceback.format_exc())
-
-    return results, addins
-
-    ### Testcases ###
 
 
 def test_hello_world_button_normal():
@@ -54,7 +17,7 @@ def test_hello_world_button_normal():
         button = faf.Control(panel)
         cmd = faf.AddinCommand(
             button,
-            onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+            execute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
                 "hello world"
             ),
         )
@@ -73,7 +36,7 @@ def test_hello_world_button_dotted():
             .panel()
             .control()
             .addinCommand(
-                onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+                execute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
                     "hello world"
                 ),
             )
@@ -87,7 +50,7 @@ def test_hello_world_button_dotted():
 def test_hello_world_button_defaults():
     try:
         cmd = faf.AddinCommand(
-            onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+            execute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
                 "hello world"
             )
         )
@@ -106,7 +69,7 @@ def test_checkbox_normal():
         checkbox = faf.Control(panel, controlType="checkbox")
         cmd = faf.AddinCommand(
             checkbox,
-            onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+            execute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
                 "hello world"
             ),
         )
@@ -125,7 +88,7 @@ def test_checkbox_dotted():
             .panel()
             .control(controlType="checkbox")
             .addinCommand(
-                onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+                execute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
                     "hello world"
                 ),
             )
@@ -141,7 +104,7 @@ def test_checkbox_defaults():
         checkbox = faf.Control(controlType="checkbox")
         cmd = faf.AddinCommand(
             checkbox,
-            onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+            execute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
                 "hello world"
             ),
         )
@@ -151,6 +114,7 @@ def test_checkbox_defaults():
     return checkbox.addin
 
 
+# region
 # def test_list_normal():
 #     try:
 #         addin = faf.FusionAddin()
@@ -160,7 +124,7 @@ def test_checkbox_defaults():
 #         checkbox = faf.Control(panel, controlType="list")
 #         cmd = faf.AddinCommand(
 #             checkbox,
-#             onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+#             execute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
 #                 "hello world"
 #             ),
 #         )
@@ -178,7 +142,7 @@ def test_checkbox_defaults():
 #             .panel()
 #             .control(controlType="list")
 #             .addinCommand(
-#                 onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+#                 execute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
 #                     "hello world"
 #                 ),
 #             )
@@ -193,7 +157,7 @@ def test_checkbox_defaults():
 #         list_ctrl = faf.Control(controlType="list")
 #         cmd = faf.AddinCommand(
 #             list_ctrl,
-#             onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+#             execute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
 #                 "hello world"
 #             ),
 #         )
@@ -201,6 +165,7 @@ def test_checkbox_defaults():
 #         list_ctrl.addin.stop()
 #         raise test_exception
 #     return list_ctrl.addin
+# endregion
 
 
 def test_standard_attrs_button():
@@ -243,7 +208,7 @@ def test_standard_attrs_button():
                 isEnabled=True,
                 isVisible=True,
                 isChecked=True,
-                onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+                execute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
                     "hello world"
                 ),
             )
@@ -298,7 +263,7 @@ def test_very_custom_button():
             isEnabled=True,
             isVisible=True,
             isChecked=True,
-            onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+            execute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
                 "hello world"
             ),
         )
@@ -352,7 +317,7 @@ def test_very_custom_checkbox():
             isEnabled=True,
             isVisible=True,
             isChecked=True,
-            onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+            execute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
                 "hello world"
             ),
         )
@@ -362,6 +327,7 @@ def test_very_custom_checkbox():
     return addin
 
 
+# region
 # def test_very_custom_list():
 #     try:
 #         addin = faf.FusionAddin(debugToUi=True)
@@ -406,7 +372,7 @@ def test_very_custom_checkbox():
 #             isEnabled=True,
 #             isVisible=True,
 #             isChecked=True,
-#             onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+#             execute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
 #                 "hello world"
 #             ),
 #         )
@@ -414,6 +380,7 @@ def test_very_custom_checkbox():
 #         addin.stop()
 #         raise test_exception
 #     return addin
+# endregion
 
 
 def test_addin_properties():
@@ -636,6 +603,7 @@ def test_checkbox_properties():
     return addin
 
 
+# region
 # def test_list_properties():
 #     try:
 #         addin = faf.FusionAddin()
@@ -680,6 +648,7 @@ def test_checkbox_properties():
 #         addin.stop()
 #         raise test_exception
 #     return addin
+# endregion
 
 
 def test_button_command_properties():
@@ -699,7 +668,7 @@ def test_button_command_properties():
             isEnabled=True,
             isVisible=True,
             isChecked=True,
-            onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+            execute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
                 "hello world"
             ),
         )
@@ -782,7 +751,7 @@ def test_checkbox_command_properties():
             isEnabled=True,
             isVisible=True,
             isChecked=True,
-            onExecute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
+            execute=lambda command_event_args: adsk.core.Application.get().userInterface.messageBox(
                 "hello world"
             ),
         )
@@ -851,80 +820,6 @@ def test_checkbox_command_properties():
     return addin
 
 
-def test_all_on_handlers_buttton():
-    try:
-        cmd = faf.AddinCommand(
-            onCommandCreated=lambda args: args.command.commandInputs.addBoolValueInput(
-                "customboolvalueinputid", "bool", False
-            ),
-            onActivate=lambda args: print("onActivate", args),
-            onDeactivate=lambda args: print("onDeactivate", args),
-            onDestroy=lambda args: print("onDestroy", args),
-            onExecute=lambda args: print("onExecute", args),
-            onExecutePreview=lambda args: print("onExecutePreview", args),
-            onInputChanged=lambda args: print("onInputChanged", args),
-            onKeyDown=lambda args: print("onKayDown", args),
-            onKeyUp=lambda args: print("onKayUp", args),
-            onMouseClick=lambda args: print("onMouseClick", args),
-            onMouseDoubleClick=lambda args: print("onMouseDoubleClick", args),
-            onMouseDown=lambda args: print("onMouseDown", args),
-            onMouseDrag=lambda args: print("onMouseDrag", args),
-            onMouseDragBegin=lambda args: print("onMouseDrgaBegin", args),
-            onMouseDragEnd=lambda args: print("onMouseDragEnd", args),
-            onMouseUp=lambda args: print("onMouseUp", args),
-            onMouseWheel=lambda args: print("onMouseWheel", args),
-            # onMouseMove=lambda args: print("onMouseMove", args),
-            onPreSelect=lambda args: print("onPreSelect", args),
-            onPreSelectEnd=lambda args: print("onPreSelectEnd", args),
-            onPreSelectMouseMove=lambda args: print("onPreSelectMouseMove", args),
-            onSelect=lambda args: print("onSelect", args),
-            onUnselect=lambda args: print("onUnselect", args),
-            onValidateInputs=lambda args: print("onValidateInputs", args),
-        )
-    except Exception as test_exception:
-        cmd.addin.stop()
-        raise test_exception
-    return cmd.addin
-
-
-def test_all_on_handlers_checkbox():
-    try:
-        checkbox = faf.Control(controlType="checkbox")
-        cmd = faf.AddinCommand(
-            checkbox,
-            onCommandCreated=lambda args: args.command.commandInputs.addBoolValueInput(
-                "customboolvalueinputid", "bool", False
-            ),
-            onActivate=lambda args: print("onActivate", args),
-            onDeactivate=lambda args: print("onDeactivate", args),
-            onDestroy=lambda args: print("onDestroy", args),
-            onExecute=lambda args: print("onExecute", args),
-            onExecutePreview=lambda args: print("onExecutePreview", args),
-            onInputChanged=lambda args: print("onInputChanged", args),
-            onKeyDown=lambda args: print("onKayDown", args),
-            onKeyUp=lambda args: print("onKayUp", args),
-            onMouseClick=lambda args: print("onMouseClick", args),
-            onMouseDoubleClick=lambda args: print("onMouseDoubleClick", args),
-            onMouseDown=lambda args: print("onMouseDown", args),
-            onMouseDrag=lambda args: print("onMouseDrag", args),
-            onMouseDragBegin=lambda args: print("onMouseDrgaBegin", args),
-            onMouseDragEnd=lambda args: print("onMouseDragEnd", args),
-            onMouseUp=lambda args: print("onMouseUp", args),
-            onMouseWheel=lambda args: print("onMouseWheel", args),
-            # onMouseMove=lambda args: print("onMouseMove", args),
-            onPreSelect=lambda args: print("onPreSelect", args),
-            onPreSelectEnd=lambda args: print("onPreSelectEnd", args),
-            onPreSelectMouseMove=lambda args: print("onPreSelectMouseMove", args),
-            onSelect=lambda args: print("onSelect", args),
-            onUnselect=lambda args: print("onUnselect", args),
-            onValidateInputs=lambda args: print("onValidateInputs", args),
-        )
-    except Exception as test_exception:
-        cmd.addin.stop()
-        raise test_exception
-    return cmd.addin
-
-
 def test_all_handlers_buttton():
     try:
         cmd = faf.AddinCommand(
@@ -947,7 +842,45 @@ def test_all_handlers_buttton():
             mouseDragEnd=lambda args: print("onMouseDragEnd", args),
             mouseUp=lambda args: print("onMouseUp", args),
             mouseWheel=lambda args: print("onMouseWheel", args),
-            # mouseMove=lambda args: print("onMouseMove", args),
+            # onMouseMove=lambda args: print("onMouseMove", args),
+            preSelect=lambda args: print("onPreSelect", args),
+            preSelectEnd=lambda args: print("onPreSelectEnd", args),
+            preSelectMouseMove=lambda args: print("onPreSelectMouseMove", args),
+            select=lambda args: print("onSelect", args),
+            unselect=lambda args: print("onUnselect", args),
+            validateInputs=lambda args: print("onValidateInputs", args),
+        )
+    except Exception as test_exception:
+        cmd.addin.stop()
+        raise test_exception
+    return cmd.addin
+
+
+def test_all_handlers_checkbox():
+    try:
+        checkbox = faf.Control(controlType="checkbox")
+        cmd = faf.AddinCommand(
+            checkbox,
+            commandCreated=lambda args: args.command.commandInputs.addBoolValueInput(
+                "customboolvalueinputid", "bool", False
+            ),
+            activate=lambda args: print("onActivate", args),
+            deactivate=lambda args: print("onDeactivate", args),
+            destroy=lambda args: print("onDestroy", args),
+            execute=lambda args: print("onExecute", args),
+            executePreview=lambda args: print("onExecutePreview", args),
+            inputChanged=lambda args: print("onInputChanged", args),
+            keyDown=lambda args: print("onKayDown", args),
+            keyUp=lambda args: print("onKayUp", args),
+            mouseClick=lambda args: print("onMouseClick", args),
+            mouseDoubleClick=lambda args: print("onMouseDoubleClick", args),
+            mouseDown=lambda args: print("onMouseDown", args),
+            mouseDrag=lambda args: print("onMouseDrag", args),
+            mouseDragBegin=lambda args: print("onMouseDrgaBegin", args),
+            mouseDragEnd=lambda args: print("onMouseDragEnd", args),
+            mouseUp=lambda args: print("onMouseUp", args),
+            mouseWheel=lambda args: print("onMouseWheel", args),
+            # onMouseMove=lambda args: print("onMouseMove", args),
             preSelect=lambda args: print("onPreSelect", args),
             preSelectEnd=lambda args: print("onPreSelectEnd", args),
             preSelectMouseMove=lambda args: print("onPreSelectMouseMove", args),
@@ -962,12 +895,15 @@ def test_all_handlers_buttton():
 
 
 def test_error_handlers_passed_buttton():
+    cmd = None
     try:
-        cmd = faf.AddinCommand(
-            execute=lambda args: print("onExecute", args),
-            onExecute=lambda args: print("onExecute DOUBLE", args),
-            asdasd=lambda args: print("error"),
-        )
+        raised = False
+        try:
+            cmd = faf.AddinCommand(asdasd=lambda args: print("error"))
+        except Exception:
+            raised = True
+        if not raised:
+            raise ValueError("Invalid handler name not detected by addin.")
     except Exception as test_exception:
         cmd.addin.stop()
         raise test_exception
@@ -977,13 +913,11 @@ def test_error_handlers_passed_buttton():
 def test_error_in_handler():
     def raise_error(args):
         print("start")
-        raise ValueError
+        raise ValueError()
         print("end")
 
     try:
-        cmd = faf.AddinCommand(
-            execute=raise_error,  # print("onExecute", args),
-        )
+        cmd = faf.AddinCommand(execute=raise_error)
         cmd.addin.debugToUi = False
         assert cmd.addin.debugToUi == False
     except Exception as test_exception:
@@ -1176,27 +1110,144 @@ def test_dropdown_properties():
     return dd.addin
 
 
-def test_custom_events():
+def test_custom_event():
+    event_id = str(uuid4())
     try:
-        custom_event_id = str(uuid4())
-        cmd = faf.AddinCommand(
-            customEventHandlers={
-                custom_event_id: lambda args: adsk.core.Application.get().userInterface.messageBox(
-                    args.additionalInfo
-                )
-            }
+        addin = faf.FusionAddin()
+        faf.utils.create_custom_event(
+            event_id,
+            lambda event_arg: adsk.core.Application.get().userInterface.messageBox(
+                str(random.randint(0, 100))
+            ),
         )
+        adsk.core.Application.get().fireCustomEvent(event_id)
+    except Exception as test_exception:
+        addin.stop()
+        raise test_exception
+    return addin
 
+
+def test_execute_as_event():
+    try:
+        addin = faf.FusionAddin()
+        faf.utils.execute_as_event(
+            lambda: adsk.core.Application.get().userInterface.messageBox("42")
+        )
+    except Exception as test_exception:
+        addin.stop()
+        raise test_exception
+    return addin
+
+
+def test_thread_event_utility():
+    try:
+        addin = faf.FusionAddin()
         thread = faf.utils.PeriodicExecuter(
             5,
-            lambda: adsk.core.Application.get().fireCustomEvent(
-                custom_event_id, str(random.randint(0, 100))
+            lambda: faf.utils.execute_as_event(
+                lambda: adsk.core.Application.get().userInterface.messageBox(
+                    str(random.randint(0, 100))
+                )
             ),
         )
         thread.start()
-        # time.sleep(20)
-        # thread.kill()
+    except Exception as test_exception:
+        try:
+            thread.pause()
+        except:
+            pass
+        addin.stop()
+        raise test_exception
+    return addin
+
+
+@faf.utils.execute_as_event_deco()
+def decorated_action(show="42"):
+    adsk.core.Application.get().userInterface.messageBox(show)
+
+
+def test_execute_as_event_decorator():
+    try:
+        addin = faf.FusionAddin()
+        decorated_action("42")
+    except Exception as test_exception:
+        addin.stop()
+        raise test_exception
+    return addin
+
+
+def test_thread_event_decorator():
+    try:
+        addin = faf.FusionAddin()
+        thread = faf.utils.PeriodicExecuter(5, decorated_action)
+        thread.start()
+    except Exception as test_exception:
+        try:
+            thread.pause()
+        except:
+            pass
+        addin.stop()
+        raise test_exception
+    return addin
+
+
+class MyCommand(faf.AddinCommandBase):
+    def execute(self, eventArgs):
+        print("execute")
+
+    def commandCreated(self, eventArgs: adsk.core.CommandEventArgs):
+        print("commandCreated")
+
+    def inputChanged(self, eventArgs: adsk.core.CommandEventArgs):
+        print("input changed")
+
+
+def test_subclass_pattern():
+    try:
+        cmd = MyCommand()
     except Exception as test_exception:
         cmd.addin.stop()
         raise test_exception
     return cmd.addin
+
+
+ALL_CASES = [
+    test_hello_world_button_normal,
+    test_hello_world_button_dotted,
+    test_hello_world_button_defaults,
+    test_checkbox_normal,
+    test_checkbox_dotted,
+    test_checkbox_defaults,
+    test_standard_attrs_button,
+    test_very_custom_button,
+    test_very_custom_checkbox,
+    test_addin_properties,
+    test_workspace_properties,
+    test_tab_properties,
+    test_panel_properties,
+    test_button_properties,
+    test_checkbox_properties,
+    test_button_command_properties,
+    test_checkbox_command_properties,
+    test_all_handlers_buttton,
+    test_all_handlers_checkbox,
+    # onyl testabel as single test as addin gets instantiated but does not return reference and therefore cant be deleted later
+    # test_error_handlers_passed_buttton,
+    test_error_in_handler,
+    test_multiple_controls,
+    test_multiple_controls_2,
+    test_multiple_controls_3,
+    test_multiple_controls_different_type,
+    test_dropdown_normal,
+    test_dropdown_default,
+    test_dropdown_dotted,
+    test_dropdown_nested,
+    test_dropdown_properties,
+    test_custom_event,
+    test_execute_as_event,
+    # test_thread_event_utility,
+    test_execute_as_event_decorator,
+    # test_thread_event_decorator,
+    test_subclass_pattern,
+    # TODO
+]

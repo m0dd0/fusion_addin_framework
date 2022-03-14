@@ -1,7 +1,9 @@
 """This modules contains utility functions realted to the Fusion360 API."""
-
+# pylint:disable=unspecified-encoding
 # to avoid import error due to type hints if adsk.core not available
 from __future__ import annotations
+from ast import Call
+from queue import Queue
 from typing import Any, Callable, Iterable, Dict, List, Union, Tuple
 import logging
 import json
@@ -11,10 +13,16 @@ import time
 import threading
 import os
 from pathlib import Path
+from uuid import uuid4
+from functools import wraps
 
 import adsk.core, adsk.fusion
 
+from . import handlers
+
+
 ### LOGGING ###
+# region
 def create_logger(
     name: str,
     handlers: Iterable[logging.Handler],
@@ -77,7 +85,11 @@ class TextPaletteLoggingHandler(logging.StreamHandler):
         # adsk.doEvents() # doesnt seem to be necessary
 
 
+# endregion
+
+
 ### FRAMEWORK RELATED ###
+# region
 @enum.unique
 class InputIdsBase(enum.Enum):
     """A Enum subclass which values are of type <name>_input_type.
@@ -199,7 +211,11 @@ class AppObjects:
         return self._app.activeViewport
 
 
+# endregion
+
+
 ### COMPONENT RELATED ###
+# region
 def new_component(
     name: str = None, parent: adsk.fusion.Component = None
 ) -> adsk.fusion.Component:
@@ -263,7 +279,11 @@ def make_comp_invisible(comp: adsk.fusion.Component):
     return (active_lightbulbs, visible_occs)
 
 
+# endregion
+
+
 ### COLLECTION RELATED ###
+# region
 def clear_collection(collection: adsk.core.ObjectCollection):
     """Safely clears a collection.
 
@@ -296,7 +316,11 @@ def items_by_attribute(
     return found_items
 
 
+# endregion
+
+
 ### HUB REALTED ###
+# region
 def get_data_folder(
     fusion_path: List[str], create_folders=False
 ) -> adsk.core.DataFolder:
@@ -343,9 +367,7 @@ def get_data_folder(
     return folder
 
 
-def get_doc(
-    fusion_path: List[str], tolerance_search=False, raise_exception=True
-) -> adsk.core.DataFile:
+def get_doc(fusion_path: List[str], tolerance_search=False) -> adsk.core.DataFile:
     """Searches the data hub for a document folder at the given "fusion path". A "fusion path" is
     a list in the form [<project_name>,<folder>,<subfolder>,<subfolder>,...,<file_name>] which describes
     the position of the file.
@@ -354,7 +376,6 @@ def get_doc(
         fusion_path (List[str]): The path of the fusion document in the form [<project_name>,<folder>,<subfolder>,<subfolder>,...,<file_name>].
         tolerance_search (bool, optional): If set to true file name is treated as not case
             sensitive and any whitespaces are ignored in the search. Defaults to False.
-        raise_exception (bool, optional):  Defaults to True.
 
     Returns:
         adsk.core.DataFile: The queried fusion document.
@@ -376,7 +397,11 @@ def get_doc(
     )
 
 
+# endregion
+
+
 ### CAMERA ###
+# region
 def view_extents_by_measure(measure: float, is_horizontal_measure: bool = True):
     """Returns the viewExtents parameter so the given model measure fits exactly
     into the viewport.
@@ -577,7 +602,11 @@ def camera_zoom(factor: int, camera: adsk.core.Camera = None) -> adsk.core.Camer
     return camera
 
 
+# endregion
+
+
 ### MISC ###
+# region
 def ui_ids_dict(out_file_path=None) -> Dict:
     """Dumps the ids of the fusion user interface element to a hierachical dict.
 
@@ -754,22 +783,27 @@ def create_cube(
 
 
 def get_json_attribute(
-    object: adsk.core.Base, group_name: str, attribute_name: str
+    object_: adsk.core.Base, group_name: str, attribute_name: str
 ) -> Dict[str, Any]:
     """Gets the json loaded attributes of a object.
 
     Args:
-        object (adsk.core.Base): The of the object in which attributs is looked for the attribute.
+        object_ (adsk.core.Base): The of the object in which attributs is looked for the attribute.
+            (Trailing underscore to avoid redeining build in).
         group_name (str): The attribute group name of the wanted attribute.
         attribute_name (str): The name of the atribute.
 
     Returns:
         Dict[str, Any]: The json loaded attribute values.
     """
-    return json.loads(object.attributes.itemByName(group_name, attribute_name).value)
+    return json.loads(object_.attributes.itemByName(group_name, attribute_name).value)
+
+
+# endregion
 
 
 ### PYTHON ONLY ###
+# region
 def get_json_from_file(
     path: Union[str, Path], default_value: Union[Dict, List] = None
 ) -> Union[Dict, List]:
@@ -826,12 +860,12 @@ class AnnotatedTimer(threading.Timer):
         self._execution_timestamp = None
 
     def start(self):
-        self._exection_timestamp = time.perf_counter() + self.interval
+        self._execution_timestamp = time.perf_counter() + self.interval
         super().start()
 
     @property
     def execution_timestamp(self):
-        return self._exection_timestamp
+        return self._execution_timestamp
 
 
 class PeriodicExecuter:
@@ -869,7 +903,6 @@ class PeriodicExecuter:
     def _cancel_timer(self):
         self._timer.cancel()
         self._timer = None
-        self._next_execution = None
 
     def _scheduled_action(self):
         if self.wait_for_func:
@@ -898,3 +931,95 @@ class PeriodicExecuter:
         if self._timer is not None:  # only if we are currently running / not paused
             self._cancel_timer()
             self.start()
+
+
+# endregion
+
+### THREAD / CUSTOM EVENT ###
+# region
+_thread_event_id = None
+_thread_event_queue = Queue()
+
+
+def create_custom_event(
+    event_id: str, action: Call, debug_to_ui=False
+) -> adsk.core.CustomEvent:
+    """Creates and registers a custom event. The event is not associated with any command.
+    The custom event gets removed and cleaned up when calling the addin.stop() method.
+    If you dont instantiate a addin you need to clean up / unregister the event manually.
+
+    Args:
+        event_id (str): The id of the event.
+        action (Call): The action which gets executed from the handler. Must accept one argument
+            for eventArgs which might get passed.
+        debug_to_ui (bool, optional): Whether any errors appearing during execution
+                of the action are displayed in messageBox. Defaults to False.
+
+    Returns:
+        adsk.core.CustomEvent: The created CustomEvent.
+    """
+    custom_event = adsk.core.Application.get().registerCustomEvent(event_id)
+    custom_handler = handlers.GenericCustomEventHandler(
+        action, custom_event, debug_to_ui
+    )
+    custom_event.add(custom_handler)
+    return custom_event
+
+
+def _generic_thread_event_action(
+    event_args: adsk.core.EventArgs,  # pylint:disable=unused-argument
+):
+    """The generic handler function used in the thread event.
+    Executes all actions which got stored in the corresponding queue.
+
+    Args:
+        event_args (adsk.core.CustomEventArgs): The eventArgs which get passed to the handler
+            notify by Fusion. However they are ignored.
+    """
+    while not _thread_event_queue.empty():
+        _thread_event_queue.get()()
+
+
+def execute_as_event(to_execute: Callable, debug_to_ui: bool = False):
+    """Utility function which allows you to execute the passed Callable from witihn a
+    custom event. This is needed when you want to trigger some Fusion related actions
+    from a thread or other external non Fusion stimuli. The passed Callable must not accept any
+    arguments.
+
+    Args:
+        to_execute (Callable): The argument free action to execute.
+        debug_to_ui (bool, optional): Whether any errors appearing during execution
+                of the action are displayed in messageBox. Defaults to False.
+    """
+    global _thread_event_id
+    if _thread_event_id is None:
+        _thread_event_id = f"utility_thread_event_{str(uuid4())}"
+        create_custom_event(_thread_event_id, _generic_thread_event_action, debug_to_ui)
+
+    _thread_event_queue.put(to_execute)
+    adsk.core.Application.get().fireCustomEvent(_thread_event_id)
+
+
+def execute_as_event_deco(debug_to_ui: bool = False):
+    """Utility decorator which allows you to execute the passed Callable from witihn a
+    custom event. This is needed when you want to trigger some Fusion related actions
+    from a thread or other external non Fusion stimuli. You can also decorate functions
+    which receive arguments (in contrast to the execute_as_event utility function).
+
+    Args:
+        debug_to_ui (bool, optional): Whether any errors appearing during execution
+    """
+
+    def decorator(to_decorate: Callable):
+        @wraps(to_decorate)
+        def decorated(*args, **kwargs):
+            execute_as_event(
+                lambda: to_decorate(*args, **kwargs), debug_to_ui=debug_to_ui
+            )
+
+        return decorated
+
+    return decorator
+
+
+# endregion

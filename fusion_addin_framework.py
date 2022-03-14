@@ -7,19 +7,29 @@ directory. In normal use this can be ignored and wont be recognized by Fuion360.
 import traceback
 from pprint import pprint
 import logging
+from collections import defaultdict
+from time import perf_counter
 
 import adsk.core, adsk.fusion, adsk.cam
 
-# using reative imports because editable pip install doesnt work
 from .tests import testcases
 from . import fusion_addin_framework as faf
 
-addins = []
+# a list or a single test function to test
+# if a single testfunction is testes the addin.stop method is called at leaving addin
+# if multiple testfunctions are provided we stop the addin immideately after the test
+# which created it got executed.
+# TESTCASES = testcases.ALL_CASES
+TESTCASES = [testcases.test_thread_event_decorator]
+
+
+addin = None
 
 
 def run(context):  # pylint:disable=unused-argument
     ui = None
     try:
+        global addin
         app = adsk.core.Application.get()
         ui = app.userInterface
 
@@ -32,18 +42,27 @@ def run(context):  # pylint:disable=unused-argument
             "started fusion_addin_framework testing addin"
         )
 
-        all_testcases = [
-            getattr(testcases, name)
-            for name in dir(testcases)
-            if name.startswith("test") and callable(getattr(testcases, name))
-        ]
-
-        global addins
-        results, addins = testcases.execute_cases(all_testcases)
-        # results, addins = testcases.execute_cases([testcases.test_custom_events])
+        results = defaultdict(dict)
+        for case in TESTCASES:
+            try:
+                print(f"{f' {case.__name__} ':{'#'}^{60}}")
+                start = perf_counter()
+                addin = case()
+                results[case.__name__]["elapsed_time"] = perf_counter() - start
+                results[case.__name__]["passed"] = True
+            except:
+                results[case.__name__]["elapsed_time"] = -1
+                results[case.__name__]["passed"] = False
+                print(traceback.format_exc())
+            try:
+                if len(TESTCASES) > 1:
+                    addin.stop()
+                    addin = None
+            except:
+                pass
 
         print("### RESULTS ###")
-        pprint(dict(results))
+        pprint(dict(results), width=200)
         if all([r["passed"] for r in results.values()]):
             print("### PASSED ###")
         else:
@@ -60,11 +79,8 @@ def stop(context):  # pylint:disable=unused-argument
         app = adsk.core.Application.get()
         ui = app.userInterface
 
-        global addins
-
-        for addin in reversed(addins):
-            if addin is not None:
-                addin.stop()
+        if addin is not None:
+            addin.stop()
 
         logging.getLogger(faf.__name__).info("stopped all addin instances")
 
