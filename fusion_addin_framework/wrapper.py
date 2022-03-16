@@ -24,9 +24,9 @@ from . import handlers
 _addins = []
 
 
-# def stop_all():
-#     for a in _addins:
-#         a.stop()
+def stop():
+    for a in _addins:
+        a.stop()
 
 
 class _FusionWrapper(ABC):
@@ -984,7 +984,7 @@ class AddinCommand(_FusionWrapper):
             )
             self._add_handlers(name, eventHandlers)
             # self._add_custom_handlers(name, customEventHandlers)
-            self._add_thread_handler(name)
+            # self._add_thread_handler(name)
 
         # (re)create the controls with this new commandDefinition
         for p in parent_list:
