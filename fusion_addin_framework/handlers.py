@@ -50,7 +50,9 @@ custom_events_and_handlers = []
 
 
 class GenericCustomEventHandler(adsk.core.CustomEventHandler):
-    def __init__(self, action: Callable, event: adsk.core.Event, debug_to_ui=False):
+    def __init__(
+        self, action: Callable, event: adsk.core.CustomEvent, debug_to_ui=False
+    ):
         """Generic version of a CustomEventHAndler  which executes the passed action as its
         notify method. This handler is NOT associated to any command and is used from the
         utility functions.
@@ -80,7 +82,7 @@ class GenericCustomEventHandler(adsk.core.CustomEventHandler):
             self.action(eventArgs)
             logging.getLogger(__name__).info(
                 msgs.handler_execution_time(
-                    f"{self.event.id} (custom event)",
+                    f"{self.event.eventId} (custom event)",
                     "<no_command>",
                     time.perf_counter() - start,
                 )
@@ -89,7 +91,7 @@ class GenericCustomEventHandler(adsk.core.CustomEventHandler):
             # no exception gets raised outside the handlers so this try, except
             # block is mandatory to prevent silent errors !!!!!!!
             msg = msgs.handler_error(
-                f"{self.event.id} (custom event)",
+                f"{self.event.eventId} (custom event)",
                 "<no_command>",
                 traceback.format_exc(),
             )
