@@ -20,6 +20,8 @@ from . import messages as msgs
 # keep all handlers referenced
 handlers = []
 custom_events_and_handlers = []
+# last_activated_command = None
+# execute_handler_utility_queue = Queue()
 
 # region
 # doesnt make live much easier so generic class is not used
@@ -175,6 +177,17 @@ class CommandEventHandler_(adsk.core.CommandEventHandler):
         )
 
 
+# class CommandExecuteHandler_(CommandEventHandler_):
+#     def __init__(self, addin, cmd_name: str, event_name: str, action: Callable):
+#         super().__init__(addin, cmd_name, event_name, action)
+
+#     def notify(self, eventArgs: adsk.core.EventArgs):
+#         while not execute_handler_utility_queue.empty():
+#             execute_handler_utility_queue.pop()()
+#         if self.action is not None:
+#             super().notify(eventArgs)
+
+
 class ValidateInputsEventHandler_(adsk.core.ValidateInputsEventHandler):
     def __init__(self, addin, cmd_name: str, event_name: str, action: Callable):
         super().__init__()
@@ -299,6 +312,14 @@ class CommandCreatedHandler_(adsk.core.CommandCreatedEventHandler):
 
     def notify(self, eventArgs: adsk.core.CommandCreatedEventArgs):
         cmd = eventArgs.command
+
+        # global last_activated_command
+        # last_activated_command = cmd
+        # global execute_handler_utility_queue
+        # execute_handler_utility_queue.queue.clear()
+
+        # if "execute" not in self.handler_dict.keys():
+        #     self.handler_dict["execute"] = None
 
         # create handlers for all events in the handler dict and connect them to
         # the correct event
