@@ -134,37 +134,6 @@ def _notify_routine(
             adsk.core.Application.get().userInterface.messageBox(msg)
 
 
-# region
-# class CustomEventHandler_(adsk.core.CustomEventHandler):
-#     def __init__(self, addin, cmd_name: str, event: adsk.core.Event, action: Callable):
-#         """Generic custom event handlers which is associated with a certain command.
-
-#         Args:
-#             addin (FusionAddin): _description_
-#             cmd_name (str): The command name.
-#             event (adsk.core.Event): The associated event.
-#             action (Callable): The notify function of the event to execute.
-#         """
-#         super().__init__()
-
-#         self.addin = addin
-#         self.cmd_name = cmd_name
-#         self.event = event
-#         self.action = action
-
-#         custom_events_and_handlers.append((event, self))
-
-#     def notify(self, eventArgs: adsk.core.CommandEventArgs):
-#         _notify_routine(
-#             self.addin,
-#             self.cmd_name,
-#             self.event.eventId + " (custom event)",
-#             self.action,
-#             eventArgs,
-#         )
-# endregion
-
-
 class InputChangedHandler_(adsk.core.InputChangedEventHandler):
     def __init__(self, addin, cmd_name: str, event_name: str, action: Callable):
         """Generic version of a InputChangedHandler class.
