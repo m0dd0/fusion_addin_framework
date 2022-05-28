@@ -937,8 +937,7 @@ class PeriodicExecuter:
 
 ### THREAD / CUSTOM EVENT ###
 # region
-_thread_event_id = None
-_thread_event_queue = Queue()
+_custom_event_queues = {}  # {id:queue}
 
 
 def create_custom_event(
@@ -966,8 +965,8 @@ def create_custom_event(
     return custom_event
 
 
-def _generic_thread_event_action(
-    event_args: adsk.core.EventArgs,  # pylint:disable=unused-argument
+def _generic_custom_event_action(
+    event_args: adsk.core.CustomEventArgs,  # pylint:disable=unused-argument
 ):
     """The generic handler function used in the thread event.
     Executes all actions which got stored in the corresponding queue.
@@ -976,11 +975,14 @@ def _generic_thread_event_action(
         event_args (adsk.core.CustomEventArgs): The eventArgs which get passed to the handler
             notify by Fusion. However they are ignored.
     """
-    while not _thread_event_queue.empty():
-        _thread_event_queue.get()()
+    event_queue = _custom_event_queues[event_args.firingEvent.eventId]
+    while not event_queue.empty():
+        event_queue.get()()
 
 
-def execute_as_event(to_execute: Callable, debug_to_ui: bool = False):
+def execute_as_event(
+    to_execute: Callable, event_id: str = None, debug_to_ui: bool = False
+):
     """Utility function which allows you to execute the passed Callable from witihn a
     custom event. This is needed when you want to trigger some Fusion related actions
     from a thread or other external non Fusion stimuli. The passed Callable must not accept any
@@ -991,16 +993,18 @@ def execute_as_event(to_execute: Callable, debug_to_ui: bool = False):
         debug_to_ui (bool, optional): Whether any errors appearing during execution
                 of the action are displayed in messageBox. Defaults to False.
     """
-    global _thread_event_id
-    if _thread_event_id is None:
-        _thread_event_id = f"utility_thread_event_{str(uuid4())}"
-        create_custom_event(_thread_event_id, _generic_thread_event_action, debug_to_ui)
+    if event_id is None:
+        event_id = "faf_utility_default_custom_event"
 
-    _thread_event_queue.put(to_execute)
-    adsk.core.Application.get().fireCustomEvent(_thread_event_id)
+    if event_id not in _custom_event_queues.keys():
+        create_custom_event(event_id, _generic_custom_event_action, debug_to_ui)
+        _custom_event_queues[event_id] = Queue()
+
+    _custom_event_queues[event_id].put(to_execute)
+    adsk.core.Application.get().fireCustomEvent(event_id)
 
 
-def execute_as_event_deco(debug_to_ui: bool = False):
+def execute_as_event_deco(event_id: str = None, debug_to_ui: bool = False):
     """Utility decorator which allows you to execute the passed Callable from witihn a
     custom event. This is needed when you want to trigger some Fusion related actions
     from a thread or other external non Fusion stimuli. You can also decorate functions
@@ -1014,12 +1018,25 @@ def execute_as_event_deco(debug_to_ui: bool = False):
         @wraps(to_decorate)
         def decorated(*args, **kwargs):
             execute_as_event(
-                lambda: to_decorate(*args, **kwargs), debug_to_ui=debug_to_ui
+                lambda: to_decorate(*args, **kwargs),
+                event_id=event_id,
+                debug_to_ui=debug_to_ui,
             )
 
         return decorated
 
     return decorator
+
+
+# def execute_from_command_execute_handler(to_execute: Callable):
+#     if (handlers.last_activated_command.parentCommandDefinition.id
+#         != adsk.core.Application.get().userInterface.activeCommand
+#     ):
+#         # handlers.last_activated_command = None
+#         raise RuntimeError(msgs.)
+
+#     handlers.last_activated_command_queue[1].put(to_execute)
+#     handlers.last_activated_command.doExecute(False)
 
 
 # endregion
