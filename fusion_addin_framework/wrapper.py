@@ -1097,20 +1097,8 @@ class AddinCommand(_FusionWrapper):
             handlers.CommandCreatedHandler_(self.addin, name, eventHandlers)
         )
 
-    # def _add_custom_handlers(self, name: str, customEventHandlers: Dict[str, Callable]):
-    #     """Registers the passed customEvents to the appülication. Note that in general
-    #     this is not related to the command and the events are not asscociated to command.
-
-    #     Args:
-    #         name (str): The name of thr command (needed for logging).
-    #         customEventHandlers (Dict[str, Callable]): A {event_id:handler_notify} mapping.
-    #     """
-    #     for event_id, handler_notify in customEventHandlers.items():
-    #         custom_event = adsk.core.Application.get().registerCustomEvent(event_id)
-    #         custom_handler = handlers.CustomEventHandler_(
-    #             self.addin, name, custom_event, handler_notify
-    #         )
-    #         custom_event.add(custom_handler)
+    # def do_from_execute_handler(self, action:Callable):
+    #     self._command.doExecute()
 
     def addParentControl(self, parentControl):
         """Adds an additional control for acticvating this command.
