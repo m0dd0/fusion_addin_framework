@@ -23,9 +23,6 @@ TESTCASES = testcases.ALL_CASES
 # TESTCASES = [testcases.test_thread_event_decorator]
 
 
-addin = None
-
-
 def format_results(result_dict: Dict[str, Dict[str, Union[str, float]]]) -> str:
     """Gives a nice summarizing string of the results of the tests.
 
@@ -38,13 +35,13 @@ def format_results(result_dict: Dict[str, Dict[str, Union[str, float]]]) -> str:
     # pprint(dict(results), width=200)
     formatted_str = "### RESULTS ###"
 
-    formatted_str += f"\n{'test name':<50}\t{'elapsed time':<15}\tresult"
+    formatted_str += f"\n{'test name':<50}{'elapsed time':<15}exception"
     for test_name, test_result in result_dict.items():
         formatted_str += f"\n{test_name:<50}"
-        formatted_str += f"\t{str(round(test_result['elapsed_time'],5)):<15}"
-        formatted_str += f"\t{'passed' if test_result['passed'] else 'failed'}"
+        formatted_str += f"{str(round(test_result['elapsed_time'],5)):<15}"
+        formatted_str += f"{type(test_result['exception']).__name__}"
 
-    if all([r["passed"] for r in result_dict.values()]):
+    if all([r["exception"] is None for r in result_dict.values()]):
         formatted_str += "\n### PASSED ###"
     else:
         formatted_str += "\n### FAILED ###"
@@ -55,7 +52,6 @@ def format_results(result_dict: Dict[str, Dict[str, Union[str, float]]]) -> str:
 def run(context):  # pylint:disable=unused-argument
     ui = None
     try:
-        global addin
         app = adsk.core.Application.get()
         ui = app.userInterface
 
@@ -69,25 +65,32 @@ def run(context):  # pylint:disable=unused-argument
         )
 
         results = defaultdict(dict)
+
         for case in TESTCASES:
+            print(f"{f' {case.__name__} ':{'#'}^{60}}")
+
+            start = perf_counter()
+
+            thrown_exception = None
+            formatted_traceback = None
+
             try:
-                print(f"{f' {case.__name__} ':{'#'}^{60}}")
-                start = perf_counter()
-                addin = case()
-                results[case.__name__]["elapsed_time"] = perf_counter() - start
-                results[case.__name__]["passed"] = True
-            except:
-                results[case.__name__]["elapsed_time"] = -1
-                results[case.__name__]["passed"] = False
-                print(traceback.format_exc())
-            try:
-                # if we only had one testcase we mostly want to analyse the result in fusion
-                # and therfore we shouldnt stop the addin directly after the test
-                if len(TESTCASES) > 1:
-                    addin.stop()
-                    addin = None
-            except:
-                pass
+                case()
+            except Exception as test_exception:
+                thrown_exception = test_exception
+                formatted_traceback = traceback.format_exc()
+
+            results[case.__name__]["elapsed_time"] = perf_counter() - start
+            results[case.__name__]["exception"] = thrown_exception
+            results[case.__name__]["traceback"] = formatted_traceback
+
+            if formatted_traceback is not None:
+                print(formatted_traceback)
+
+            # if we only had one testcase we mostly want to analyse the result in fusion
+            # and therfore we shouldnt stop the addin directly after the test
+            if len(TESTCASES) > 1:
+                faf.stop()
 
         print(format_results(results))
 
@@ -102,8 +105,7 @@ def stop(context):  # pylint:disable=unused-argument
         app = adsk.core.Application.get()
         ui = app.userInterface
 
-        if addin is not None:
-            addin.stop()
+        faf.stop()
 
         logging.getLogger(faf.__name__).info("stopped all addin instances")
 

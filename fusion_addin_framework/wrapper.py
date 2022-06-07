@@ -21,10 +21,14 @@ from . import defaults as dflts
 from . import handlers
 
 
+# List of FusionAddin instances managed by the addin. Will conatin at max one instance.
 _addins = []
 
 
 def stop():
+    """Stops the addin managed by this framework. See FusionAddin.stop() for details.
+    This is useful if you dont ant to manage a global addin instance in your main file.
+    """
     for a in _addins:
         a.stop()
 
@@ -139,7 +143,11 @@ class FusionAddin:
 
         self._registered_elements = defaultdict(list)
 
-        # addin instances from other addins are also dtected so dont use
+        # as we usually have the framework forked to each addin one fork of the framework only manages
+        # the FusionAddin instance of a single addin
+        # therfore addin instances from other addins are not affected
+        # however this forbidds to install the framework into fusiony pythons instance
+        # TODO change the installation instructions in the docs to discourage global pip install of the framework.
         if len(_addins) > 0:
             raise ValueError(msgs.addin_exists())
         _addins.append(self)
