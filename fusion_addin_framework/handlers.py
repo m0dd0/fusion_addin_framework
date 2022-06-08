@@ -46,59 +46,6 @@ custom_events_and_handlers = []
 # endregion
 
 
-class GenericCustomEventHandler(adsk.core.CustomEventHandler):
-    def __init__(
-        self, action: Callable, event: adsk.core.CustomEvent, debug_to_ui=False
-    ):
-        """Generic version of a CustomEventHAndler  which executes the passed action as its
-        notify method. This handler is NOT associated to any command and is used from the
-        utility functions. (Thats why it doesnt follow the naming convention fo the other handler
-        wrappers.)
-
-        Args:
-            action (Callable): The action to execute from the custom event.
-            event (adsk.core.Event): The associated event.
-            debug_to_ui (bool, optional): Whether any errors appearing during execution
-                of the action are displayed in messageBox. Defaults to False.
-        """
-        super().__init__()
-
-        self.action = action
-        self.event = event
-        self.debug_to_ui = debug_to_ui
-
-        custom_events_and_handlers.append((event, self))
-
-    def notify(self, eventArgs: adsk.core.CommandEventArgs):
-        # TODO reuse notify routine
-        logging.getLogger(__name__).info(
-            msgs.starting_handler(
-                f"{self.event.eventId} (custom event)", "<no_command>"
-            )
-        )
-        try:
-            start = time.perf_counter()
-            self.action(eventArgs)
-            logging.getLogger(__name__).info(
-                msgs.handler_execution_time(
-                    f"{self.event.eventId} (custom event)",
-                    "<no_command>",
-                    time.perf_counter() - start,
-                )
-            )
-        except:
-            # no exception gets raised outside the handlers so this try, except
-            # block is mandatory to prevent silent errors !!!!!!!
-            msg = msgs.handler_error(
-                f"{self.event.eventId} (custom event)",
-                "<no_command>",
-                traceback.format_exc(),
-            )
-            logging.getLogger(__name__).error(msg)
-            if self.debug_to_ui:  ## only differecne to _notify_routine
-                adsk.core.Application.get().userInterface.messageBox(msg)
-
-
 def _notify_routine(
     debug_to_ui: bool,
     cmd_name: str,
@@ -106,7 +53,7 @@ def _notify_routine(
     action: Callable,
     event_args: adsk.core.CommandEventArgs,
 ):
-    """Executes the handler action and ensures proper logging.
+    """Executes the handler action and ensures proper and consistent logging.
 
     Args:
         debug_to_ui(bool): Whether to ouput the tracebacks of error occurring in the handlers to
@@ -132,6 +79,39 @@ def _notify_routine(
         logging.getLogger(__name__).error(msg)
         if debug_to_ui:
             adsk.core.Application.get().userInterface.messageBox(msg)
+
+
+class GenericCustomEventHandler(adsk.core.CustomEventHandler):
+    def __init__(
+        self, action: Callable, event: adsk.core.CustomEvent, debug_to_ui=False
+    ):
+        """Generic version of a CustomEventHAndler which executes the passed action as its
+        notify method. This handler is NOT associated to any command and is used from the
+        utility functions. (Thats why it doesnt follow the naming convention fo the other handler
+        wrappers.)
+
+        Args:
+            action (Callable): The action to execute from the custom event.
+            event (adsk.core.Event): The associated event.
+            debug_to_ui (bool, optional): Whether any errors appearing during execution
+                of the action are displayed in messageBox. Defaults to False.
+        """
+        super().__init__()
+
+        self.action = action
+        self.event = event
+        self.debug_to_ui = debug_to_ui
+
+        custom_events_and_handlers.append((event, self))
+
+    def notify(self, eventArgs: adsk.core.CommandEventArgs):
+        _notify_routine(
+            self.debug_to_ui,
+            "<no command>",
+            f"{self.event.eventId} (custom event)",
+            self.action,
+            eventArgs,
+        )
 
 
 class InputChangedHandler_(adsk.core.InputChangedEventHandler):
