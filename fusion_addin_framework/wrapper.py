@@ -9,7 +9,6 @@ by these wrapper classes."""
 import logging
 from pathlib import Path
 from abc import ABC
-from queue import Queue
 from typing import Union, Callable, List, Any, Dict
 from collections import defaultdict
 from uuid import uuid4
@@ -823,7 +822,6 @@ class AddinCommand(_FusionWrapper):
         isVisible: bool = True,
         isChecked: bool = True,  # only checkbox
         listControlDisplayType: int = adsk.core.ListControlDisplayTypes.RadioButtonlistType,  # only list
-        # customEventHandlers: Dict[str, Callable] = None,
         **eventHandlers: Callable
         # activate: Callable = None,
         # deactivate: Callable = None,
@@ -957,19 +955,12 @@ class AddinCommand(_FusionWrapper):
         else:
             parent_list = self._parent
 
-        # if customEventHandlers is None:
-        #     customEventHandlers = {}
-
         self._validate_handler_dict(eventHandlers)
 
         id = dflts.eval_id(id)
         name = dflts.eval_name(name, __class__)
         resourceFolder = dflts.eval_image(resourceFolder)
         toolClipFileName = dflts.eval_image(toolClipFileName, "32x32.png")
-
-        # attributes for the thread event
-        self._thread_event_id = f"{id}_custom_thread_event"
-        self._thread_event_queue = Queue()
 
         # build the command definition and connected the handlers
         self._in_fusion = (
@@ -990,9 +981,9 @@ class AddinCommand(_FusionWrapper):
                 isVisible,
                 listControlDisplayType,
             )
-            self._add_handlers(name, eventHandlers)
-            # self._add_custom_handlers(name, customEventHandlers)
-            # self._add_thread_handler(name)
+            self._in_fusion.commandCreated.add(
+                handlers.CommandCreatedHandler_(self.addin, name, eventHandlers)
+            )
 
         # (re)create the controls with this new commandDefinition
         for p in parent_list:
