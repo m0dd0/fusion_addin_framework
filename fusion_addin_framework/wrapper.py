@@ -9,7 +9,6 @@ by these wrapper classes."""
 import logging
 from pathlib import Path
 from abc import ABC
-from queue import Queue
 from typing import Union, Callable, List, Any, Dict
 from collections import defaultdict
 from uuid import uuid4
@@ -823,7 +822,6 @@ class AddinCommand(_FusionWrapper):
         isVisible: bool = True,
         isChecked: bool = True,  # only checkbox
         listControlDisplayType: int = adsk.core.ListControlDisplayTypes.RadioButtonlistType,  # only list
-        # customEventHandlers: Dict[str, Callable] = None,
         **eventHandlers: Callable
         # activate: Callable = None,
         # deactivate: Callable = None,
@@ -957,19 +955,12 @@ class AddinCommand(_FusionWrapper):
         else:
             parent_list = self._parent
 
-        # if customEventHandlers is None:
-        #     customEventHandlers = {}
-
         self._validate_handler_dict(eventHandlers)
 
         id = dflts.eval_id(id)
         name = dflts.eval_name(name, __class__)
         resourceFolder = dflts.eval_image(resourceFolder)
         toolClipFileName = dflts.eval_image(toolClipFileName, "32x32.png")
-
-        # attributes for the thread event
-        self._thread_event_id = f"{id}_custom_thread_event"
-        self._thread_event_queue = Queue()
 
         # build the command definition and connected the handlers
         self._in_fusion = (
@@ -990,9 +981,12 @@ class AddinCommand(_FusionWrapper):
                 isVisible,
                 listControlDisplayType,
             )
-            self._add_handlers(name, eventHandlers)
-            # self._add_custom_handlers(name, customEventHandlers)
-            # self._add_thread_handler(name)
+            # ! if there is some error (typo) etc. fusion will break instantanious !
+            self._in_fusion.commandCreated.add(
+                handlers.CommandCreatedHandler_(
+                    self.addin.debugToUi, name, eventHandlers
+                )
+            )
 
         # (re)create the controls with this new commandDefinition
         for p in parent_list:
@@ -1090,23 +1084,6 @@ class AddinCommand(_FusionWrapper):
         )
         if len(unknown_event_names) > 0:
             raise ValueError(msgs.unknown_event_name(str(unknown_event_names)))
-
-    def _add_handlers(self, name: str, eventHandlers: Dict[str, Callable]):
-        """Adds all the handlers functionality to the command definition by adding the
-        generic CommandCreatedHAndler from the handlers module to the command definition.
-
-        Args:
-            name (str): The name of thr command (needed for logging).
-            eventHandlers (Dict[str, Callable]): The notify functions of the handlers mapped
-            by their event names.
-        """
-        # ! if there is some error (typo) etc. fusion will break instantanious !
-        self._in_fusion.commandCreated.add(
-            handlers.CommandCreatedHandler_(self.addin, name, eventHandlers)
-        )
-
-    # def do_from_execute_handler(self, action:Callable):
-    #     self._command.doExecute()
 
     def addParentControl(self, parentControl):
         """Adds an additional control for acticvating this command.
