@@ -983,7 +983,9 @@ class AddinCommand(_FusionWrapper):
             )
             # ! if there is some error (typo) etc. fusion will break instantanious !
             self._in_fusion.commandCreated.add(
-                handlers.CommandCreatedHandler_(self.addin, name, eventHandlers)
+                handlers.CommandCreatedHandler_(
+                    self.addin.debugToUi, name, eventHandlers
+                )
             )
 
         # (re)create the controls with this new commandDefinition
