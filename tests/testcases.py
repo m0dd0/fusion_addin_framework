@@ -1,18 +1,13 @@
 """Testcases 
 All testcases are functions which start with test_ by convention.
-No testing framework is used as the tests work directly on the API functionalities which are in 
+No testing framework like pytest is used as the tests work directly on the API functionalities which are in 
 general hard to mock.
-Each test function must return an addin instance which is stopped by the surrounding testing mein function.
-Since there can only exists a single addin instance it is very important to return the addin instance
-in any case. Only by doing this it is possible to automatically execuite multiple testcases after another.
-Therefore all testcases should contain a try/except-block to ensuure tga 
+The functionality for clean up, evaluation and summarizing is done from the fusion_addin_framework.py
+file which is the entry point for testing.
 """
 
-from functools import wraps
-from typing import Callable
 from uuid import uuid4
 import random
-import traceback
 
 import adsk.fusion, adsk.core
 
