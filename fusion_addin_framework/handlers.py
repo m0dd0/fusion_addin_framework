@@ -55,7 +55,8 @@ class GenericCustomEventHandler(adsk.core.CustomEventHandler):
     ):
         """Generic version of a CustomEventHAndler  which executes the passed action as its
         notify method. This handler is NOT associated to any command and is used from the
-        utility functions.
+        utility functions. (Thats why it doesnt follow the naming convention fo the other handler
+        wrappers.)
 
         Args:
             action (Callable): The action to execute from the custom event.
@@ -72,6 +73,7 @@ class GenericCustomEventHandler(adsk.core.CustomEventHandler):
         custom_events_and_handlers.append((event, self))
 
     def notify(self, eventArgs: adsk.core.CommandEventArgs):
+        # TODO reuse notify routine
         logging.getLogger(__name__).info(
             msgs.starting_handler(
                 f"{self.event.eventId} (custom event)", "<no_command>"
@@ -96,7 +98,7 @@ class GenericCustomEventHandler(adsk.core.CustomEventHandler):
                 traceback.format_exc(),
             )
             logging.getLogger(__name__).error(msg)
-            if self.debug_to_ui:
+            if self.debug_to_ui:  ## only differecne to _notify_routine
                 adsk.core.Application.get().userInterface.messageBox(msg)
 
 
