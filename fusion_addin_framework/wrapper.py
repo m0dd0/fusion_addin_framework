@@ -981,6 +981,7 @@ class AddinCommand(_FusionWrapper):
                 isVisible,
                 listControlDisplayType,
             )
+            # ! if there is some error (typo) etc. fusion will break instantanious !
             self._in_fusion.commandCreated.add(
                 handlers.CommandCreatedHandler_(self.addin, name, eventHandlers)
             )
@@ -1081,23 +1082,6 @@ class AddinCommand(_FusionWrapper):
         )
         if len(unknown_event_names) > 0:
             raise ValueError(msgs.unknown_event_name(str(unknown_event_names)))
-
-    def _add_handlers(self, name: str, eventHandlers: Dict[str, Callable]):
-        """Adds all the handlers functionality to the command definition by adding the
-        generic CommandCreatedHAndler from the handlers module to the command definition.
-
-        Args:
-            name (str): The name of thr command (needed for logging).
-            eventHandlers (Dict[str, Callable]): The notify functions of the handlers mapped
-            by their event names.
-        """
-        # ! if there is some error (typo) etc. fusion will break instantanious !
-        self._in_fusion.commandCreated.add(
-            handlers.CommandCreatedHandler_(self.addin, name, eventHandlers)
-        )
-
-    # def do_from_execute_handler(self, action:Callable):
-    #     self._command.doExecute()
 
     def addParentControl(self, parentControl):
         """Adds an additional control for acticvating this command.
