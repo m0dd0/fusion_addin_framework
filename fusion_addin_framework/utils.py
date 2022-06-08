@@ -13,7 +13,6 @@ import time
 import threading
 import os
 from pathlib import Path
-from uuid import uuid4
 from functools import wraps
 
 import adsk.core, adsk.fusion

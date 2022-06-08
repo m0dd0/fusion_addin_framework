@@ -180,7 +180,7 @@ class FusionAddin:
             for elem in elems:
                 try:
                     elem.deleteMe()
-                except:
+                except: #pylint:disable=bare-except
                     # element is probably already deleted
                     pass
 
