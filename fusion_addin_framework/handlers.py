@@ -8,6 +8,7 @@ import logging
 import traceback
 from typing import Callable, Dict
 import time
+from queue import Queue
 
 import adsk.core
 
@@ -15,8 +16,11 @@ from . import messages as msgs
 
 
 # keep all handlers referenced
+# TODO move to addin instance as attributes
 handlers = []
 custom_events_and_handlers = []
+current_active_command = None
+command_execution_queue = Queue()
 
 # region
 # doesnt make live much easier so generic class is not used
@@ -159,6 +163,12 @@ class CommandEventHandler_(adsk.core.CommandEventHandler):
             self.debug_to_ui, self.cmd_name, self.event_name, self.action, eventArgs
         )
 
+class ExecuteHandler_(CommandEventHandler_):
+    def notify(self, eventArgs: adsk.core.CommandEventArgs):
+        while not command_execution_queue.empty():
+            command_execution_queue.get()()
+        super().notify(eventArgs)
+
 
 class ValidateInputsEventHandler_(adsk.core.ValidateInputsEventHandler):
     def __init__(
@@ -233,7 +243,7 @@ handler_type_mapping = {
     "activate": CommandEventHandler_,
     "deactivate": CommandEventHandler_,
     "destroy": CommandEventHandler_,
-    "execute": CommandEventHandler_,
+    "execute": ExecuteHandler_,
     "executePreview": CommandEventHandler_,
     "inputChanged": InputChangedHandler_,
     "keyDown": KeyboardEvenHandler_,

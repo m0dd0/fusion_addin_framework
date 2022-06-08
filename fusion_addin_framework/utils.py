@@ -13,13 +13,13 @@ import time
 import threading
 import os
 from pathlib import Path
-from uuid import uuid4
 from functools import wraps
 
 import adsk.core, adsk.fusion
 
 from . import handlers
 
+# TODO seperate into multiple files
 
 ### LOGGING ###
 # region
@@ -1028,15 +1028,14 @@ def execute_as_event_deco(event_id: str = None, debug_to_ui: bool = False):
     return decorator
 
 
-# def execute_from_command_execute_handler(to_execute: Callable):
-#     if (handlers.last_activated_command.parentCommandDefinition.id
-#         != adsk.core.Application.get().userInterface.activeCommand
-#     ):
-#         # handlers.last_activated_command = None
-#         raise RuntimeError(msgs.)
+def execute_from_command_execute_handler(to_execute: Callable):
+    if (handlers.current_active_command.parentCommandDefinition.id
+        != adsk.core.Application.get().userInterface.activeCommand
+    ):
+        raise RuntimeError()
 
-#     handlers.last_activated_command_queue[1].put(to_execute)
-#     handlers.last_activated_command.doExecute(False)
+    handlers.command_execution_queue.put(to_execute)
+    handlers.current_active_command.doExecute(False)
 
 
 # endregion
