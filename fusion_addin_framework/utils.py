@@ -870,7 +870,7 @@ class AnnotatedTimer(threading.Timer):
 class PeriodicExecuter:
     def __init__(
         self,
-        interval: int,
+        interval: float,
         action: Callable,
         wait_for_action: bool = False,
         initial_execution: bool = False,
@@ -878,7 +878,7 @@ class PeriodicExecuter:
         """Creates an executer which executes the passed action periodically.
 
         Args:
-            interval (int): The time in milliseconds to wait between calls of action.
+            interval (float): The time in seconds to wait between calls of action.
             action (Callable): The function to execute periodically. Must not accept any
                 arguments.
             wait_for_action (bool, optional): Determines if the time which is needed to
