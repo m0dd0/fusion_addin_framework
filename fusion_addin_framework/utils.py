@@ -488,7 +488,7 @@ def set_camera_viewarea(
         target = (horizontal_center, 0, vertical_center)
         eye = (horizontal_center, eye_distance, vertical_center)
         up_vector = (0, 0, 1)
-    if plane == "xy" or plane == "top":
+    elif plane == "xy" or plane == "top":
         target = (horizontal_center, vertical_center, 0)
         eye = (horizontal_center, vertical_center, eye_distance)
         up_vector = (0, 1, 0)
@@ -497,7 +497,7 @@ def set_camera_viewarea(
         eye = (eye_distance, horizontal_center, vertical_center)
         up_vector = (0, 0, 1)
     else:
-        raise ValueError("Provided invalid plane.")
+        raise ValueError(f"Provided invalid plane ({plane}).")
 
     if camera is None:
         camera = adsk.core.Application.get().activeViewport.camera
