@@ -28,6 +28,9 @@ def stop():
     """Stops the addin managed by this framework. See FusionAddin.stop() for details.
     This is useful if you dont ant to manage a global addin instance in your main file.
     """
+    for event, handler in handlers.custom_events_and_handlers:
+        event.remove(handler)
+        adsk.core.Application.get().unregisterCustomEvent(event.eventId)
     for a in _addins:
         a.stop()
 
@@ -171,16 +174,16 @@ class FusionAddin:
         main file of your addin to ensure proper cleanup.
         If you dont call it, strange thigs can happen the next time you run the addin.
         """
-        for event, handler in handlers.custom_events_and_handlers:
-            event.remove(handler)
-            adsk.core.Application.get().unregisterCustomEvent(event.eventId)
+        # for event, handler in handlers.custom_events_and_handlers:
+        #     event.remove(handler)
+        #     adsk.core.Application.get().unregisterCustomEvent(event.eventId)
 
         for level in reversed(sorted(list(self._registered_elements.keys()))):
             elems = self._registered_elements.pop(level)
             for elem in elems:
                 try:
                     elem.deleteMe()
-                except: #pylint:disable=bare-except
+                except:  # pylint:disable=bare-except
                     # element is probably already deleted
                     pass
 
