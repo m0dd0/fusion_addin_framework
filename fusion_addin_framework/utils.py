@@ -967,6 +967,8 @@ def create_custom_event(
     """Creates and registers a custom event. The event is not associated with any command.
     The custom event gets removed and cleaned up when calling the addin.stop() method.
     If you dont instantiate a addin you need to clean up / unregister the event manually.
+    Note that custom events can only be created from the command created handler.
+    Otherwise calling them will have no effect.
 
     Args:
         event_id (str): The id of the event.
@@ -1008,6 +1010,9 @@ def execute_as_event(
     custom event. This is needed when you want to trigger some Fusion related actions
     from a thread or other external non Fusion stimuli. The passed Callable must not accept any
     arguments.
+    Note that it is essential that the event which is used is has been created already in the
+    command created handler. This can be achieved by calling this method (with the same event_id)
+    in the command created handler with an empty action.
 
     Args:
         to_execute (Callable): The argument free action to execute.
@@ -1030,6 +1035,9 @@ def execute_as_event_deco(event_id: str = None, debug_to_ui: bool = False):
     custom event. This is needed when you want to trigger some Fusion related actions
     from a thread or other external non Fusion stimuli. You can also decorate functions
     which receive arguments (in contrast to the execute_as_event utility function).
+    Note that it is essential that the event which is used is has been created already in the
+    command created handler. This can be achieved by calling this method (with the same event_id)
+    in the command created handler with an empty action.
 
     Args:
         debug_to_ui (bool, optional): Whether any errors appearing during execution
