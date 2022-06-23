@@ -450,6 +450,7 @@ def set_camera_viewarea(
     horizontal_borders=(0, 10),
     vertical_borders=(0, 10),
     camera: adsk.core.Camera = None,
+    apply_camera: bool = False,
 ) -> adsk.core.Camera:
     """Returns a camera which is condifured so that the vieport certainly displays the area
     defioned by the horizonal and vertical extent parameters. The viewport is set to the minimum
@@ -461,6 +462,8 @@ def set_camera_viewarea(
         vertical_borders (tuple, optional): The vertical dimension which is diaplayed. Defaults to (0, 10).
         camera (adsk.core.Camera, optional): A camera instance which gets adapted.
             Defaults to the currently active camera.
+        apply_camera (bool, optional): Defines whether the modified camera is set as the active camera.
+            Defaults to False.
 
     Raises:
         ValueError: IF an invalid name of a plane is provided.
@@ -507,11 +510,16 @@ def set_camera_viewarea(
     camera.upVector = adsk.core.Vector3D.create(*up_vector)
     camera.viewExtents = view_extent_by_rectangle(horizontal_extent, vertical_extent)
 
+    if apply_camera:
+        adsk.core.Application.get().activeViewport.camera = camera
+
     return camera
 
 
 def set_camera_viewcube(
-    view: Tuple[str], camera: adsk.core.Camera = None
+    view: Tuple[str],
+    camera: adsk.core.Camera = None,
+    apply_camera: bool = False,
 ) -> adsk.core.Camera:
     """Creates a camera which is oriented in the same way as a click on a edge or corner
     of the viewcube would do. The camera is builfd from the passed camera or the currently
@@ -524,6 +532,8 @@ def set_camera_viewcube(
             or corner of the viewcube
         camera (adsk.core.Camera, optional): A camera instance which gets adapted.
             Defaults to the currently active camera.
+        apply_camera (bool, optional): Defines whether the modified camera is set as the active camera.
+            Defaults to False.
 
     Raises:
         ValueError: If the view arguments does not refer to a valid viewcue position.
@@ -580,10 +590,15 @@ def set_camera_viewcube(
     eye = eye.asPoint()
     camera.eye = eye
 
+    if apply_camera:
+        adsk.core.Application.get().activeViewport.camera = camera
+
     return camera
 
 
-def camera_zoom(factor: int, camera: adsk.core.Camera = None) -> adsk.core.Camera:
+def camera_zoom(
+    factor: int, camera: adsk.core.Camera = None, apply_camera: bool = False
+) -> adsk.core.Camera:
     """Adjusts the cameras viewWxtents by zooming. A zoom factor of n results in the viewport
     being zoomed in to show only 1/n th area of the previous area.
 
@@ -591,13 +606,20 @@ def camera_zoom(factor: int, camera: adsk.core.Camera = None) -> adsk.core.Camer
         factor (int): The zoom factor
         camera (adsk.core.Camera, optional):A camera instance which gets adapted.
             Defaults to the currently active camera.
+        apply_camera (bool, optional): Defines whether the modified camera is set as the active camera.
+            Defaults to False.
 
     Returns:
         adsk.core.Camera: The adjusted camera.
     """
     if camera is None:
         camera = adsk.core.Application.get().activeViewport.camera
+
     camera.viewExtents = camera.viewExtents / factor**2
+
+    if apply_camera:
+        adsk.core.Application.get().activeViewport.camera = camera
+
     return camera
 
 
