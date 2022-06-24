@@ -820,6 +820,19 @@ def get_json_attribute(
     return json.loads(object_.attributes.itemByName(group_name, attribute_name).value)
 
 
+def create_progress_dialog(**kwargs) -> adsk.core.ProgressDialog:
+    """Simple utility which can be used to declarative create a new progress dialog.
+    With the create function of the framework attributes cant be set at creation time.
+
+    Returns:
+        adsk.core.ProgressDialog: The created progress dialog.
+    """
+    progress_dialog = adsk.core.Application.get().userInterface.createProgressDialog()
+    for attr_name, attr_value in kwargs.items():
+        setattr(progress_dialog, attr_name, attr_value)
+    return progress_dialog
+
+
 # endregion
 
 
