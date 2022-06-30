@@ -782,7 +782,8 @@ def delete_all_graphics():
 def create_cube(
     center: Tuple[Union[float, int]], side_length: float
 ) -> adsk.fusion.BRepBody:
-    """Creates a simple cube using the TemporaryBRepManager.
+    """Creates a simple cube using the TemporaryBRepManager. You need to pass it to the bodies collection
+    of a component in order to make it available in Fusion.
 
     Args:
         center (Tuple[Union[float, int]]): A (x,y,z)-tuple containing the cubes center coordinates.
