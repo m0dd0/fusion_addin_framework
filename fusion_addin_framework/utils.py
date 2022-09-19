@@ -1,8 +1,7 @@
 """This modules contains utility functions realted to the Fusion360 API."""
 # pylint:disable=unspecified-encoding
-# to avoid import error due to type hints if adsk.core not available
+# to avoid import error due to type hints in doc creation if adsk.core not available
 from __future__ import annotations
-from ast import Call
 from queue import Queue
 from typing import Any, Callable, Iterable, Dict, List, Union, Tuple
 import logging
@@ -975,7 +974,10 @@ _custom_event_queues = {}  # {id:queue}
 
 
 def create_custom_event(
-    event_id: str, action: Call, debug_to_ui=False
+    event_id: str,
+    action: Callable = None,
+    debug_to_ui: bool = False,
+    generic_use: bool = False,
 ) -> adsk.core.CustomEvent:
     """Creates and registers a custom event. The event is not associated with any command.
     The custom event gets removed and cleaned up when calling the addin.stop() method.
@@ -989,10 +991,19 @@ def create_custom_event(
             for eventArgs which might get passed.
         debug_to_ui (bool, optional): Whether any errors appearing during execution
                 of the action are displayed in messageBox. Defaults to False.
+        generic_use (boool, optional): If you intend to use this event with the dynamic 'execute_from_even'
+            functions set this to true. If this is set actiob must be None. Defaults to False.
 
     Returns:
         adsk.core.CustomEvent: The created CustomEvent.
     """
+    if action == None:
+        assert generic_use
+    if generic_use == True:
+        assert action == None
+        action = _generic_custom_event_action
+        _custom_event_queues[event_id] = Queue()
+
     custom_event = adsk.core.Application.get().registerCustomEvent(event_id)
     custom_handler = handlers.GenericCustomEventHandler(
         action, custom_event, debug_to_ui
@@ -1016,69 +1027,45 @@ def _generic_custom_event_action(
         event_queue.get()()
 
 
-def execute_as_event(
-    to_execute: Callable, event_id: str = None, debug_to_ui: bool = False
-):
+def execute_from_event(to_execute: Callable, event_id: str):
     """Utility function which allows you to execute the passed Callable from witihn a
     custom event. This is needed when you want to trigger some Fusion related actions
     from a thread or other external non Fusion stimuli. The passed Callable must not accept any
-    arguments.
-    Note that it is essential that the event which is used is has been created already in the
-    command created handler. This can be achieved by calling this method (with the same event_id)
-    in the command created handler with an empty action.
+    arguments. The event must has been created already with the 'create_custom_event' method where
+    dynamic_use was set to True.
 
     Args:
         to_execute (Callable): The argument free action to execute.
-        debug_to_ui (bool, optional): Whether any errors appearing during execution
-                of the action are displayed in messageBox. Defaults to False.
+        event_id (str): The event id of the event from which the passed Callable gets executed.
+            The event must has been created already with the 'create_custom_event' method where
+            dynamic_use was set to True.
     """
-    if event_id is None:
-        event_id = "faf_utility_default_custom_event"
-
-    if event_id not in _custom_event_queues.keys():
-        create_custom_event(event_id, _generic_custom_event_action, debug_to_ui)
-        _custom_event_queues[event_id] = Queue()
+    assert event_id in _custom_event_queues.keys()
 
     _custom_event_queues[event_id].put(to_execute)
     adsk.core.Application.get().fireCustomEvent(event_id)
 
 
-def execute_as_event_deco(event_id: str = None, debug_to_ui: bool = False):
+def execute_from_event_deco(event_id: str):
     """Utility decorator which allows you to execute the passed Callable from witihn a
     custom event. This is needed when you want to trigger some Fusion related actions
     from a thread or other external non Fusion stimuli. You can also decorate functions
     which receive arguments (in contrast to the execute_as_event utility function).
-    Note that it is essential that the event which is used is has been created already in the
-    command created handler. This can be achieved by calling this method (with the same event_id)
-    in the command created handler with an empty action.
 
     Args:
-        debug_to_ui (bool, optional): Whether any errors appearing during execution
+        event_id (str): The event id of the event from which the passed Callable gets executed.
+            The event must has been created already with the 'create_custom_event' method where
+            dynamic_use was set to True.
     """
 
     def decorator(to_decorate: Callable):
         @wraps(to_decorate)
         def decorated(*args, **kwargs):
-            execute_as_event(
-                lambda: to_decorate(*args, **kwargs),
-                event_id=event_id,
-                debug_to_ui=debug_to_ui,
-            )
+            execute_from_event(lambda: to_decorate(*args, **kwargs), event_id=event_id)
 
         return decorated
 
     return decorator
-
-
-# def execute_from_command_execute_handler(to_execute: Callable):
-#     if (handlers.last_activated_command.parentCommandDefinition.id
-#         != adsk.core.Application.get().userInterface.activeCommand
-#     ):
-#         # handlers.last_activated_command = None
-#         raise RuntimeError(msgs.)
-
-#     handlers.last_activated_command_queue[1].put(to_execute)
-#     handlers.last_activated_command.doExecute(False)
 
 
 # endregion
