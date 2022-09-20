@@ -940,15 +940,13 @@ class AddinCommand(_FusionWrapper):
                 <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-3b2f79e4-2b1b-4bc9-8632-d3b6fe1fc421>`_
                 enumerator. Defaults to RadioButtonListType (1).
             **eventHandlers (Callable, optional): The notify functions of the command handlers.
-                all of these arguments are in the form "onEventName". You can either pass
-                Callables to this command construcotor or override the corresponding methods
-                of this class (named in the same pattern). You should not mix both patterns.
-                Available events which can be passed or overridden are: {activate,
-                Deactivate, Destroy, Execute, ExecutePreview, InputChanged,
-                KeyDown, KeyUp, MouseClick, MouseDoubleClick, MouseDown,
-                MouseDrag, MouseDragBegin, MouseDragEnd, MouseMove, MouseUp,
-                MouseWheel, PreSelect, PeSelectEnd, PreSelectMouseMove,
-                Select, Unselect, ValidateInputs, CommandCreated}.
+                all of these arguments are in the form "eventName". Available events for which a callable
+                can be passed are: {activate,
+                deactivate, destroy, execute, executePreview, inputChanged,
+                keyDown, keyUp, mouseClick, mouseDoubleClick, mouseDown,
+                mouseDrag, mouseDragBegin, MouseDragEnd, mouseMove, mouseUp,
+                mouseWheel, preSelect, preSelectEnd, preSelectMouseMove,
+                select, unselect, validateInputs, commandCreated}.
         """
         super().__init__(parent, Control)
 
