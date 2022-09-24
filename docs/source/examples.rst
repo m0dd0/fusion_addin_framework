@@ -48,7 +48,7 @@ This concept will be demonstrated in more detail in another example.
     def run(context):
         try:
             global cmd
-            cmd = faf.AddinCommand(onExecute=say_hi)
+            cmd = faf.AddinCommand(execute=say_hi)
         except:
             adsk.core.Application.get().userInterface.messageBox(
                 "Failed:\n{}".format(traceback.format_exc())
@@ -93,7 +93,7 @@ We set ``isPromoted=True`` so the control will appear in the Panel.
             tab = faf.Tab(parent=ws, id="SolidTab")
             panel = faf.Panel(parent=tab, id="SolidCreatePanel")
             control = faf.Control(parent=panel, isPromoted=True)
-            cmd = faf.AddinCommand(parent=control, onExecute=say_hi, name="my command")
+            cmd = faf.AddinCommand(parent=control, execute=say_hi, name="my command")
         except:
             adsk.core.Application.get().userInterface.messageBox(
                 "Failed:\n{}".format(traceback.format_exc())
@@ -131,7 +131,7 @@ as well as long as you dont need to add more than one child to a parent UI eleme
                 .tab(id="SolidTab")
                 .panel(id="SolidCreatePanel")
                 .control(isPromoted=True)
-                .addinCommand(onExecute=say_hi, name="my command")
+                .addinCommand(execute=say_hi, name="my command")
             )
         except:
             adsk.core.Application.get().userInterface.messageBox(
@@ -186,7 +186,7 @@ image.
             panel = faf.Panel(parent=tab, id="random", name="my panel")
             control = faf.Control(parent=panel, isPromoted=True, isPromotedByDefault=True)
             cmd = faf.AddinCommand(
-                parent=control, onExecute=say_hi, name="my command", resourceFolder="cubes"
+                parent=control, execute=say_hi, name="my command", resourceFolder="cubes"
             )
         except:
             adsk.core.Application.get().userInterface.messageBox(
@@ -207,9 +207,7 @@ All other event handlers that can be connected to Fusions `Command
 <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-0550963a-ff63-4183-b0a7-a1bf0c99f821>`_ 
 class are supported by the framework as well.
 You can pass the corresponding notify-function as an argument to the ``faf.AddinCommand`` class.
-Use the name of the event as attribute name. Optionally you can add an "on"-prefix 
-to the attribute name.
-``AddincComman(onExecute=my_func)`` is the same as ``AddinCommand(execute=my_func)``.
+Use the name of the event as attribute name.
 
 In the example below we use a subset of the possible event handlers to demonstrate
 the usage of functions instead of command handlers.
@@ -245,10 +243,10 @@ As in the first example the addin will be positioned at the default position (Ad
             global cmd
             cmd = faf.AddinCommand(
                 name="my command",
-                onExecute=say_hi,
-                onCommandCreated=create_inputs,
-                onInputChanged=say_changed,
-                onDestroy=say_by,
+                execute=say_hi,
+                commandCreated=create_inputs,
+                inputChanged=say_changed,
+                destroy=say_by,
             )
             # it is not necessary to use the "on"-prefix, the code below is equivalent
             # cmd = faf.AddinCommand(
@@ -349,7 +347,7 @@ both activate the same command.
             # this command has two parental controls and can therfore be acticated from
             # different postions in the UI
             cmd = faf.AddinCommand(
-                parent=[control_1, control_2], onExecute=say_hi, name="my command"
+                parent=[control_1, control_2], execute=say_hi, name="my command"
             )
         except:
             adsk.core.Application.get().userInterface.messageBox(
@@ -431,7 +429,7 @@ looked up in the API documentation of the wrapped class.
             print(button.parent)
             # ...
 
-            cmd = faf.AddinCommand(parent=button, onExecute=say_hi, name="my command")
+            cmd = faf.AddinCommand(parent=button, execute=say_hi, name="my command")
             print(cmd.parent)
             print(cmd.controlDefinition)
             print(cmd.isVisible)
@@ -539,7 +537,7 @@ to Fusions integrated text pallette.
             tab = faf.Tab(parent=ws, id="SolidTab")
             panel = faf.Panel(parent=tab, id="SolidCreatePanel")
             control = faf.Control(parent=panel, isPromoted=True)
-            cmd = faf.AddinCommand(parent=control, onExecute=say_hi, name="my command")
+            cmd = faf.AddinCommand(parent=control, execute=say_hi, name="my command")
         except:
             adsk.core.Application.get().userInterface.messageBox(
                 "Failed:\n{}".format(traceback.format_exc())

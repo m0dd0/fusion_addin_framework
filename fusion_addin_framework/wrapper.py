@@ -149,7 +149,6 @@ class FusionAddin:
         # the FusionAddin instance of a single addin
         # therfore addin instances from other addins are not affected
         # however this forbidds to install the framework into fusiony pythons instance
-        # TODO change the installation instructions in the docs to discourage global pip install of the framework.
         if len(_addins) > 0:
             raise ValueError(msgs.addin_exists())
         _addins.append(self)
@@ -940,13 +939,11 @@ class AddinCommand(_FusionWrapper):
                 <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-3b2f79e4-2b1b-4bc9-8632-d3b6fe1fc421>`_
                 enumerator. Defaults to RadioButtonListType (1).
             **eventHandlers (Callable, optional): The notify functions of the command handlers.
-                all of these arguments are in the form "eventName". Available events for which a callable
-                can be passed are: {activate,
-                deactivate, destroy, execute, executePreview, inputChanged,
-                keyDown, keyUp, mouseClick, mouseDoubleClick, mouseDown,
-                mouseDrag, mouseDragBegin, MouseDragEnd, mouseMove, mouseUp,
-                mouseWheel, preSelect, preSelectEnd, preSelectMouseMove,
-                select, unselect, validateInputs, commandCreated}.
+                All of these arguments are in the form "eventName". Available events for which a 
+                Callable can be passed are: {activate, deactivate, destroy, execute, executePreview, 
+                inputChanged, keyDown, keyUp, mouseClick, mouseDoubleClick, mouseDown, mouseDrag, 
+                mouseDragBegin, MouseDragEnd, mouseMove, mouseUp, mouseWheel, preSelect, preSelectEnd, 
+                preSelectMouseMove, select, unselect, validateInputs, commandCreated}.
         """
         super().__init__(parent, Control)
 

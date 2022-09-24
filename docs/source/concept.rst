@@ -72,6 +72,11 @@ All events that are associated with Fusions `Command class
 <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-0550963a-ff63-4183-b0a7-a1bf0c99f821>`_
 can be set at initialization of the ``AddinCommand`` class.
 
+As an alternative to ptoviding the notify functions as arguments to a ``fusion_addin_framework.AddinCommand`` 
+constructor, you can create a class which inherits from ``fusion_addin_framework.AddinCommandBase``.
+Then you can simply implement all the needed handler functions as methods of your Command class by overweriting
+the abstract methods from the ``fusion_addin_framework.AddinCommandBase``.
+
 See :ref:`this example <_handler_example>` for more information.
 
 

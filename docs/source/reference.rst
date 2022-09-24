@@ -16,6 +16,7 @@ Wrapper
    fusion_addin_framework.Dropdown
    fusion_addin_framework.Control
    fusion_addin_framework.AddinCommand
+   fusion_addin_framework.AddinCommandBase
 
 Utilities
 ---------

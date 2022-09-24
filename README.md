@@ -67,7 +67,7 @@ def run(context):
     tab = faf.Tab(parent=ws, id="SolidTab")
     panel = faf.Panel(parent=tab, id="SolidCreatePanel")
     control = faf.Control(parent=panel, isPromoted=True)
-    cmd = faf.AddinCommand(parent=control, onExecute=say_hi, name="my command")
+    cmd = faf.AddinCommand(parent=control, execute=say_hi, name="my command")
 
 
 def stop(context):

@@ -26,8 +26,8 @@ with the Fusion API and covers only the use of the framework itself.
 
    self
    installation
-   concept
    examples
+   concept
    reference
    indices
 
