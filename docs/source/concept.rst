@@ -41,7 +41,7 @@ So, for example, if you just create a tab without any parameters passed (``tab =
 it will be created as a child of a panel instance where only default parameters
 were used. 
 
-See :ref:`this example <_hirachy_example>` for a better understanding of the discussed concept.
+See :ref:`this example <hirachy_example>` for a better understanding of the discussed concept.
 
 After a wrapper class got instantiated you can use the instance as they would 
 be "normal" instances of their corresponding class in the ntaive API. 
@@ -77,7 +77,7 @@ constructor, you can create a class which inherits from ``fusion_addin_framework
 Then you can simply implement all the needed handler functions as methods of your Command class by overweriting
 the abstract methods from the ``fusion_addin_framework.AddinCommandBase``.
 
-See :ref:`this example <_handler_example>` for more information.
+See :ref:`this example <handler_example>` for more information.
 
 
 Default images
