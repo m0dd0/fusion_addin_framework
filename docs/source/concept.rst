@@ -41,7 +41,7 @@ So, for example, if you just create a tab without any parameters passed (``tab =
 it will be created as a child of a panel instance where only default parameters
 were used. 
 
-See :ref:`this example <_hirachy_example>` for a better understanding of the discussed concept.
+See :ref:`this example <hirachy_example>` for a better understanding of the discussed concept.
 
 After a wrapper class got instantiated you can use the instance as they would 
 be "normal" instances of their corresponding class in the ntaive API. 
@@ -72,7 +72,12 @@ All events that are associated with Fusions `Command class
 <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-0550963a-ff63-4183-b0a7-a1bf0c99f821>`_
 can be set at initialization of the ``AddinCommand`` class.
 
-See :ref:`this example <_handler_example>` for more information.
+As an alternative to ptoviding the notify functions as arguments to a ``fusion_addin_framework.AddinCommand`` 
+constructor, you can create a class which inherits from ``fusion_addin_framework.AddinCommandBase``.
+Then you can simply implement all the needed handler functions as methods of your Command class by overweriting
+the abstract methods from the ``fusion_addin_framework.AddinCommandBase``.
+
+See :ref:`this example <handler_example>` for more information.
 
 
 Default images

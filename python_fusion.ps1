@@ -5,4 +5,6 @@
 # instancess of Fusion360 automatically.  
 # This scriot will not work on Mac.
 
+# do not use with -e flag for isntalling this frameowrk --> won't be vsisible inside Fusion 
+
 &(Get-ChildItem $env:LOCALAPPDATA\Autodesk\webdeploy\production\*\Python\python.exe) $args

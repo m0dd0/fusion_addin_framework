@@ -4,27 +4,35 @@ by these wrapper classes."""
 
 # pylint:disable=redefined-builtin
 # pylint:disable=unsubscriptable-object
+# pylint:disable=invalid-name
 
 import logging
 from pathlib import Path
 from abc import ABC
-from typing import Union, Callable, List, Any
+from typing import Union, Callable, List, Any, Dict
 from collections import defaultdict
 from uuid import uuid4
 
-import adsk.core
-import adsk.fusion
+import adsk.core, adsk.fusion
 
 from . import messages as msgs
 from . import defaults as dflts
 from . import handlers
 
 
-# will stop also addins instaces from other addins do use only for debugging
-# _addins = []
-# def stop_all():
-#     for a in _addins:
-#         a.stop()
+# List of FusionAddin instances managed by the addin. Will conatin at max one instance.
+_addins = []
+
+
+def stop():
+    """Stops the addin managed by this framework. See FusionAddin.stop() for details.
+    This is useful if you dont ant to manage a global addin instance in your main file.
+    """
+    for event, handler in handlers.custom_events_and_handlers:
+        event.remove(handler)
+        adsk.core.Application.get().unregisterCustomEvent(event.eventId)
+    for a in _addins:
+        a.stop()
 
 
 class _FusionWrapper(ABC):
@@ -137,10 +145,13 @@ class FusionAddin:
 
         self._registered_elements = defaultdict(list)
 
-        # addin instances from other addins are also dtected so dont use
-        # if len(_addins) > 0:
-        #     logging.getLogger(__name__).warning(msgs.addin_exists())
-        # _addins.append(self)
+        # as we usually have the framework forked to each addin one fork of the framework only manages
+        # the FusionAddin instance of a single addin
+        # therfore addin instances from other addins are not affected
+        # however this forbidds to install the framework into fusiony pythons instance
+        if len(_addins) > 0:
+            raise ValueError(msgs.addin_exists())
+        _addins.append(self)
 
     def workspace(self, *args, **kwargs):
         """Creates a :class:`.Workspace` as a child of this Adddin.
@@ -162,14 +173,20 @@ class FusionAddin:
         main file of your addin to ensure proper cleanup.
         If you dont call it, strange thigs can happen the next time you run the addin.
         """
+        # for event, handler in handlers.custom_events_and_handlers:
+        #     event.remove(handler)
+        #     adsk.core.Application.get().unregisterCustomEvent(event.eventId)
+
         for level in reversed(sorted(list(self._registered_elements.keys()))):
             elems = self._registered_elements.pop(level)
             for elem in elems:
                 try:
                     elem.deleteMe()
-                except:
+                except:  # pylint:disable=bare-except
                     # element is probably already deleted
                     pass
+
+        _addins.remove(self)
 
     def registerElement(self, elem: _FusionWrapper, level: int = 0):
         """Registers an instance of a :class:`._FusionWrapper` to the addin.
@@ -807,7 +824,31 @@ class AddinCommand(_FusionWrapper):
         isVisible: bool = True,
         isChecked: bool = True,  # only checkbox
         listControlDisplayType: int = adsk.core.ListControlDisplayTypes.RadioButtonlistType,  # only list
-        **eventHandlers: Callable,
+        **eventHandlers: Callable
+        # activate: Callable = None,
+        # deactivate: Callable = None,
+        # destroy: Callable = None,
+        # execute: Callable = None,
+        # executePreview: Callable = None,
+        # inputChanged: Callable = None,
+        # keyDown: Callable = None,
+        # keyUp: Callable = None,
+        # mouseClick: Callable = None,
+        # mouseDoubleClick: Callable = None,
+        # mouseDown: Callable = None,
+        # mouseDrag: Callable = None,
+        # mouseDragBegin: Callable = None,
+        # mouseDragEnd: Callable = None,
+        # mouseMove: Callable = None,
+        # mouseUp: Callable = None,
+        # mouseWheel: Callable = None,
+        # preSelect: Callable = None,
+        # preSelectEnd: Callable = None,
+        # preSelectMouseMove: Callable = None,
+        # select: Callable = None,
+        # unselect: Callable = None,
+        # validateInputs: Callable = None,
+        # mmandCreated: Callable = None,
     ):
         """Wraps around Fusions `CommandDefinition
         <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-5e5a72e2-0869-4f85-936f-eab4ebd4aced>`_
@@ -897,81 +938,150 @@ class AddinCommand(_FusionWrapper):
                 the `ListControlDisplayType
                 <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-3b2f79e4-2b1b-4bc9-8632-d3b6fe1fc421>`_
                 enumerator. Defaults to RadioButtonListType (1).
+            **eventHandlers (Callable, optional): The notify functions of the command handlers.
+                All of these arguments are in the form "eventName". Available events for which a 
+                Callable can be passed are: {activate, deactivate, destroy, execute, executePreview, 
+                inputChanged, keyDown, keyUp, mouseClick, mouseDoubleClick, mouseDown, mouseDrag, 
+                mouseDragBegin, MouseDragEnd, mouseMove, mouseUp, mouseWheel, preSelect, preSelectEnd, 
+                preSelectMouseMove, select, unselect, validateInputs, commandCreated}.
         """
         super().__init__(parent, Control)
 
+        # initial argument sanitation
         if not isinstance(self._parent, list):
             parent_list = [self._parent]
         else:
             parent_list = self._parent
+
+        self._validate_handler_dict(eventHandlers)
 
         id = dflts.eval_id(id)
         name = dflts.eval_name(name, __class__)
         resourceFolder = dflts.eval_image(resourceFolder)
         toolClipFileName = dflts.eval_image(toolClipFileName, "32x32.png")
 
+        # build the command definition and connected the handlers
         self._in_fusion = (
             adsk.core.Application.get().userInterface.commandDefinitions.itemById(id)
         )
-
         if self._in_fusion:
             logging.getLogger(__name__).info(msgs.using_exisiting(__class__, id))
-
         else:
-            # create definition depending on the parent(s) control type
-            parent_control_type = parent_list[
-                0
-            ].commandDefinition.controlDefinition.objectType
-
-            if parent_control_type == adsk.core.ButtonControlDefinition.classType():
-                self._in_fusion = adsk.core.Application.get().userInterface.commandDefinitions.addButtonDefinition(
-                    id,
-                    name,
-                    tooltip,
-                    resourceFolder,
-                )
-            elif parent_control_type == adsk.core.CheckBoxControlDefinition.classType():
-                self._in_fusion = adsk.core.Application.get().userInterface.commandDefinitions.addCheckBoxDefinition(
-                    id,
-                    name,
-                    tooltip,
-                    isChecked,
-                )
-            elif parent_control_type == adsk.core.ListControlDefinition.classType():
-                self._in_fusion = adsk.core.Application.get().userInterface.commandDefinitions.addListDefinition(
-                    id,
-                    name,
-                    listControlDisplayType,
-                    resourceFolder,
-                )
-            else:
-                raise ValueError(msgs.invalid_control_type(parent_control_type))
-
-            if toolClipFileName is not None:
-                self._in_fusion.toolClipFilename = toolClipFileName
-            self._in_fusion.tooltip = tooltip
-            self._in_fusion.resourceFolder = resourceFolder
-            self._in_fusion.controlDefinition.isEnabled = isEnabled
-            self._in_fusion.controlDefinition.isVisible = isVisible
-            self._in_fusion.controlDefinition.name = name
-
-            # maybe move handler dict sanitation here
-            # not done yet because handler type mapping in handlers.py
-            # move when reconnecting handlers is implemented
-
+            self._in_fusion = self._create_command_definition(
+                id,
+                name,
+                tooltip,
+                resourceFolder,
+                toolClipFileName,
+                parent_list,
+                isChecked,
+                isEnabled,
+                isVisible,
+                listControlDisplayType,
+            )
             # ! if there is some error (typo) etc. fusion will break instantanious !
             self._in_fusion.commandCreated.add(
-                handlers._CommandCreatedHandler(  # pylint:disable=protected-access
-                    self.addin, name, eventHandlers
+                handlers.CommandCreatedHandler_(
+                    self.addin.debugToUi, name, eventHandlers
                 )
             )
 
-            self.addin.registerElement(self, self.uiLevel)
-
+        # (re)create the controls with this new commandDefinition
         for p in parent_list:
             p._create_control(self._in_fusion)  # pylint:disable=protected-access
 
+        self.addin.registerElement(self, self.uiLevel)
         logging.getLogger(__name__).info(msgs.created_new(__class__, id))
+
+    def _create_command_definition(
+        self,
+        id: str,
+        name: str,
+        tooltip: str,
+        resourceFolder: str,
+        toolClipFileName: str,
+        parent_list: List[Control],
+        isChecked: bool,
+        isEnabled: bool,
+        isVisible: bool,
+        listControlDisplayType: int,
+    ) -> adsk.core.CommandDefinition:
+        """Helper function which creates and returns a command defintion according to the
+        passed arguments.
+
+        Args:
+            id (str): See __init__.
+            name (str): See __init__.
+            tooltip (str): See __init__.
+            resourceFolder (str): See __init__.
+            toolClipFileName (str): See __init__.
+            parent_list (List[Control]): See __init__.
+            isChecked (bool): See __init__.
+            isEnabled (bool): See __init__.
+            isVisible (bool): See __init__.
+            listControlDisplayType (int): See __init__.
+
+        Raises:
+            ValueError: If the control type of the parent is not in {adsk.core.ButtonControlDefinition,
+                adsk.core.CheckBoxControlDefinition, adsk.core.ListControlDefinition}
+
+        Returns:
+            adsk.core.CommandDefinition: The new build command definition.
+        """
+        # create definition depending on the parent(s) control type
+        parent_control_type = parent_list[
+            0
+        ].commandDefinition.controlDefinition.objectType
+
+        if parent_control_type == adsk.core.ButtonControlDefinition.classType():
+            cmd_def = adsk.core.Application.get().userInterface.commandDefinitions.addButtonDefinition(
+                id,
+                name,
+                tooltip,
+                resourceFolder,
+            )
+        elif parent_control_type == adsk.core.CheckBoxControlDefinition.classType():
+            cmd_def = adsk.core.Application.get().userInterface.commandDefinitions.addCheckBoxDefinition(
+                id,
+                name,
+                tooltip,
+                isChecked,
+            )
+        elif parent_control_type == adsk.core.ListControlDefinition.classType():
+            cmd_def = adsk.core.Application.get().userInterface.commandDefinitions.addListDefinition(
+                id,
+                name,
+                listControlDisplayType,
+                resourceFolder,
+            )
+        else:
+            raise ValueError(msgs.invalid_control_type(parent_control_type))
+
+        if toolClipFileName is not None:
+            cmd_def.toolClipFilename = toolClipFileName
+        cmd_def.tooltip = tooltip
+        cmd_def.resourceFolder = resourceFolder
+        cmd_def.controlDefinition.isEnabled = isEnabled
+        cmd_def.controlDefinition.isVisible = isVisible
+        cmd_def.controlDefinition.name = name
+
+        return cmd_def
+
+    def _validate_handler_dict(self, event_handlers: Dict[str, Callable]):
+        """Helper method that asserts that all event names in the passed event_handler dict
+        are valid event names.
+
+        Args:
+            event_handlers (Dict[str, Callable]): The {eventName: notify_handlers_function} mapping to check.
+
+        Raises:
+            ValueError: If there are unknown event names in the mapping.
+        """
+        unknown_event_names = list(
+            event_handlers.keys() - handlers.handler_type_mapping.keys()
+        )
+        if len(unknown_event_names) > 0:
+            raise ValueError(msgs.unknown_event_name(str(unknown_event_names)))
 
     def addParentControl(self, parentControl):
         """Adds an additional control for acticvating this command.
@@ -1027,3 +1137,209 @@ class AddinCommand(_FusionWrapper):
                 super().__setattr__(name, value)
         else:
             super().__setattr__(name, value)
+
+
+class AddinCommandBase(AddinCommand):
+    def __init__(
+        self,
+        parent: Union[Control, List[Control]] = None,
+        id: str = "random",
+        name: str = "random",
+        resourceFolder: Union[str, Path] = "lightbulb",
+        tooltip: str = "",
+        toolClipFileName: Union[str, Path] = None,
+        isEnabled: bool = True,
+        isVisible: bool = True,
+        isChecked: bool = True,
+        listControlDisplayType: int = adsk.core.ListControlDisplayTypes.RadioButtonlistType,
+    ):
+        """Wraps around Fusions `CommandDefinition
+        <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-5e5a72e2-0869-4f85-936f-eab4ebd4aced>`_
+        object and its `ControlDefintion
+        <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-f4282920-9484-49db-bcdd-b46f6506543d>`_
+        attribute.
+        Besides the documented attributes and methods on this page all
+        attributes and methods of the wrapped classes can be accessed with the same
+        attribute and method names as in the wrapped classes.
+        The atributes of the commandDefintion object will be looked up first.
+
+        This class does NOT wrap around Fusions `Command
+        <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-0550963a-ff63-4183-b0a7-a1bf0c99f821>`_
+        class.
+        (Thats why its called 'AddinCommand' and not 'Command' only.)
+
+        If an Id of an existing CommandDefintion is provided, all parameters except
+        `parent` and `id` will be ignored.
+
+        This class also encapsulates the concepts of the `event handlers
+        <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID->`_
+        of the Fusion API.
+        Using this class you do not need to connect a handler to the `created event
+        <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-895ee146-8697-4ba0-98e7-4f72b74edb4f>`_
+        of the commandDefintion.
+        Instead of connecting handlers, you simply overwrite the corresponding methods which
+        are exactly named as the events available. Also the same argument will get passed to
+        the overwritten methods.
+
+        See the example section for some use cases.
+        Checking out the examples should make the concept od using function-arguments
+        instead of handlers understandable in no time.
+
+        Args:
+            parent (Union[Control, List[Control]], optional): The parent Control
+                this command is connected to. You can also pass a list of controls.
+                In this case the same command/functionality getx connected to multiple
+                controls. If a list of controls is passed you must ensure that all
+                controls are of the same controlType and that all of them are in
+                distinct panels. Defaults to a ComanndControl with the default
+                properties.
+            id (str, optional): The unique id of the commandDefintion with respect
+                to all other existing commandDefintions. Defaults to a random id.
+            name (str, optional): The visible name of the command as seen in the
+                user interface. This will also be set as the name of the controlDefintione
+                attribute. Defaults to a random name.
+            resourceFolder (Union[str, Path], optional): Directory that contains
+                any additional files associated with this command. These are
+                typically the image files that will be used for a button and the
+                HTML files for a tool clip or helps and tips. Alternatively you
+                can provide the name of one of the available default images.
+                Defaults to "lightbulb".
+            tooltip (str, optional): The tooltip string. This is always shown
+                for commands. If the tooltip description and/or tool clip are also
+                specified then the tooltip will progressively display more information
+                as the user hovers the mouse over the control. Defaults to "".
+            toolClipFileName (Union[str, Path], optional): The full filename of
+                the image file (PNG) used for the tool clip. The tooltip is always
+                shown but as the user hovers over the control it will progressively
+                display the tool clip along with the tooltip text. Alternatively you
+                can provide the name of one of the available default images.
+                Defaults to None (no toolclip image is used).
+            isEnabled (bool, optional): Sets if this ControlDefinition is enabled
+                or not. This has the effect of enabling and disabling any
+                associated (parental) controls. Defaults to True.
+            isVisible (bool, optional): Sets if this ControlDefinition is visible
+                or not. This has the effect of making any associated (parental)
+                controls visible or invisible in the user interface. Defaults to True.
+            isChecked (bool, optional): Will be ignored if controlType of the parental
+                Control is not 'checkbox'. Sets whether the check box of the parental
+                controlDefintions is checked. Changing this will result in changing
+                any associated (parental) controls and will execute the associated
+                command. Defaults to True.
+            listControlDisplayType (int, optional): Will be ignored if the controlType
+                of the paerntal Control is not 'list'. Sets how the parental list
+                control will be displayed; as a standard list, a list of check boxes,
+                or a list of radio buttons. Possible Values can be found in
+                the `ListControlDisplayType
+                <https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-3b2f79e4-2b1b-4bc9-8632-d3b6fe1fc421>`_
+                enumerator. Defaults to RadioButtonListType (1).
+        """
+        eventHandlers = self._get_handler_dict()
+
+        super().__init__(
+            parent,
+            id,
+            name,
+            resourceFolder,
+            tooltip,
+            toolClipFileName,
+            isEnabled,
+            isVisible,
+            isChecked,
+            listControlDisplayType,
+            **eventHandlers,
+        )
+
+    def _get_handler_dict(self) -> Dict[str, Callable]:
+        """Helper functions which converts the overwritten handler methods into a {event_name: Calllable}
+        mapping.
+
+        Returns:
+            Dict[str, Callable]: The event handler mapping.
+        """
+        common_methods = (
+            AddinCommandBase.__dict__.keys() & self.__class__.__dict__.keys()
+        )
+        overwridden_methods = [
+            m
+            for m in common_methods
+            if AddinCommandBase.__dict__[m] != self.__class__.__dict__[m]
+        ]
+        overwridden_methods = [
+            m for m in overwridden_methods if m in handlers.handler_type_mapping.keys()
+        ]
+
+        event_handlers = {meth: getattr(self, meth) for meth in overwridden_methods}
+
+        return event_handlers
+
+    def activate(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def deactivate(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def destroy(self, eventArgs: adsk.core.CommandCreatedEventArgs):
+        raise NotImplementedError()
+
+    def execute(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def executePreview(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def inputChanged(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def keyDown(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def keyUp(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def mouseClick(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def mouseDoubleClick(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def mouseDown(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def mouseDrag(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def mouseDragBegin(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def mouseDragEnd(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def mouseMove(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def mouseUp(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def mouseWheel(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def preSelect(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def preSelectEnd(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def preSelectMouseMove(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def select(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def unselect(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def validateInputs(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
+
+    def commandCreated(self, eventArgs: adsk.core.CommandEventArgs):
+        raise NotImplementedError()
