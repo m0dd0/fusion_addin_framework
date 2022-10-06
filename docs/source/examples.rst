@@ -248,21 +248,27 @@ names.
 
     class MyCommandClass(faf.AddinCommandBase):
         def __init__(self):
-            pass
+            workspace = faf.Workspace()
+            tab = faf.Tab(workspace)
+            panel = faf.Panel(tab)
+            control = faf.Control(panel)
 
-        def commandCreated(event_args: adsk.core.CommandCreatedEventArgs):
+            super().__init__(
+                control,
+                name="my command"
+                # ...
+            )
+
+        def commandCreated(self, event_args: adsk.core.CommandCreatedEventArgs):
             event_args.command.commandInputs.addBoolValueInput("boolInputId", "my input", True)
 
-
-        def execute(event_args: adsk.core.CommandEventArgs):
+        def execute(self, event_args: adsk.core.CommandEventArgs):
             adsk.core.Application.get().userInterface.messageBox("hi")
 
-
-        def inputChanged(event_args: adsk.core.InputChangedEventArgs):
+        def inputChanged(self, event_args: adsk.core.InputChangedEventArgs):
             adsk.core.Application.get().userInterface.messageBox("input changed")
 
-
-        def destroy(event_args: adsk.core.CommandCreatedEventArgs):
+        def destroy(self, event_args: adsk.core.CommandCreatedEventArgs):
             adsk.core.Application.get().userInterface.messageBox("by")
 
 
