@@ -56,6 +56,7 @@ This concept will be demonstrated in more detail in another example.
                 "Failed:\n{}".format(traceback.format_exc())
             )
 
+
 Specify position of the addin
 -----------------------------
 
@@ -126,6 +127,7 @@ as well as long as you dont need to add more than one child to a parent UI eleme
     def stop(context):
         faf.stop()
 
+
 .. _hirachy_example:
 
 Command at a very custom position
@@ -175,6 +177,7 @@ image.
 
     def stop(context):
         faf.stop()
+
 
 .. _handler_example:
 
@@ -232,6 +235,7 @@ As in the first example the addin will be positioned at the default position (Ad
 
     def stop(context):
         faf.stop()
+
 
 .. _handler_example_base:
 
