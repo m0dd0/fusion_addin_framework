@@ -10,9 +10,9 @@ All the given examples assume that you cloned the `fusion_addin_framework
 into the directory of your addin as explained :ref:`here<installation>` and the 
 code is executed from the main-file of your addin.
 
-`This repository
-<https://github.com/m0dd0/SampleFusionAddin>`_ 
-contains each of the shown examples in a seperate branch.
+.. `This repository
+.. <https://github.com/m0dd0/SampleFusionAddin>`_ 
+.. contains each of the shown examples in a seperate branch.
 
 
 Simple addin
@@ -266,6 +266,11 @@ As in the first example the addin will be positioned at the default position (Ad
     def stop(context):
         cmd.addin.stop()
 
+.. _handler_example_base:
+
+Command Base class
+------------------
+Instead of passing functions to the constructor of the 
 
 
 Checkbox controlled addin

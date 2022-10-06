@@ -26,5 +26,4 @@ In the main-file of your addin (``<YourAddinName>.py``) you can then use
 ``from .fusion_addin_framework import fusion_addin_framework as faf``
 to import the framework and access its classes.
 
-A ready to use cookiecutter template can be found `here`_
-.. _here: https://github.com/m0dd0/FusionAddinCookiecutter
+A ready to use cookiecutter template can be found `here <https://github.com/m0dd0/FusionAddinCookiecutter>`_.

@@ -3,7 +3,7 @@
 # To use autodoc the module must be importable.
 # Therefore it must be installed to the python instanve which executes sphinx.
 # By default this is the standard python instance.
-# To execute sphix from a virtual env in which faf is installed to, sphix must be
+# To execute sphix from a virtual env in which faf is installed to, sphinx must be
 # installed within this environment.
 # requirements_docs.txt gives contains all the dependencies (the framework repo,
 # sphinx itself and the rtd theme) that are needed in the environment to succesfully
