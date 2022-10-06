@@ -37,27 +37,20 @@ This concept will be demonstrated in more detail in another example.
     import adsk.core, adsk.fusion, adsk.cam, traceback
     from .fusion_addin_framework import fusion_addin_framework as faf
 
-
-    cmd = None
-
-
     def say_hi(event_args: adsk.core.CommandEventArgs):
         adsk.core.Application.get().userInterface.messageBox("hi")
 
-
     def run(context):
         try:
-            global cmd
             cmd = faf.AddinCommand(execute=say_hi)
         except:
             adsk.core.Application.get().userInterface.messageBox(
                 "Failed:\n{}".format(traceback.format_exc())
             )
 
-
     def stop(context):
         try:
-            cmd.addin.stop()
+            faf.stop()
         except:
             adsk.core.Application.get().userInterface.messageBox(
                 "Failed:\n{}".format(traceback.format_exc())
@@ -78,16 +71,12 @@ We set ``isPromoted=True`` so the control will appear in the Panel.
     from .fusion_addin_framework import fusion_addin_framework as faf
 
 
-    addin = None
-
-
     def say_hi(event_args: adsk.core.CommandEventArgs):
         adsk.core.Application.get().userInterface.messageBox("hi")
 
 
     def run(context):
         try:
-            global addin
             addin = faf.FusionAddin()
             ws = faf.Workspace(parent=addin, id="FusionSolidEnvironment")
             tab = faf.Tab(parent=ws, id="SolidTab")
@@ -100,7 +89,7 @@ We set ``isPromoted=True`` so the control will appear in the Panel.
             )
 
     def stop(context):
-        addin.stop()
+        faf.stop()
 
 
 As an alternative to the the notation above you can also use the following code which
@@ -114,17 +103,12 @@ as well as long as you dont need to add more than one child to a parent UI eleme
     import adsk.core, adsk.fusion, adsk.cam, traceback
     from .fusion_addin_framework import fusion_addin_framework as faf
 
-
-    cmd = None
-
-
     def say_hi(event_args: adsk.core.CommandEventArgs):
         adsk.core.Application.get().userInterface.messageBox("hi")
 
 
     def run(context):
         try:
-            global cmd
             cmd = (
                 faf.FusionAddin()
                 .workspace(id="FusionSolidEnvironment")
@@ -140,7 +124,7 @@ as well as long as you dont need to add more than one child to a parent UI eleme
 
 
     def stop(context):
-        cmd.addin.stop()
+        faf.stop()
 
 .. _hirachy_example:
 
@@ -167,17 +151,12 @@ image.
 
     from .fusion_addin_framework import fusion_addin_framework as faf
 
-
-    addin = None
-
-
     def say_hi(event_args: adsk.core.CommandEventArgs):
         adsk.core.Application.get().userInterface.messageBox("hi")
 
 
     def run(context):
         try:
-            global addin
             addin = faf.FusionAddin()
             ws = faf.Workspace(parent=addin, id="FusionSolidEnvironment")
             # passing the "random" as an id will generate an UUID, it would be also possible
@@ -195,7 +174,7 @@ image.
 
 
     def stop(context):
-        addin.stop()
+        faf.stop()
 
 .. _handler_example:
 
@@ -219,9 +198,6 @@ As in the first example the addin will be positioned at the default position (Ad
     import adsk.core, adsk.fusion, adsk.cam, traceback
     from .fusion_addin_framework import fusion_addin_framework as faf
 
-    cmd = None
-
-
     def create_inputs(event_args: adsk.core.CommandCreatedEventArgs):
         event_args.command.commandInputs.addBoolValueInput("boolInputId", "my input", True)
 
@@ -240,7 +216,6 @@ As in the first example the addin will be positioned at the default position (Ad
 
     def run(context):
         try:
-            global cmd
             cmd = faf.AddinCommand(
                 name="my command",
                 execute=say_hi,
@@ -248,14 +223,6 @@ As in the first example the addin will be positioned at the default position (Ad
                 inputChanged=say_changed,
                 destroy=say_by,
             )
-            # it is not necessary to use the "on"-prefix, the code below is equivalent
-            # cmd = faf.AddinCommand(
-            #     name="my command",
-            #     execute=say_hi,
-            #     commandCreated=create_inputs,
-            #     inputChanged=say_changed,
-            #     destroy=say_by,
-            # )
 
         except:
             adsk.core.Application.get().userInterface.messageBox(
@@ -264,13 +231,53 @@ As in the first example the addin will be positioned at the default position (Ad
 
 
     def stop(context):
-        cmd.addin.stop()
+        faf.stop()
 
 .. _handler_example_base:
 
 Command Base class
 ------------------
-Instead of passing functions to the constructor of the 
+Instead of passing handler-functions to the constructor of the command we can also use a ``MyCommandClass``
+which inherits from ``faf.AddinCommandBase`` and defines the handlers as methods with the corresponding
+names.
+
+.. code-block:: python
+
+    import adsk.core, adsk.fusion, adsk.cam, traceback
+    from .fusion_addin_framework import fusion_addin_framework as faf
+
+    class MyCommandClass(faf.AddinCommandBase):
+        def __init__(self):
+            pass
+
+        def commandCreated(event_args: adsk.core.CommandCreatedEventArgs):
+            event_args.command.commandInputs.addBoolValueInput("boolInputId", "my input", True)
+
+
+        def execute(event_args: adsk.core.CommandEventArgs):
+            adsk.core.Application.get().userInterface.messageBox("hi")
+
+
+        def inputChanged(event_args: adsk.core.InputChangedEventArgs):
+            adsk.core.Application.get().userInterface.messageBox("input changed")
+
+
+        def destroy(event_args: adsk.core.CommandCreatedEventArgs):
+            adsk.core.Application.get().userInterface.messageBox("by")
+
+
+    def run(context):
+        try:
+            cmd = faf.MyCommandClass()
+
+        except:
+            adsk.core.Application.get().userInterface.messageBox(
+                "Failed:\n{}".format(traceback.format_exc())
+            )
+
+
+    def stop(context):
+        faf.stop()
 
 
 Checkbox controlled addin
@@ -284,17 +291,11 @@ Control wrapper.
     import adsk.core, adsk.fusion, adsk.cam, traceback
     from .fusion_addin_framework import fusion_addin_framework as faf
 
-
-    addin = None
-
-
     def say_hi(even_args: adsk.core.CommandEventArgs):
         adsk.core.Application.get().userInterface.messageBox("hi")
 
-
     def run(context):
         try:
-            global addin
             addin = faf.FusionAddin()
             workspace = faf.Workspace(addin)
             tab = faf.Tab(workspace, id="ToolsTab")
@@ -309,7 +310,7 @@ Control wrapper.
 
 
     def stop(context):
-        addin.stop()
+        faf.stop()
 
 
 Addin with multiple controls
@@ -327,16 +328,11 @@ both activate the same command.
     import adsk.core, adsk.fusion, adsk.cam, traceback
     from .fusion_addin_framework import fusion_addin_framework as faf
 
-    addin = None
-
-
     def say_hi(event_args: adsk.core.CommandEventArgs):
         adsk.core.Application.get().userInterface.messageBox("hi")
 
-
     def run(context):
         try:
-            global addin
             addin = faf.FusionAddin()
             ws = faf.Workspace(parent=addin, id="FusionSolidEnvironment")
 
@@ -361,7 +357,7 @@ both activate the same command.
 
 
     def stop(context):
-        addin.stop()
+        faf.stop()
 
 
 Accessing attributes
@@ -377,16 +373,11 @@ looked up in the API documentation of the wrapped class.
     import adsk.core, adsk.fusion, adsk.cam, traceback
     from .fusion_addin_framework import fusion_addin_framework as faf
 
-    addin = None
-
-
     def say_hi(event_args: adsk.core.CommandEventArgs):
         adsk.core.Application.get().userInterface.messageBox("hi")
 
-
     def run(context):
         try:
-            global addin
             addin = faf.FusionAddin()
 
             # access the attributes and methods of the workspace instance
@@ -449,7 +440,7 @@ looked up in the API documentation of the wrapped class.
             
 
     def stop(context):
-        addin.stop()
+        faf.stop()
 
 
 Addin with dropdowns
@@ -466,16 +457,12 @@ In this exampled we use the "dotted" notation to create 4 nested dropdowns.
     import adsk.core, adsk.fusion, adsk.cam, traceback
     from .fusion_addin_framework import fusion_addin_framework as faf
 
-    cmd = None
-
-
     def say_hi(event_args: adsk.core.CommandEventArgs):
         adsk.core.Application.get().userInterface.messageBox("hi")
 
 
     def run(context):
         try:
-            global cmd
             cmd = (
                 faf.Workspace()
                 .tab()
@@ -494,7 +481,7 @@ In this exampled we use the "dotted" notation to create 4 nested dropdowns.
 
 
     def stop(context):
-        cmd.addin.stop()
+        faf.stop()
 
 
 Using the module logger
@@ -513,9 +500,6 @@ to Fusions integrated text pallette.
     from .fusion_addin_framework import fusion_addin_framework as faf
 
     import logging
-
-    addin = None
-
 
     def say_hi(event_args: adsk.core.CommandEventArgs):
         adsk.core.Application.get().userInterface.messageBox("hi")
@@ -536,7 +520,6 @@ to Fusions integrated text pallette.
             #     [logging.StreamHandler(), faf.utils.TextPaletteLoggingHandler()],
             # )
 
-            global addin
             addin = faf.FusionAddin()
             ws = faf.Workspace(parent=addin, id="FusionSolidEnvironment")
             tab = faf.Tab(parent=ws, id="SolidTab")
@@ -550,4 +533,4 @@ to Fusions integrated text pallette.
 
 
     def stop(context):
-        addin.stop()
+        faf.stop()
