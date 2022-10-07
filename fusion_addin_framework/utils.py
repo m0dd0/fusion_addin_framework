@@ -842,7 +842,7 @@ def get_json_from_file(
     path: Union[str, Path], default_value: Union[Dict, List] = None
 ) -> Union[Dict, List]:
     """Gets the json decoded data from the file if the file exists and creates the file if
-    its not exists. IF its not existing the default value is returned.
+    its not exists. If its not existing the default value is written to the file (and therfore also returned).
 
     Args:
         path (Union[str, Path]): The file path of the json file.
